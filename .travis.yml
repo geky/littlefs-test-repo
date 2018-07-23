@@ -134,53 +134,70 @@ jobs:
         - STAGE=deploy
         - NAME=deploy
       script:
-        # Update tag for version defined in lfs.h
+        # Find version defined in lfs.h
         - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
         - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
         - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
-        - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR"
+        # Grab latests patch from tags, default to 0
+        - LFS_VERSION_PATCH=$(git tag --sort=-v:refname -l \
+                "v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.*" \
+                | head -1 | cut -d '.' -f3)
+        - LFS_VERSION_PATCH=$((${LFS_VERSION_PATCH:--1} + 1))
+        # We have our new version
+        - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
         - echo "littlefs version $LFS_VERSION"
+        # Check that we're the most recent commit
         - |
-          curl -u "$GEKY_BOT_RELEASES" -X POST \
-            https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
-            -d "{
-              \"ref\": \"refs/tags/$LFS_VERSION\",
-              \"sha\": \"$TRAVIS_COMMIT\"
-            }"
-        - |
-          curl -f -u "$GEKY_BOT_RELEASES" -X PATCH \
-            https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs/tags/$LFS_VERSION \
-            -d "{
-              \"sha\": \"$TRAVIS_COMMIT\"
-            }"
-        # Create release notes from commits
-        - LFS_PREV_VERSION="v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1))"
-        - |
-          if [ $(git tag -l "$LFS_PREV_VERSION") ]
+          UPSTREAM_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES" \
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master \
+                | jq -re '.sha')
+          if [ "$TRAVIS_COMMIT" == "$UPSTREAM_COMMIT" ]
           then
-            curl -u "$GEKY_BOT_RELEASES" -X POST \
-                https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
+            # Tag the release
+            curl -f -u "$GEKY_BOT_RELEASES" -X POST \
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
                 -d "{
-                    \"tag_name\": \"$LFS_VERSION\",
-                    \"name\": \"$LFS_VERSION\"
+                  \"ref\": \"refs/tags/$LFS_VERSION\",
+                  \"sha\": \"$TRAVIS_COMMIT\"
                 }"
-            RELEASE=$(
-                curl -f -u "$GEKY_BOT_RELEASES" \
-                    https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/tags/$LFS_VERSION
-            )
-            CHANGES=$(
-                git log --oneline $LFS_PREV_VERSION.. --grep='^Merge' --invert-grep
-            )
-            curl -f -u "$GEKY_BOT_RELEASES" -X PATCH \
-                https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/$(
-                    jq -r '.id' <<< "$RELEASE"
-                ) \
+            # Build release notes
+            PREV_PATCH=$(git tag --sort=-v:refname -l \
+                "v$LFS_VERSION_MAJOR.$LFS_VERION_MINOR.$(($LFS_VERSION_PATCH-1))" \
+                | head -1)
+            PREV_MINOR=$(git tag --sort=-v:refname -l \
+                "v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1)).*" \
+                | head -1)
+            PREV_MAJOR=$(git tag --sort=-v:refname -l \
+                "v$(($LFS_VERSION_MAJOR-1)).*.*" \
+                | head -1)
+            # Grab existing notes from previous release
+            if [ ! -z "$PREV_PATCH" ]
+            then
+                RELEASE=$(curl -f -u "$GEKY_BOT_RELEASES" \
+                    https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/tags/$PREV_PATCH)
+            fi
+            # Find changes since last minor/major version
+            if [ ! -z "${PREV_MINOR:-$PREV_MAJOR}" ]
+            then
+                CHANGES="### Changes since ${PREV_MINOR:-$PREV_MAJOR}"$'\n\n'$(
+                    git log --oneline ${PREV_MINOR:-$PREV_MAJOR}.. \
+                    --grep='^Merge' --invert-grep)
+            fi
+            # Create release
+            curl -f -u "$GEKY_BOT_RELEASES" -X POST \
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
                 -d "$(
                     jq -s '{
-                        "body": ((.[0] // "" | sub("(?<=\n)#+ Changes.*"; ""; "mi"))
-                            + "### Changes\n\n" + .[1])
+                        "body": ((.[0] // "" | sub("(?<=\n)#+ Changes.*"; ""; "mi")) + .[1])
                     }' <(jq '.body' <<< "$RELEASE") <(jq -sR '.' <<< "$CHANGES")
                 )"
+            # Delete outdated release notes, release is still available
+            if [ ! -z "PREV_PATCH" ]
+            then
+                curl -f -u "$GEKY_BOT_RELEASES" -X DELETE \
+                    https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/$( \
+                        jq -r '.id' <<< "$RELEASE")
+            fi
           fi
 
 # Manage statuses
