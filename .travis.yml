@@ -5,24 +5,24 @@ env:
 
 # Common test script
 script:
-  # make sure example can at least compile
-  - sed -n '/``` c/,/```/{/```/d; p;}' README.md > test.c &&
-    make all CFLAGS+="
-        -Duser_provided_block_device_read=NULL
-        -Duser_provided_block_device_prog=NULL
-        -Duser_provided_block_device_erase=NULL
-        -Duser_provided_block_device_sync=NULL
-        -include stdio.h"
-
-  # run tests
-  - make test QUIET=1
-
-  # run tests with a few different configurations
-  - make test QUIET=1 CFLAGS+="-DLFS_READ_SIZE=1      -DLFS_PROG_SIZE=1"
-  - make test QUIET=1 CFLAGS+="-DLFS_READ_SIZE=512    -DLFS_PROG_SIZE=512"
-  - make test QUIET=1 CFLAGS+="-DLFS_BLOCK_COUNT=1023 -DLFS_LOOKAHEAD=2048"
-
-  - make clean test QUIET=1 CFLAGS+="-DLFS_NO_INTRINSICS"
+#  # make sure example can at least compile
+#  - sed -n '/``` c/,/```/{/```/d; p;}' README.md > test.c &&
+#    make all CFLAGS+="
+#        -Duser_provided_block_device_read=NULL
+#        -Duser_provided_block_device_prog=NULL
+#        -Duser_provided_block_device_erase=NULL
+#        -Duser_provided_block_device_sync=NULL
+#        -include stdio.h"
+#
+#  # run tests
+#  - make test QUIET=1
+#
+#  # run tests with a few different configurations
+#  - make test QUIET=1 CFLAGS+="-DLFS_READ_SIZE=1      -DLFS_PROG_SIZE=1"
+#  - make test QUIET=1 CFLAGS+="-DLFS_READ_SIZE=512    -DLFS_PROG_SIZE=512"
+#  - make test QUIET=1 CFLAGS+="-DLFS_BLOCK_COUNT=1023 -DLFS_LOOKAHEAD=2048"
+#
+#  - make clean test QUIET=1 CFLAGS+="-DLFS_NO_INTRINSICS"
 
   # compile and find the code size with the smallest configuration
   - make clean size
@@ -118,15 +118,15 @@ jobs:
         # self-host test
         - make -C littlefs-fuse
 
-        - littlefs-fuse/lfs --format /dev/loop0
-        - littlefs-fuse/lfs /dev/loop0 mount
-
-        - ls mount
-        - mkdir mount/littlefs
-        - cp -r $(git ls-tree --name-only HEAD) mount/littlefs
-        - cd mount/littlefs
-        - ls
-        - make -B test_dirs test_files QUIET=1
+#        - littlefs-fuse/lfs --format /dev/loop0
+#        - littlefs-fuse/lfs /dev/loop0 mount
+#
+#        - ls mount
+#        - mkdir mount/littlefs
+#        - cp -r $(git ls-tree --name-only HEAD) mount/littlefs
+#        - cd mount/littlefs
+#        - ls
+#        - make -B test_dirs test_files QUIET=1
 
       # Automatically update releases
     - stage: deploy
