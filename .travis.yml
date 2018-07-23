@@ -35,7 +35,7 @@ script:
     if [ "$TRAVIS_TEST_RESULT" -eq 0 ]
     then
         CURR=$(tail -n1 sizes | awk '{print $1}')
-        PREV=$(curl -u $GEKY_BOT_STATUSES https://api.github.com/repos/$TRAVIS_REPO_SLUG/status/master \
+        PREV=$(curl -u "$GEKY_BOT_STATUSES" https://api.github.com/repos/$TRAVIS_REPO_SLUG/status/master \
             | jq -re "select(.sha != \"$TRAVIS_COMMIT\")
                 | .statuses[] | select(.context == \"$STAGE/$NAME\").description
                 | capture(\"code size is (?<size>[0-9]+)\").size" \
@@ -141,14 +141,14 @@ jobs:
         - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR"
         - echo "littlefs version $LFS_VERSION"
         - |
-          curl -u $GEKY_BOT_RELEASES -X POST \
+          curl -u "$GEKY_BOT_RELEASES" -X POST \
             https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
             -d "{
               \"ref\": \"refs/tags/$LFS_VERSION\",
               \"sha\": \"$TRAVIS_COMMIT\"
             }"
         - |
-          curl -f -u $GEKY_BOT_RELEASES -X PATCH \
+          curl -f -u "$GEKY_BOT_RELEASES" -X PATCH \
             https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs/tags/$LFS_VERSION \
             -d "{
               \"sha\": \"$TRAVIS_COMMIT\"
@@ -158,20 +158,20 @@ jobs:
         - |
           if [ $(git tag -l "$LFS_PREV_VERSION") ]
           then
-            curl -u $GEKY_BOT_RELEASES -X POST \
+            curl -u "$GEKY_BOT_RELEASES" -X POST \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
                 -d "{
                     \"tag_name\": \"$LFS_VERSION\",
                     \"name\": \"$LFS_VERSION\"
                 }"
             RELEASE=$(
-                curl -f -u $GEKY_BOT_RELEASES \
+                curl -f -u "$GEKY_BOT_RELEASES" \
                     https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/tags/$LFS_VERSION
             )
             CHANGES=$(
                 git log --oneline $LFS_PREV_VERSION.. --grep='^Merge' --invert-grep
             )
-            curl -f -u $GEKY_BOT_RELEASES -X PATCH \
+            curl -f -u "$GEKY_BOT_RELEASES" -X PATCH \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/$(
                     jq -r '.id' <<< "$RELEASE"
                 ) \
@@ -186,7 +186,7 @@ jobs:
 # Manage statuses
 before_install:
   - |
-    curl -u $GEKY_BOT_STATUSES -X POST \
+    curl -u "$GEKY_BOT_STATUSES" -X POST \
         https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
         -d "{
             \"context\": \"$STAGE/$NAME\",
@@ -197,7 +197,7 @@ before_install:
 
 after_failure:
   - |
-    curl -u $GEKY_BOT_STATUSES -X POST \
+    curl -u "$GEKY_BOT_STATUSES" -X POST \
         https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
         -d "{
             \"context\": \"$STAGE/$NAME\",
@@ -208,7 +208,7 @@ after_failure:
 
 after_success:
   - |
-    curl -u $GEKY_BOT_STATUSES -X POST \
+    curl -u "$GEKY_BOT_STATUSES" -X POST \
         https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
         -d "{
             \"context\": \"$STAGE/$NAME\",
