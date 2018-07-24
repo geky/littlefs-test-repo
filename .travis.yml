@@ -141,7 +141,7 @@ jobs:
         # Grab latests patch from repo tags, default to 0
         - LFS_VERSION_PATCH=$(curl -f -u "$GEKY_BOT_RELEASES"
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
-                | jq -r 'map(.ref | match(
+                | jq 'map(.ref | match(
                     "refs/tags/v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\.(.*)$")
                     .captures[].string | tonumber + 1) | max // 0')
         # We have our new version
@@ -187,14 +187,12 @@ jobs:
             # Create release
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
-                -d "$(
-                    jq -s '{
-                        "tag_name": "'$LFS_VERSION'",
-                        "name": "'$LFS_VERSION'",
-                        "body": ((.[0].body // "" | sub("(?<=\n)#+ Changes.*"; ""; "mi"))
-                            + "'"$CHANGES"'")
-                    }' <<< "$RELEASE"
-                )"
+                --upload <(jq -s '{
+                    "tag_name": "'$LFS_VERSION'",
+                    "name": "'$LFS_VERSION'",
+                    "body": ((.[0].body // "" | sub(
+                        "(?<=\n)#+ Changes.*"; ""; "mi")) + "'"$CHANGES"'")
+                }' <<< "$RELEASE")
             # Delete outdated release notes, release is still available
             if [ ! -z "PREV_PATCH" ]
             then
