@@ -178,7 +178,6 @@ jobs:
             then
                 RELEASE=$(curl -f -u "$GEKY_BOT_RELEASES" \
                     https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/tags/$PREV_PATCH)
-                echo "RELEASE $RELEASE"
             fi
             # Find changes since last minor/major version
             if [ ! -z "${PREV_MINOR:-$PREV_MAJOR}" ]
@@ -186,7 +185,6 @@ jobs:
                 CHANGES="### Changes since ${PREV_MINOR:-$PREV_MAJOR}"$'\n\n'$(
                     git log --oneline ${PREV_MINOR:-$PREV_MAJOR}.. \
                     --grep='^Merge' --invert-grep)
-                echo "CHANGES $CHANGES"
             fi
             # Create release
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
