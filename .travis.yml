@@ -162,9 +162,9 @@ jobs:
                   \"sha\": \"$TRAVIS_COMMIT\"
                 }"
             # Build release notes
-            PREV_MAJOR=v$(($LFS_VERSION_MAJOR-1)).*.*
-            PREV_MINOR=v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1)).*
-            PREV_PATCH=v$LFS_VERSION_MAJOR.$LFS_VERION_MINOR.$(($LFS_VERSION_PATCH-1))
+            PREV_MAJOR="v$(($LFS_VERSION_MAJOR-1)).*.*"
+            PREV_MINOR="v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1)).*"
+            PREV_PATCH="v$LFS_VERSION_MAJOR.$LFS_VERION_MINOR.$(($LFS_VERSION_PATCH-1))"
             PREV_MAJOR=$(git tag -l $PREV_MAJOR --sort=-v:refname | head -1)
             PREV_MINOR=$(git tag -l $PREV_MINOR --sort=-v:refname | head -1)
             PREV_PATCH=$(git tag -l $PREV_PATCH --sort=-v:refname | head -1)
