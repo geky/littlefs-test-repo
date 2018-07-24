@@ -3,6 +3,8 @@ env:
   global:
     - CFLAGS=-Werror
 
+# TODO TEST EDIT
+
 # Common test script
 script:
 #  # make sure example can at least compile
