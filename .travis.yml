@@ -139,20 +139,20 @@ jobs:
         - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
         - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
         # Grab latests patch from repo tags, default to 0
-        - LFS_VERSION_PATCH=$(curl -f -u "$GEKY_BOT_RELEASES"
-                https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
-                | jq 'map(.ref | match(
-                    "refs/tags/v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\.(.*)$")
-                    .captures[].string | tonumber + 1) | max // 0')
+        - TAGS=$(curl -f -u "$GEKY_BOT_RELEASES"
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs)
+        - LFS_VERSION_PATCH=$(jq 'map(.ref | match(
+                "refs/tags/v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\.(.*)$")
+                .captures[].string | tonumber + 1) | max // 0' <<< "$TAGS")
         # We have our new version
         - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
         - echo "littlefs version $LFS_VERSION"
         # Check that we're the most recent commit
         - |
-          UPSTREAM_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES" \
+          CURRENT_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES" \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master \
                 | jq -re '.sha')
-          if [ "$TRAVIS_COMMIT" == "$UPSTREAM_COMMIT" ]
+          if [ "$TRAVIS_COMMIT" == "$CURRENT_COMMIT" ]
           then
             # Tag the release
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
@@ -162,12 +162,17 @@ jobs:
                   \"sha\": \"$TRAVIS_COMMIT\"
                 }"
             # Build release notes
+            echo "tags?"
+            git tag --sort=-v:refname
+            echo "trying to find v$LFS_VERSION_MAJOR.$LFS_VERION_MINOR.$(($LFS_VERSION_PATCH-1))"
             PREV_PATCH=$(git tag --sort=-v:refname -l \
                 "v$LFS_VERSION_MAJOR.$LFS_VERION_MINOR.$(($LFS_VERSION_PATCH-1))" \
                 | head -1)
+            echo "trying to find v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1)).*"
             PREV_MINOR=$(git tag --sort=-v:refname -l \
                 "v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1)).*" \
                 | head -1)
+            echo "trying to find v$(($LFS_VERSION_MAJOR-1)).*.*"
             PREV_MAJOR=$(git tag --sort=-v:refname -l \
                 "v$(($LFS_VERSION_MAJOR-1)).*.*" \
                 | head -1)
@@ -190,12 +195,12 @@ jobs:
             # Create release
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
-                --upload <(jq -s '{
+                -d "$(jq -s '{
                     "tag_name": "'$LFS_VERSION'",
                     "name": "'$LFS_VERSION'",
                     "body": ((.[0].body // "" | sub(
                         "(?<=\n)#+ Changes.*"; ""; "mi")) + "'"$CHANGES"'")
-                }' <<< "$RELEASE")
+                }' <<< "$RELEASE")"
             # Delete outdated release notes, note release is still available
             if [ ! -z "PREV_PATCH" ]
             then
