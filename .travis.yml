@@ -168,11 +168,15 @@ jobs:
             PREV_MAJOR=$(git tag -l $PREV_MAJOR --sort=-v:refname | head -1)
             PREV_MINOR=$(git tag -l $PREV_MINOR --sort=-v:refname | head -1)
             PREV_PATCH=$(git tag -l $PREV_PATCH --sort=-v:refname | head -1)
+            echo "PREV_MAJOR $PREV_MAJOR"
+            echo "PREV_MINOR $PREV_MINOR"
+            echo "PREV_PATCH $PREV_PATCH"
             # Grab existing notes from previous release
             if [ ! -z "$PREV_PATCH" ]
             then
                 RELEASE=$(curl -f -u "$GEKY_BOT_RELEASES" \
                     https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/tags/$PREV_PATCH)
+                echo "RELEASE $RELEASE"
             fi
             # Find changes since last minor/major version
             if [ ! -z "${PREV_MINOR:-$PREV_MAJOR}" ]
@@ -180,6 +184,7 @@ jobs:
                 CHANGES="### Changes since ${PREV_MINOR:-$PREV_MAJOR}"$'\n\n'$(
                     git log --oneline ${PREV_MINOR:-$PREV_MAJOR}.. \
                     --grep='^Merge' --invert-grep)
+                echo "CHANGES $CHANGES"
             fi
             # Create release
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
