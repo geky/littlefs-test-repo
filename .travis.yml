@@ -171,6 +171,9 @@ jobs:
             PREV_MAJOR=$(git tag --sort=-v:refname -l \
                 "v$(($LFS_VERSION_MAJOR-1)).*.*" \
                 | head -1)
+            echo "PREV_MAJOR " $PREV_MAJOR
+            echo "PREV_MINOR " $PREV_MINOR
+            echo "PREV_PATCH " $PREV_PATCH
             # Grab existing notes from previous release
             if [ ! -z "$PREV_PATCH" ]
             then
@@ -193,7 +196,7 @@ jobs:
                     "body": ((.[0].body // "" | sub(
                         "(?<=\n)#+ Changes.*"; ""; "mi")) + "'"$CHANGES"'")
                 }' <<< "$RELEASE")
-            # Delete outdated release notes, release is still available
+            # Delete outdated release notes, note release is still available
             if [ ! -z "PREV_PATCH" ]
             then
                 curl -f -u "$GEKY_BOT_RELEASES" -X DELETE \
