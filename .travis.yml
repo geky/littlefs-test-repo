@@ -138,11 +138,12 @@ jobs:
         - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
         - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
         - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
-        # Grab latests patch from tags, default to 0
-        - LFS_VERSION_PATCH=$(git tag --sort=-v:refname -l \
-                "v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.*" \
-                | head -1 | cut -d '.' -f3)
-        - LFS_VERSION_PATCH=$((${LFS_VERSION_PATCH:--1} + 1))
+        # Grab latests patch from repo tags, default to 0
+        - LFS_VERSION_PATCH=$(curl -f -u "$GEKY_BOT_RELEASES"
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
+                | jq -r 'map(.ref | match(
+                    "refs/tags/v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\.(.*)$")
+                    .captures[].string | tonumber + 1) | max // 0')
         # We have our new version
         - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
         - echo "littlefs version $LFS_VERSION"
