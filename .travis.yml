@@ -167,14 +167,14 @@ jobs:
             if [ "$LFS_VERSION_PATCH" -eq 0 ]
             then
                 # Find changes since last major or minor version
-                PREV=$(git tag --sort=-v:refname -l
-                    "v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1))"{,.0}
-                    "v$(($LFS_VERSION_MAJOR-1))"{,.0,.0.0}
+                PREV=$(git tag --sort=-v:refname -l \
+                    "v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1))"{,.0} \
+                    "v$(($LFS_VERSION_MAJOR-1))"{,.0,.0.0} \
                     | head -1)
                 if [ ! -z "$PREV" ]
                 then
                     echo "### Previous version $PREV"
-                    CHANGES=$'### Changes\n\n'$(
+                    CHANGES=$'### Changes\n\n'$( \
                         git log --oneline $PREV.. --grep='^Merge' --invert-grep)
                     echo "$CHANGES"
                 fi
@@ -184,7 +184,7 @@ jobs:
                     -d "{
                         \"tag_name\": \"$LFS_VERSION\",
                         \"name\": \"${LFS_VERSION%.*}\",
-                        \"body\": \"$CHANGES\",
+                        \"body\": $(jq -sR '.' <<< "$CHANGES"),
                         \"draft\": true
                     }"
             fi
