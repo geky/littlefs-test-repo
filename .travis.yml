@@ -163,7 +163,7 @@ jobs:
                 echo "PREV $PREV"
                 CHANGES=$'### Changes\n\n'$( \
                     git log --oneline $PREV.. --grep='^Merge' --invert-grep)
-                printf "CHANGES\n%s\n" "$CHANGES"
+                printf "CHANGES\n%s\n\n" "$CHANGES"
             fi
             # Create the release
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
