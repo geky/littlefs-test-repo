@@ -141,11 +141,12 @@ jobs:
         - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
         - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
         # Grab latests patch from repo tags, default to 0
-        - LFS_VERSION_PATCH=$(curl -f -u "$GEKY_BOT_RELEASES"
+        - PREV_PATCH=$(curl -f -u "$GEKY_BOT_RELEASES"
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
-                | jq 'map(.ref | match(
-                    "refs/tags/v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\.(.*)$")
-                    .captures[].string | tonumber + 1) | max // 0')
+                | jq -r '.[].ref | match("(?<=refs/tags/)"+
+                    "v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\..*$")).string'
+                | sort -rV | head -1)
+        - LFS_VERSION_PATCH=$(($(cut -d '.' -f3 <<< "${PREV_PATCH:--1}") + 1))
         # We have our new version
         - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
         - echo "littlefs version $LFS_VERSION"
@@ -166,12 +167,10 @@ jobs:
             # Build release notes
             PREV_MAJOR="v$(($LFS_VERSION_MAJOR-1)).*.*"
             PREV_MAJOR=$(git tag -l $PREV_MAJOR --sort=-v:refname | head -1)
-            echo "PREV_MAJOR $PREV_MAJOR"
             PREV_MINOR="v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1)).*"
             PREV_MINOR=$(git tag -l $PREV_MINOR --sort=-v:refname | head -1)
+            echo "PREV_MAJOR $PREV_MAJOR"
             echo "PREV_MINOR $PREV_MINOR"
-            PREV_PATCH="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$(($LFS_VERSION_PATCH-1))"
-            PREV_PATCH=$(git tag -l $PREV_PATCH --sort=-v:refname | head -1)
             echo "PREV_PATCH $PREV_PATCH"
             # Grab existing notes from previous release
             if [ ! -z "$PREV_PATCH" ]
