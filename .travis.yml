@@ -141,15 +141,14 @@ jobs:
         - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
         - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
         # Grab latests patch from repo tags, default to 0
-        - PREV_PATCH=$(curl -f -u "$GEKY_BOT_RELEASES"
+        - LFS_VERSION_PATCH=$(curl -f -u "$GEKY_BOT_RELEASES"
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
-                | jq -r '.[].ref | match("(?<=refs/tags/)"+
-                    "v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\..*$")).string'
-                | sort -rV | head -1)
-        - LFS_VERSION_PATCH=$(($(cut -d '.' -f3 <<< "${PREV_PATCH:--1}") + 1))
+                | jq 'map(.ref | match(
+                    "refs/tags/v'"$LFS_VERSION_MAJOR"'\\.'"$LFS_VERSION_MINOR"'\\.(.*)$")
+                    .captures[].string | tonumber + 1) | max // 0')
         # We have our new version
         - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
-        - echo "littlefs version $LFS_VERSION"
+        - echo "### Version $LFS_VERSION"
         # Check that we're the most recent commit
         - |
           CURRENT_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES" \
@@ -161,45 +160,33 @@ jobs:
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
                 -d "{
-                  \"ref\": \"refs/tags/$LFS_VERSION\",
-                  \"sha\": \"$TRAVIS_COMMIT\"
+                    \"ref\": \"refs/tags/$LFS_VERSION\",
+                    \"sha\": \"$TRAVIS_COMMIT\"
                 }"
-            # Build release notes
-            PREV_MAJOR="v$(($LFS_VERSION_MAJOR-1)).*.*"
-            PREV_MAJOR=$(git tag -l $PREV_MAJOR --sort=-v:refname | head -1)
-            PREV_MINOR="v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1)).*"
-            PREV_MINOR=$(git tag -l $PREV_MINOR --sort=-v:refname | head -1)
-            echo "PREV_MAJOR $PREV_MAJOR"
-            echo "PREV_MINOR $PREV_MINOR"
-            echo "PREV_PATCH $PREV_PATCH"
-            # Grab existing notes from previous release
-            if [ ! -z "$PREV_PATCH" ]
+            # Build release notes if there's no previous patch
+            if [ "$LFS_VERSION_PATCH" -eq 0 ]
             then
-                RELEASE=$(curl -f -u "$GEKY_BOT_RELEASES" \
-                    https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/tags/$PREV_PATCH)
-            fi
-            # Find changes since last minor/major version
-            if [ ! -z "${PREV_MINOR:-$PREV_MAJOR}" ]
-            then
-                CHANGES="### Changes since ${PREV_MINOR:-$PREV_MAJOR}"$'\n\n'$(
-                    git log --oneline ${PREV_MINOR:-$PREV_MAJOR}.. \
-                    --grep='^Merge' --invert-grep)
-            fi
-            # Create release
-            curl -f -u "$GEKY_BOT_RELEASES" -X POST \
-                https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
-                -d "$(jq -s '{
-                    "tag_name": "'$LFS_VERSION'",
-                    "name": "'$LFS_VERSION'",
-                    "body": ((.[0].body // "" | sub(
-                        "(?<=\n)#+ Changes.*"; ""; "mi")) + "'"$CHANGES"'")
-                }' <<< "$RELEASE")"
-            # Delete outdated release notes, note release is still available
-            if [ ! -z "$PREV_PATCH" ]
-            then
-                curl -f -u "$GEKY_BOT_RELEASES" -X DELETE \
-                    https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases/$( \
-                        jq -r '.id' <<< "$RELEASE")
+                # Find changes since last major or minor version
+                PREV=$(git tag --sort=-v:refname -l
+                    "v$LFS_VERSION_MAJOR.$(($LFS_VERSION_MINOR-1))"{,.0}
+                    "v$(($LFS_VERSION_MAJOR-1))"{,.0,.0.0}
+                    | head -1)
+                if [ ! -z "$PREV" ]
+                then
+                    echo "### Previous version $PREV"
+                    CHANGES=$'### Changes\n\n'$(
+                        git log --oneline $PREV.. --grep='^Merge' --invert-grep)
+                    echo "$CHANGES"
+                fi
+                # Create the release
+                curl -f -u "$GEKY_BOT_RELEASES" -X POST \
+                    https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
+                    -d "{
+                        \"tag_name\": \"$LFS_VERSION\",
+                        \"name\": \"${LFS_VERSION%.*}\",
+                        \"body\": \"$CHANGES\",
+                        \"draft\": true
+                    }"
             fi
           fi
 
