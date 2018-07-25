@@ -149,8 +149,8 @@ jobs:
         # We have our new version
         - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
         - echo "VERSION $LFS_VERSION"
-        # Check that we're the most recent commit
         - |
+          # Check that we're the most recent commit
           CURRENT_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES" \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master \
                 | jq -re '.sha')
