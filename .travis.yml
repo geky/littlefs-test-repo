@@ -132,6 +132,7 @@ jobs:
 
       # Automatically update releases
     - stage: deploy
+      if: branch = master AND type = push
       env:
         - STAGE=deploy
         - NAME=deploy
@@ -190,7 +191,7 @@ jobs:
             fi
             # Update major version branch
             git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
-                     $TRAVIS_COMMIT:v$LFS_VERSION_MAJOR
+                     $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR
           fi
 
 # Manage statuses
@@ -231,4 +232,3 @@ after_success:
 stages:
     - name: test
     - name: deploy
-      if: branch = master AND type = push
