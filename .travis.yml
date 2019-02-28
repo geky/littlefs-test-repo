@@ -189,8 +189,7 @@ jobs:
                   }"
             fi
             # Update major version branch
-            git checkout -B v$LFS_VERSION_MAJOR
-            git push origin v$LFS_VERSION_MAJOR
+            git push origin $TRAVIS_COMMIT:v$LFS_VERSION_MAJOR
           fi
 
 # Manage statuses
