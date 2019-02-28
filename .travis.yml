@@ -166,13 +166,6 @@ jobs:
                     \"ref\": \"refs/tags/$LFS_VERSION\",
                     \"sha\": \"$TRAVIS_COMMIT\"
                 }"
-            # Update major version branch
-            curl -f -u "$GEKY_BOT_RELEASES" -X PATCH \
-                https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs/heads/v$LFS_VERSION_MAJOR \
-                -d "{
-                    \"sha\": \"$TRAVIS_COMMIT\",
-                    \"force\": true
-                }"
             # Minor release?
             if [[ "$LFS_VERSION" == *.0 ]]
             then
@@ -195,6 +188,9 @@ jobs:
                       \"body\": $(jq -sR '.' <<< "$CHANGES")
                   }"
             fi
+            # Update major version branch
+            git checkout -B v$LFS_VERSION_MAJOR
+            git push origin v$LFS_VERSION_MAJOR
           fi
 
 # Manage statuses
