@@ -189,7 +189,8 @@ jobs:
                   }"
             fi
             # Update major version branch
-            git push origin $TRAVIS_COMMIT:v$LFS_VERSION_MAJOR
+            git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
+                     $TRAVIS_COMMIT:v$LFS_VERSION_MAJOR
           fi
 
 # Manage statuses
