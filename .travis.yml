@@ -190,22 +190,22 @@ jobs:
     # Automatically create new patch tag
     - stage: deploy
       if: branch =~ ^v[0-9]+$ AND type = push
-      env:
-        - STAGE=deploy
-        - NAME=patch
-      script:
-        # Find version defined in lfs.h, do not continue if we do not match
-        - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
-        - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
-        - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
-        - test $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR
-        # Create a simple tag
-        - curl -f -u "$GEKY_BOT_RELEASES" -X POST \
-            https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
-            -d "{
-                \"ref\": \"refs/tags/$LFS_VERSION\",
-                \"sha\": \"$TRAVIS_COMMIT\"
-            }"
+#      env:
+#        - STAGE=deploy
+#        - NAME=patch
+#      script:
+#        # Find version defined in lfs.h, do not continue if we do not match
+#        - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
+#        - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
+#        - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
+#        - test $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR
+#        # Create a simple tag
+#        - curl -f -u "$GEKY_BOT_RELEASES" -X POST \
+#            https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
+#            -d "{
+#                \"ref\": \"refs/tags/$LFS_VERSION\",
+#                \"sha\": \"$TRAVIS_COMMIT\"
+#            }"
 #
 #    # Automatically create prefixed branches for major versions
 #    - stage: deploy
