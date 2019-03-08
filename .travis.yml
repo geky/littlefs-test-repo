@@ -222,9 +222,9 @@ jobs:
         - test $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR
         # Generate prefixes and push to prefix branch
         - ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
-        - git commit --author="geky bot <bot@geky.net>" \
+        - git commit --author="geky bot <bot@geky.net>"
                 -m "Automatically generated v$LFS_VERSION_MAJOR prefixes"
-        - git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
+        - git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git
                  $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR-prefix --force
 
 # Manage statuses
