@@ -163,6 +163,23 @@ jobs:
             # Update major version branch
             git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
                     $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR --force
+            # Update prefixed branch for major version
+            git merge v$LFS_VERSION_MAJOR-prefix -s ours --no-ff --no-commit \
+                || true
+            ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
+            git checkout -B v$LFS_VERSION_MAJOR-prefix
+            git commit --author="geky bot <bot@geky.net>" \
+                -m "Generated v$LFS_VERSION_MAJOR prefixes"
+            git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
+                 v$LFS_VERSION_MAJOR-prefix --force
+            git checkout $TRAVIS_BRANCH
+            # Create a patch version tag
+            curl -f -u "$GEKY_BOT_RELEASES" -X POST \
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
+                -d "{
+                    \"ref\": \"refs/tags/$LFS_VERSION\",
+                    \"sha\": \"$TRAVIS_COMMIT\"
+                }"
             # Minor release?
             if [[ "$LFS_VERSION" == *.0 ]]
             then
@@ -186,46 +203,6 @@ jobs:
                   }"
             fi
           fi
-
-    # Automatically create new patch tag
-    - stage: deploy
-      if: branch =~ ^v[0-9]+$ AND type = push
-      env:
-        - STAGE=deploy
-        - NAME=patch
-      script:
-        # Find version defined in lfs.h, do not continue if we do not match
-        - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
-        - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
-        - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
-        - test $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR
-        # Create a simple tag
-        - |
-          curl -f -u "$GEKY_BOT_RELEASES" -X POST \
-            https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
-            -d "{
-                \"ref\": \"refs/tags/$LFS_VERSION\",
-                \"sha\": \"$TRAVIS_COMMIT\"
-            }"
-
-    # Automatically create prefixed branches for major versions
-    - stage: deploy
-      if: branch =~ ^v[0-9]+$ AND type = push
-      env:
-        - STAGE=deploy
-        - NAME=prefix
-      script:
-        # Find version defined in lfs.h, do not continue if we do not match
-        - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
-        - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
-        - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
-        - test $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR
-        # Generate prefixes and push to prefix branch
-        - ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
-        - git commit --author="geky bot <bot@geky.net>"
-                -m "Automatically generated v$LFS_VERSION_MAJOR prefixes"
-        - git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git
-                 $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR-prefix --force
 
 # Manage statuses
 before_install:
