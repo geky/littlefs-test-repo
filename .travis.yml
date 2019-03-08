@@ -198,7 +198,7 @@ jobs:
         - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
         - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
         - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
-        - [[ $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR ]]
+        - [ $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR ]
         # Create a simple tag
         - curl -f -u "$GEKY_BOT_RELEASES" -X POST \
             https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
@@ -218,7 +218,7 @@ jobs:
         - LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
         - LFS_VERSION_MAJOR=$((0xffff & ($LFS_VERSION >> 16)))
         - LFS_VERSION_MINOR=$((0xffff & ($LFS_VERSION >>  0)))
-        - [[ $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR ]]
+        - [ $TRAVIS_BRANCH == v$LFS_VERSION_MAJOR ]
         # Generate prefixes and push to prefix branch
         - ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
         - git commit --author="geky bot <bot@geky.net>" \
