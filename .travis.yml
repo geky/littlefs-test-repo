@@ -169,7 +169,7 @@ jobs:
             then
                 git checkout FETCH_HEAD
                 git merge $TRAVIS_BRANCH -s ours --no-ff --no-commit
-                git checkout $TRAVIS_BRANCH .
+                git checkout $TRAVIS_BRANCH -- .
             fi
             git checkout -B v$LFS_VERSION_MAJOR-prefix
             ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
