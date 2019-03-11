@@ -167,12 +167,11 @@ jobs:
             if git fetch https://github.com/$TRAVIS_REPO_SLUG.git \
                 --depth=50 v$LFS_VERSION_MAJOR-prefix
             then
-                git checkout v$LFS_VERSION_MAJOR-prefix
+                git checkout FETCH_HEAD
                 git merge $TRAVIS_BRANCH -s ours --no-ff --no-commit
                 git checkout $TRAVIS_BRANCH .
-            else
-                git checkout -B v$LFS_VERSION_MAJOR-prefix
             fi
+            git checkout -B v$LFS_VERSION_MAJOR-prefix
             ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
             git config user.name "geky bot"
             git config user.email "bot@geky.net"
