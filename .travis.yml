@@ -161,22 +161,20 @@ jobs:
           if [ "$TRAVIS_COMMIT" == "$CURRENT_COMMIT" ]
           then
             # Update major version branch
-            git push origin $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR --force
+            git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
+                $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR --force
             # Update prefixed branch for major version
-            git fetch origin v$LFS_VERSION_MAJOR-prefix
-            echo "--- a ---"
-            git branch
-            echo "--- b ---"
-            git branch -a 
-            echo "--- c ---"
-            git checkout -B v$LFS_VERSION_MAJOR-prefix
-            git merge origin/v$LFS_VERSION_MAJOR-prefix -s ours --no-ff \
-                --no-commit || true
             ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
+            git fetch https://github.com/$TRAVIS_REPO_SLUG.git \
+                --depth=50 v$LFS_VERSION_MAJOR-prefix
+            git merge v$LFS_VERSION_MAJOR-prefix -s ours --no-ff \
+                --no-commit || true
+            git checkout -B v$LFS_VERSION_MAJOR-prefix
             git config user.name "geky bot"
             git config user.email "bot@geky.net"
             git commit -m "Generated v$LFS_VERSION_MAJOR prefixes"
-            git push origin v$LFS_VERSION_MAJOR-prefix --force
+            git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
+                v$LFS_VERSION_MAJOR-prefix --force
             git checkout $TRAVIS_BRANCH
             # Create a patch version tag
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
