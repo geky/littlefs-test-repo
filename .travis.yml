@@ -168,7 +168,7 @@ jobs:
             if git fetch https://github.com/$TRAVIS_REPO_SLUG.git \
                 --depth=50 v$LFS_VERSION_MAJOR-prefix
             then
-                git merge FETCH_HEAD -s ours --no-ff --no-commit
+                git merge FETCH_HEAD master -s ours --no-ff --no-commit
             fi
             ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
             git config user.name "geky bot"
