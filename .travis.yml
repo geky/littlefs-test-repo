@@ -164,11 +164,14 @@ jobs:
             git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
                 $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR --force
             # Update prefixed branch for major version
-            git checkout -B v$LFS_VERSION_MAJOR-prefix
             if git fetch https://github.com/$TRAVIS_REPO_SLUG.git \
                 --depth=50 v$LFS_VERSION_MAJOR-prefix
             then
-                git merge FETCH_HEAD master -s ours --no-ff --no-commit
+                git checkout v$LFS_VERSION_MAJOR-prefix
+                git merge $TRAVIS_BRANCH -s ours --no-ff --no-commit
+                git checkout $TRAVIS_BRANCH .
+            else
+                git checkout -B v$LFS_VERSION_MAJOR-prefix
             fi
             ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
             git config user.name "geky bot"
