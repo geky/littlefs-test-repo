@@ -163,7 +163,7 @@ jobs:
             # Update major version branch
             git push origin $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR --force
             # Update prefixed branch for major version
-            git fetch
+            git fetch origin v$LFS_VERSION_MAJOR-prefix
             echo "--- a ---"
             git branch
             echo "--- b ---"
