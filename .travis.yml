@@ -157,7 +157,7 @@ jobs:
         - CURRENT_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES"
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master
                 | jq -re '.sha')
-        - [ "$TRAVIS_COMMIT" != "$CURRENT_COMMIT" ] && travis_terminate 0
+        - [[ "$TRAVIS_COMMIT" != "$CURRENT_COMMIT" ]] && travis_terminate 0
 #        # Create prefix branch
 #        - git config user.name "geky bot"
 #        - git config user.email "bot@geky.net"
