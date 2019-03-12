@@ -170,13 +170,16 @@ jobs:
                 git checkout FETCH_HEAD
                 git merge $TRAVIS_BRANCH -s ours --no-ff --no-commit
             fi
-            git checkout -B v$LFS_VERSION_MAJOR-prefix
+            git checkout -B temp
             git config user.name "geky bot"
             git config user.email "bot@geky.net"
             git commit --allow-empty -m "Generated v$LFS_VERSION_MAJOR prefixes"
-            git checkout $TRAVIS_BRANCH
+            git checkout $TRAVIS_BRANCH -B v$LFS_VERSION_MAJOR-prefix
             ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
-            git reset --soft v$LFS_VERSION_MAJOR-prefix
+            git reflog -n 10
+            git log -n 1
+            git reset --soft temp
+            git log -n 1
             git commit --amend --no-edit
             git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
                 v$LFS_VERSION_MAJOR-prefix --force
