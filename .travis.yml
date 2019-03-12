@@ -167,10 +167,10 @@ jobs:
             if git fetch https://github.com/$TRAVIS_REPO_SLUG.git \
                 --depth=50 v$LFS_VERSION_MAJOR-prefix
             then
-                git checkout FETCH_HEAD
+                git checkout FETCH_HEAD -B v$LFS_VERSION_MAJOR-prefix
                 git merge $TRAVIS_BRANCH -s ours --no-ff --no-commit
             fi
-            git checkout -B v$LFS_VERSION_MAJOR-prefix
+            #git checkout -B v$LFS_VERSION_MAJOR-prefix
             git config user.name "geky bot"
             git config user.email "bot@geky.net"
             git commit --allow-empty -m "Generated v$LFS_VERSION_MAJOR prefixes"
