@@ -153,66 +153,56 @@ jobs:
         # We have our new version
         - LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
         - echo "VERSION $LFS_VERSION"
-        - |
-          # Check that we're the most recent commit
-          CURRENT_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES" \
-                https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master \
+        # Check that we're the most recent commit
+        - CURRENT_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES"
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master
                 | jq -re '.sha')
-          if [ "$TRAVIS_COMMIT" == "$CURRENT_COMMIT" ]
+        - [ "$TRAVIS_COMMIT" != "$CURRENT_COMMIT" ] && travis_terminate 0
+        # Create prefix branch
+        - git config user.name "geky bot"
+        - git config user.email "bot@geky.net"
+        - git fetch https://github.com/$TRAVIS_REPO_SLUG.git
+              --depth=50 v$LFS_VERSION_MAJOR-prefix || true
+        - ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
+        - git branch v$LFS_VERSION_MAJOR-prefix $(
+              git commit-tree $(git write-tree)
+                  $(git rev-parse --verify -q FETCH_HEAD | sed -e 's/^/-p /')
+                  -p HEAD
+                  -m "Generated v$LFS_VERSION_MAJOR prefixes")
+        - git reset --hard
+        # Update major version branches (vN and vN-prefix)
+        - git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git
+              HEAD:v$LFS_VERSION_MAJOR
+              v$LFS_VERSION_MAJOR-prefix
+        # Create patch version tag (vN.N.N)
+        - curl -f -u "$GEKY_BOT_RELEASES" -X POST
+              https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
+              -d "{
+                  \"ref\": \"refs/tags/$LFS_VERSION\",
+                  \"sha\": \"$TRAVIS_COMMIT\"
+              }"
+        # Create minor release?
+        - |
+          if [[ "$LFS_VERSION" == *.0 ]]
           then
-            # Update major version branch
-            git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
-                $TRAVIS_BRANCH:v$LFS_VERSION_MAJOR --force
-            # Update prefixed branch for major version
-            if git fetch https://github.com/$TRAVIS_REPO_SLUG.git \
-                --depth=50 v$LFS_VERSION_MAJOR-prefix
+            # Build release notes
+            PREV=$(git tag --sort=-v:refname -l "v*.0" | head -1)
+            if [ ! -z "$PREV" ]
             then
-                git checkout FETCH_HEAD
-                git merge $TRAVIS_BRANCH -s ours --no-ff --no-commit
+                echo "PREV $PREV"
+                CHANGES=$'### Changes\n\n'$( \
+                    git log --oneline $PREV.. --grep='^Merge' --invert-grep)
+                printf "CHANGES\n%s\n\n" "$CHANGES"
             fi
-            git checkout -B temp
-            git config user.name "geky bot"
-            git config user.email "bot@geky.net"
-            git commit --allow-empty -m "Generated v$LFS_VERSION_MAJOR prefixes"
-            git checkout $TRAVIS_BRANCH -B v$LFS_VERSION_MAJOR-prefix
-            ./scripts/prefix.py lfs$LFS_VERSION_MAJOR
-            git reflog -n 10
-            git log -n 1
-            git reset --soft temp
-            git log -n 1
-            git commit --amend --no-edit
-            git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
-                v$LFS_VERSION_MAJOR-prefix --force
-            git checkout $TRAVIS_BRANCH
-            # Create a patch version tag
+            # Create the release
             curl -f -u "$GEKY_BOT_RELEASES" -X POST \
-                https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
                 -d "{
-                    \"ref\": \"refs/tags/$LFS_VERSION\",
-                    \"sha\": \"$TRAVIS_COMMIT\"
+                    \"tag_name\": \"$LFS_VERSION\",
+                    \"name\": \"${LFS_VERSION%.0}\",
+                    \"draft\": true,
+                    \"body\": $(jq -sR '.' <<< "$CHANGES")
                 }"
-            # Minor release?
-            if [[ "$LFS_VERSION" == *.0 ]]
-            then
-              # Build release notes
-              PREV=$(git tag --sort=-v:refname -l "v*.0" | head -1)
-              if [ ! -z "$PREV" ]
-              then
-                  echo "PREV $PREV"
-                  CHANGES=$'### Changes\n\n'$( \
-                      git log --oneline $PREV.. --grep='^Merge' --invert-grep)
-                  printf "CHANGES\n%s\n\n" "$CHANGES"
-              fi
-              # Create the release
-              curl -f -u "$GEKY_BOT_RELEASES" -X POST \
-                  https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
-                  -d "{
-                      \"tag_name\": \"$LFS_VERSION\",
-                      \"name\": \"${LFS_VERSION%.0}\",
-                      \"draft\": true,
-                      \"body\": $(jq -sR '.' <<< "$CHANGES")
-                  }"
-            fi
           fi
 
 # Manage statuses
