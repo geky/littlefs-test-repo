@@ -170,17 +170,17 @@ jobs:
                   -p HEAD
                   -m "Generated v$LFS_VERSION_MAJOR prefixes")
         - git reset --hard
-#        # Update major version branches (vN and vN-prefix)
-#        - git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git
-#              HEAD:v$LFS_VERSION_MAJOR
-#              v$LFS_VERSION_MAJOR-prefix
-#        # Create patch version tag (vN.N.N)
-#        - curl -f -u "$GEKY_BOT_RELEASES" -X POST
-#              https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
-#              -d "{
-#                  \"ref\": \"refs/tags/$LFS_VERSION\",
-#                  \"sha\": \"$TRAVIS_COMMIT\"
-#              }"
+        # Update major version branches (vN and vN-prefix)
+        - git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git
+              HEAD:v$LFS_VERSION_MAJOR
+              v$LFS_VERSION_MAJOR-prefix
+        # Create patch version tag (vN.N.N)
+        - curl -f -u "$GEKY_BOT_RELEASES" -X POST
+              https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs
+              -d "{
+                  \"ref\": \"refs/tags/$LFS_VERSION\",
+                  \"sha\": \"$TRAVIS_COMMIT\"
+              }"
 #        # Create minor release?
 #        - test "$LFS_VERSION" != *.0 && travis_terminate 0
 #        # Build release notes
