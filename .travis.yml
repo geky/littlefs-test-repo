@@ -222,7 +222,7 @@ before_install:
                 }"
             travis_terminate 0
         }
-  SCRIPT
+    SCRIPT
   
   - |
     curl -u $GEKY_BOT_STATUSES -X POST \
