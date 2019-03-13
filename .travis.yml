@@ -138,7 +138,7 @@ jobs:
         - NAME=deploy
       script:
         - |
-          source /dev/stdin << 'SCRIPT'
+          bash /dev/stdin << 'SCRIPT'
             set -ev
             # Find version defined in lfs.h
             LFS_VERSION=$(grep -ox '#define LFS_VERSION .*' lfs.h | cut -d ' ' -f3)
