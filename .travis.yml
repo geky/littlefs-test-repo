@@ -162,7 +162,9 @@ jobs:
               https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master \
               | jq -re '.sha')
           [ "$TRAVIS_COMMIT" == "$CURRENT_COMMIT" ] || exit 0
-          # Create prefix branch
+          # Create major branch
+          git branch v$LFS_VERSION_MAJOR HEAD
+          # Create major prefix branch
           git config user.name "geky bot"
           git config user.email "bot@geky.net"
           git fetch https://github.com/$TRAVIS_REPO_SLUG.git \
@@ -176,7 +178,7 @@ jobs:
           git reset --hard
           # Update major version branches (vN and vN-prefix)
           git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
-              HEAD:refs/heads/v$LFS_VERSION_MAJOR \
+              v$LFS_VERSION_MAJOR \
               v$LFS_VERSION_MAJOR-prefix
           # Create patch version tag (vN.N.N)
           curl -f -u "$GEKY_BOT_RELEASES" -X POST \
