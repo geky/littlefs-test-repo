@@ -152,7 +152,7 @@ jobs:
                 || echo $PREV_URL)
             LFS_VERSION_PATCH=$(curl -u "$GEKY_BOT_RELEASES" "$PREV_URL" \
                 | jq 'map(.ref | match("\\bv.*\\..*\\.(.*)$";"g")
-                    .captures[].string | tonumber) | max + 1'
+                    .captures[].string | tonumber) | max + 1' \
                 || echo 0)
             # We have our new version
             LFS_VERSION="v$LFS_VERSION_MAJOR.$LFS_VERSION_MINOR.$LFS_VERSION_PATCH"
