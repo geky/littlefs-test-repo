@@ -207,8 +207,8 @@ jobs:
 
 # Manage statuses
 before_install:
-  - |+
-    source /dev/stdin << SCRIPT
+  - |
+    source /dev/stdin <<< '
         succeed() {
             curl -u $GEKY_BOT_STATUSES -X POST \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
@@ -220,7 +220,7 @@ before_install:
                 }"
             travis_terminate 0
         }
-    SCRIPT
+    '
   - |
     curl -u $GEKY_BOT_STATUSES -X POST \
         https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
