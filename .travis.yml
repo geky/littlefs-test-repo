@@ -207,7 +207,7 @@ jobs:
 
 # Manage statuses
 before_install:
-  - |
+  - |+
     source /dev/stdin << SCRIPT
         succeed() {
             curl -u $GEKY_BOT_STATUSES -X POST \
