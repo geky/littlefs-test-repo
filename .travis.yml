@@ -205,7 +205,7 @@ jobs:
                     \"draft\": true,
                     \"body\": $(jq -sR '.' <<< "$CHANGES")
                 }" #"
-          SOURCE
+          SCRIPT
 
 # Manage statuses
 before_install:
