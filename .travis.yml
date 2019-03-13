@@ -216,6 +216,10 @@ jobs:
 before_install:
   - |
     source /dev/stdin << SCRIPT
+        echo "Hi Derek!"
+    SCRIPT
+  - |
+    source /dev/stdin << SCRIPT
         succeed() {
             curl -u $GEKY_BOT_STATUSES -X POST \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
