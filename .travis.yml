@@ -214,34 +214,34 @@ jobs:
 
 # Manage statuses
 before_install:
-        - |
-          source /dev/stdin << HI
-              echo "Hi Derek!"
-          HI
-        - |
-          source /dev/stdin << SCRIPT
-              succeed() {
-                  curl -u $GEKY_BOT_STATUSES -X POST \
-                      https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
-                      -d "{
-                          \"context\": \"$STAGE/$NAME\",
-                          \"state\": \"success\",
-                          \"description\": \"${STATUS:-Passed}\",
-                          \"target_url\": \"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"
-                      }"
-                  travis_terminate 0
-              }
-          SCRIPT
-      #
-        - |
-          curl -u $GEKY_BOT_STATUSES -X POST \
-              https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
-              -d "{
-                  \"context\": \"$STAGE/$NAME\",
-                  \"state\": \"pending\",
-                  \"description\": \"${STATUS:-In progress}\",
-                  \"target_url\": \"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"
-              }"
+  - |
+    source /dev/stdin <<- HI
+        echo "Hi Derek!"
+    HI
+  - |
+    source /dev/stdin <<- SCRIPT
+        succeed() {
+            curl -u $GEKY_BOT_STATUSES -X POST \
+                https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
+                -d "{
+                    \"context\": \"$STAGE/$NAME\",
+                    \"state\": \"success\",
+                    \"description\": \"${STATUS:-Passed}\",
+                    \"target_url\": \"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"
+                }"
+            travis_terminate 0
+        }
+    SCRIPT
+  
+  - |
+    curl -u $GEKY_BOT_STATUSES -X POST \
+        https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
+        -d "{
+            \"context\": \"$STAGE/$NAME\",
+            \"state\": \"pending\",
+            \"description\": \"${STATUS:-In progress}\",
+            \"target_url\": \"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"
+        }"
 
 after_failure:
   - |
