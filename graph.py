@@ -22,13 +22,13 @@ def getresults(path):
             for line in f), np.uint64)
         v.shape = v.shape[0]//6,6
 
-    v.shape = 11,9,6
+    v.shape = 13,11,6
     return v
 
 def plotall(vs, n, name):
     Xs = [np.log2(v[:,:,0]) for v in vs]
     Ys = [np.log2(v[:,:,1]) for v in vs]
-    Zs = [v[:,:,n+2] for v in vs]
+    Zs = [np.log2(v[:,:,n+2]) for v in vs]
 
     ax = fig.add_subplot(gs[0,n], projection='3d')
     ax.set_title(name, y=1.06)
@@ -37,16 +37,16 @@ def plotall(vs, n, name):
         ax.plot_surface(X, Y, Z, color='C%d'%i, alpha=0.25)
         ax.plot_wireframe(X, Y, Z, color='C%d'%i)
 
-    #ax.view_init(None, 340)
+    ax.view_init(None, 345)
 
     ax.set_xlabel('file count')
-    ax.set_xlim(0, 10)
+    ax.set_xlim(0, 12)
     ax.set_ylabel('file size')
-    ax.set_ylim(2, 10)
+    ax.set_ylim(2, 12)
     #ax.set_zlabel('multiplicative cost')
     ax.set_zlim(0, None)
-    ax.set_xticklabels(['$2^{%d}$' % i for i in range(0,12,2)])
-    ax.set_yticklabels(['$2^{%d}$' % i for i in range(2,12,2)])
+    ax.set_xticklabels(['$2^{%d}$' % i for i in range(0,14,2)])
+    ax.set_yticklabels(['$2^{%d}$' % i for i in range(2,14,2)])
 
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
@@ -62,10 +62,10 @@ def plotall(vs, n, name):
 
 
     #ax.set_xlabel('file count')
-    ax.set_xlim(0, 10)
+    ax.set_xlim(0, 12)
     #ax.set_ylabel('multiplicative cost')
     ax.set_ylim(0, None)
-    ax.set_xticklabels(['$2^{%d}$' % i for i in range(0,12,2)])
+    ax.set_xticklabels(['$2^{%d}$' % i for i in range(0,14,2)])
 
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
@@ -81,10 +81,10 @@ def plotall(vs, n, name):
         ax.plot(Y[0,:], np.mean(Z, axis=0), color='C%d'%i)
 
     #ax.set_xlabel('file size')
-    ax.set_xlim(2, 10)
+    ax.set_xlim(2, 12)
     #ax.set_ylabel('multiplicative cost')
     ax.set_ylim(0, None)
-    ax.set_xticklabels(['$2^{%d}$' % i for i in range(2,12,2)])
+    ax.set_xticklabels(['$2^{%d}$' % i for i in range(2,14,2)])
 
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)

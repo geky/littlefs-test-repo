@@ -4,9 +4,9 @@ set -e
 rm -f v1.results
 rm -f v2.results
 
-for i in {0..10}
+for i in {0..12}
 do
-for j in {2..10}
+for j in {2..12}
 do
     COUNT=$((2**i))
     SIZE=$((2**j))
