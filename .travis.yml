@@ -272,7 +272,7 @@ jobs:
               -d "{
                   \"tag_name\": \"$LFS_VERSION\",
                   \"name\": \"${LFS_VERSION%.0}\",
-                  \"draft\": $(jq -sR 'endswith(".0")' <<< "$LFS_VERSION"),
+                  \"draft\": $(jq -R 'endswith(".0")' <<< "$LFS_VERSION"),
                   \"body\": $(jq -sR '.' <<< "$CHANGES")
               }" #"
           SCRIPT
