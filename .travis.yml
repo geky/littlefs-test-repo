@@ -248,7 +248,7 @@ jobs:
                   -m "Generated v$LFS_VERSION_MAJOR prefixes")
           git reset --hard
           # Update major version branches (vN and vN-prefix)
-          git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
+          git push --atomic https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
               v$LFS_VERSION_MAJOR \
               v$LFS_VERSION_MAJOR-prefix
           # Create patch version tag (vN.N.N)
