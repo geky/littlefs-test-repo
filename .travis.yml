@@ -251,13 +251,6 @@ jobs:
           git push --atomic https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
               v$LFS_VERSION_MAJOR \
               v$LFS_VERSION_MAJOR-prefix
-          # Create patch version tag (vN.N.N)
-          curl -f -u "$GEKY_BOT_RELEASES" -X POST \
-              https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
-              -d "{
-                  \"ref\": \"refs/tags/$LFS_VERSION\",
-                  \"sha\": \"$TRAVIS_COMMIT\"
-              }"
           # Build release notes
           PREV=$(git tag --sort=-v:refname -l "v*" | head -1)
           if [ ! -z "$PREV" ]
@@ -266,12 +259,13 @@ jobs:
               CHANGES=$(git log --oneline $PREV.. --grep='^Merge' --invert-grep)
               printf "CHANGES\n%s\n\n" "$CHANGES"
           fi
-          # Create the release
+          # Create the release and patch version tag (vN.N.N)
           curl -f -u "$GEKY_BOT_RELEASES" -X POST \
               https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
               -d "{
                   \"tag_name\": \"$LFS_VERSION\",
                   \"name\": \"${LFS_VERSION%.0}\",
+                  \"target_commitish\": \"$TRAVIS_COMMIT\",
                   \"draft\": $(jq -R 'endswith(".0")' <<< "$LFS_VERSION"),
                   \"body\": $(jq -sR '.' <<< "$CHANGES")
               }" #"
