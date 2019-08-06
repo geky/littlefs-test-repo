@@ -259,6 +259,11 @@ jobs:
               CHANGES=$(git log --oneline $PREV.. --grep='^Merge' --invert-grep)
               printf "CHANGES\n%s\n\n" "$CHANGES"
           fi
+          case ${GEKY_BOT_DRAFT:-minor} in
+              true)  DRAFT=true ;;
+              minor) DRAFT=$(jq -R 'endswith(".0")' <<< "$LFS_VERSION") ;;
+              false) DRAFT=false ;;
+          esac
           # Create the release and patch version tag (vN.N.N)
           curl -f -u "$GEKY_BOT_RELEASES" -X POST \
               https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
@@ -266,7 +271,7 @@ jobs:
                   \"tag_name\": \"$LFS_VERSION\",
                   \"name\": \"${LFS_VERSION%.0}\",
                   \"target_commitish\": \"$TRAVIS_COMMIT\",
-                  \"draft\": $(jq -R 'endswith(".0")' <<< "$LFS_VERSION"),
+                  \"draft\": $DRAFT,
                   \"body\": $(jq -sR '.' <<< "$CHANGES")
               }" #"
           SCRIPT
