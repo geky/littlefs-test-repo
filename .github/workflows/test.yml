@@ -103,7 +103,7 @@ jobs:
       - name: results
         run: |
           mkdir statuses
-          echo "hi" > statuses/hi.txt
+          echo "hi" > statuses/hi-${{matrix.arch}}.txt
       - name: results-status
         uses: actions/upload-artifact@v2
         with:
