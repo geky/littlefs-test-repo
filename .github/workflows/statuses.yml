@@ -1,5 +1,8 @@
 name: statuses
-on: [status]
+on:
+  workflow_run:
+    workflows: test
+    types: completed
 
 jobs:
   statuses:
