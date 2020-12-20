@@ -23,7 +23,7 @@ jobs:
           sudo pip3 install toml
       # cross-compile with ARM Thumb (32-bit, little-endian)
       - name: install-thumb
-        if: matrix.arch == thumb
+        if: matrix.arch == 'thumb'
         run: |
           sudo apt-get install \
             gcc-arm-linux-gnueabi \
@@ -35,7 +35,7 @@ jobs:
           qemu-arm -version
       # cross-compile with MIPS (32-bit, big-endian)
       - name: install-mips
-        if: matrix.arch == mips
+        if: matrix.arch == 'mips'
         run: |
           sudo apt-get install \
             gcc-mips-linux-gnu \
@@ -47,7 +47,7 @@ jobs:
           qemu-mips -version
       # cross-compile with PowerPC (32-bit, big-endian)
       - name: install-powerpc
-        if: matrix.arch == powerpc
+        if: matrix.arch == 'powerpc'
         run: |
           sudo apt-get install \
             gcc-powerpc-linux-gnu \
