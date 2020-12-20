@@ -15,7 +15,7 @@ jobs:
       - id: status
         run: |
           echo "::set-output name=description::$(cat statuses/x86_64.txt | tr '\n' ' ')"
-      - uses: octokit/request-action@v2
+      - uses: octokit/request-action@v2.x
         with:
           route: POST /repos/{repo}/status/{sha}
           repo: ${{github.repository}}
