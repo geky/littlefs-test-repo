@@ -55,7 +55,7 @@ jobs:
             qemu-user
           echo "CC=powerpc-linux-gnu-gcc --static" >> $GITHUB_ENV
           echo "EXEC=qemu-ppc" >> $GITHUB_ENV
-          mips-linux-gnu-gcc --version
+          powerpc-linux-gnu-gcc --version
           qemu-ppc -version
       # test configurations
       # make sure example can at least compile
