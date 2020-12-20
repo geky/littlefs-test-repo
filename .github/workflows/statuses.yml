@@ -12,16 +12,18 @@ jobs:
           name: statuses
           path: statuses
           commit: ${{github.event.status.sha}}
+      - name: status-test
+        run: cat statuses/x86_64.txt
       - id: status
         run: |
           echo "::set-output name=description::$(cat statuses/x86_64.txt | tr '\n' ' ')"
-      - uses: octokit/request-action@v2.x
-        with:
-          route: POST /repos/{repo}/status/{sha}
-          repo: ${{github.repository}}
-          sha: ${{github.event.status.sha}}
-          context: ${{github.event.status.context}}
-          state: ${{github.event.status.state}}
-          description: ${{steps.status.outputs.description}}
-          target_url: ${{github.event.status.target_url}}
-    
+#      - uses: octokit/request-action@v2.x
+#        with:
+#          route: POST /repos/{repo}/status/{sha}
+#          repo: ${{github.repository}}
+#          sha: ${{github.event.status.sha}}
+#          context: ${{github.event.status.context}}
+#          state: ${{github.event.status.state}}
+#          description: ${{steps.status.outputs.description}}
+#          target_url: ${{github.event.status.target_url}}
+#    
