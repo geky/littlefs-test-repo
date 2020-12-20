@@ -99,4 +99,15 @@ jobs:
       - name: test-odd-block-size
         run: ./scripts/test.py -nrk --exec=$EXEC
           -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
+      # update results
+      - name: results
+        run: |
+          mkdir statuses
+          echo "hi" > statuses/hi.txt
+      - name: results-status
+        uses: actions/upload-artifact@v2
+        with:
+          name: statuses
+          path: statuses
+          retention-days: 1
 
