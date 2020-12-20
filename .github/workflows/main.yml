@@ -27,11 +27,11 @@ jobs:
       - name: test-example
         run: |
           sed -n '/``` c/,/```/{/```/d; p}' README.md > test.c && \
-          make all CFLAGS+="
-              -Duser_provided_block_device_read=NULL
-              -Duser_provided_block_device_prog=NULL
-              -Duser_provided_block_device_erase=NULL
-              -Duser_provided_block_device_sync=NULL
+          make all CFLAGS+=" \
+              -Duser_provided_block_device_read=NULL \
+              -Duser_provided_block_device_prog=NULL \
+              -Duser_provided_block_device_erase=NULL \
+              -Duser_provided_block_device_sync=NULL \
               -include stdio.h"
       # normal+reentrant tests
       - name: test-default
