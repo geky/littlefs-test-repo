@@ -18,17 +18,17 @@ jobs:
             exec:
           - packages: gcc-arm-linux-gnueabi libc6-dev-armel-cross qemu-user
             cc: arm-linux-gnueabi-gcc --static -mthumb
-            exec: qemu-arm
+            exec: --exec=qemu-arm
           - packages: gcc-mips-linux-gnu gcc-mips-linux-gnu qemu-user
             cc: mips-linux-gnu-gcc --static
-            exec: qemu-mips
+            exec: --exec=qemu-mips
           - packages: gcc-powerpc-linux-gnu libc6-dev-powerpc-cross qemu-user
             cc: powerpc-linux-gnu-gcc --static
-            exec: qemu-ppc
+            exec: --exec=qemu-ppc
 
     env:
       CC: ${{matrix.cc}}
-      EXEC: --exec=${{matrix.exec}}
+      EXEC: ${{matrix.exec}}
 
     steps:
       - uses: actions/checkout@v2
