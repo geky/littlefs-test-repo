@@ -6,16 +6,34 @@ env:
   MAKEFLAGS: -j
 
 jobs:
-  test:
+  install:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
           sudo apt-get install python3 python3-pip
           sudo pip3 install toml
+      
+
+    
+
+  test:
+    needs: install
+    runs-on: ubuntu-latest
+
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        arch: [x86, arm, mips, powerpc]
+
+    steps:
+      - uses: actions/checkout@v2
+#      - name: install
+#        run: |
+#          # need toml, also pip3 isn't installed by default?
+#          sudo apt-get install python3 python3-pip
+#          sudo pip3 install toml
       # test configurations
       # make sure example can at least compile
       - name: test-example
