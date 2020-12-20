@@ -15,20 +15,20 @@ jobs:
         include:
           - packages:
             cc:
-            exec:
+            exec: bash -c
           - packages: gcc-arm-linux-gnueabi libc6-dev-armel-cross qemu-user
             cc: arm-linux-gnueabi-gcc --static -mthumb
-            exec: --exec=qemu-arm
+            exec: qemu-arm
           - packages: gcc-mips-linux-gnu gcc-mips-linux-gnu qemu-user
             cc: mips-linux-gnu-gcc --static
-            exec: --exec=qemu-mips
+            exec: qemu-mips
           - packages: gcc-powerpc-linux-gnu libc6-dev-powerpc-cross qemu-user
             cc: powerpc-linux-gnu-gcc --static
-            exec: --exec=qemu-ppc
+            exec: qemu-ppc
 
     env:
       CC: ${{matrix.cc}}
-      EXEC: ${{matrix.exec}}
+      EXEC: --exec=${{matrix.exec}}
 
     steps:
       - uses: actions/checkout@v2
