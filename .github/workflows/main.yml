@@ -14,7 +14,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - ~
+          - packages:
+            cc:
+            exec:
           - packages: gcc-arm-linux-gnueabi libc6-dev-armel-cross qemu-user
             cc: arm-linux-gnueabi-gcc --static -mthumb
             exec: qemu-arm
