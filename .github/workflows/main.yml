@@ -15,7 +15,7 @@ jobs:
         include:
           - packages:
             cc:
-            exec: bash -c
+            exec:
           - packages: gcc-arm-linux-gnueabi libc6-dev-armel-cross qemu-user
             cc: arm-linux-gnueabi-gcc --static -mthumb
             exec: qemu-arm
@@ -28,7 +28,7 @@ jobs:
 
     env:
       CC: ${{matrix.cc}}
-      EXEC: \"--exec=${{matrix.exec}}\"
+      EXEC: --exec=${{matrix.exec}}
 
     steps:
       - uses: actions/checkout@v2

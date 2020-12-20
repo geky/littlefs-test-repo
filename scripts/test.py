@@ -771,7 +771,7 @@ if __name__ == "__main__":
         help="Run reentrant tests with simulated power-loss.")
     parser.add_argument('-V', '--valgrind', action='store_true',
         help="Run non-leaky tests under valgrind to check for memory leaks.")
-    parser.add_argument('-e', '--exec', default=[], type=lambda e: e.split(' '),
+    parser.add_argument('-e', '--exec', default=[], type=lambda e: e.split(),
         help="Run tests with another executable prefixed on the command line.")
     parser.add_argument('-d', '--disk',
         help="Specify a file to use for persistent/reentrant tests.")
