@@ -102,6 +102,7 @@ jobs:
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
 
       # update results
+      - run: echo ${{job.id}}
       - name: results-codesize
         run: |
           make code_size \
@@ -111,12 +112,12 @@ jobs:
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR" \
-            SFLAGS+="-qo codesize.csv"
+            SFLAGS+="-o codesize.csv"
 
           export CONTEXT="results / codesize (${{matrix.arch}})"
           export DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
           export TARGET_URL="https://github.com/${{github.repository}}/\
-          actions/runs/${{github.run_id}}"
+          runs/${{github.run_id}}"
           jq -nc '{
             state: "success",
             context: env.CONTEXT,
