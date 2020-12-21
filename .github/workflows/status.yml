@@ -36,20 +36,10 @@ jobs:
             export DESCRIPTION="$(jq -er '.description' $s)"
             # help lookup URL for job/steps because GitHub makes
             # it VERY HARD to link to specific jobs
-            export TARGET_JOB="$(jq -er '.target_job' $s)"
-            echo $TARGET_JOB
-            export TARGET_STEP="$(jq -er '.target_step // ""')"
-            echo $TARGET_STEP
-            curl -sS -H "authorization: token ${{secrets.GITHUB_TOKEN}}" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/`
-              `${{github.event.workflow_run.id}}/jobs" \
-              | jq -er '.jobs[]
-                | select(.name == env.TARGET_JOB)
-                | .steps[] | select(.name == env.TARGET_STEP)'
             export TARGET_URL="$(
               jq -er '.target_url // empty' $s || (
                 export TARGET_JOB="$(jq -er '.target_job' $s)"
-                export TARGET_STEP="$(jq -er '.target_step // ""')"
+                export TARGET_STEP="$(jq -er '.target_step // ""' $s)"
                 curl -sS -H "authorization: token ${{secrets.GITHUB_TOKEN}}" \
                   "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/`
                   `${{github.event.workflow_run.id}}/jobs" \
@@ -62,7 +52,6 @@ jobs:
             )"
             # TODO remove this
             # print for debugging
-            echo $TARGET_URL
             echo "$(jq -nc '{
                 state: env.STATE,
                 context: env.CONTEXT,
