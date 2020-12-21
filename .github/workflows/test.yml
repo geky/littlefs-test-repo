@@ -15,13 +15,13 @@ jobs:
         arch: [x86_64, thumb, mips, powerpc]
 
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
           sudo apt-get install python3 python3-pip
           sudo pip3 install toml
+          mkdir status
       # cross-compile with ARM Thumb (32-bit, little-endian)
       - name: install-thumb
         if: matrix.arch == 'thumb'
@@ -102,14 +102,19 @@ jobs:
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
 
       # update results
-      - run: mkdir status
       - run: echo "${{toJSON(job)}}"
       - name: results-codesize
-        if: success()
         run: |
-          ./scripts/code_size.py
+          make -j1 clean size \
+            OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
+            CFLAGS+=" \
+              -DLFS_NO_ASSERT \
+              -DLFS_NO_DEBUG \
+              -DLFS_NO_WARN \
+              -DLFS_NO_ERROR" \
+            SFLAGS+="-o codesize.csv"
           CONTEXT="results / codesize (${{matrix.arch}})"
-          DESCRIPTION="$(./scripts/code_size.py -S)"
+          DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
           jq -nc '{ \
             state: "success",
             context: env.CONTEXT, \
