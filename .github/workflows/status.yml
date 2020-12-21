@@ -19,7 +19,12 @@ jobs:
           name: status
           path: status
       - name: status-test
-        run: cat statuses/x86_64.txt
+        run: |
+          ls status
+          for f in status/*.json
+          do
+            cat $f
+          done
 #      - id: status
 #        run: |
 #          echo "::set-output name=description::$(cat statuses/x86_64.txt | tr '\n' ' ')"
