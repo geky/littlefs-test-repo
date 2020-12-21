@@ -102,10 +102,9 @@ jobs:
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
 
       # update results
-      - run: echo "${{toJSON(job)}}"
       - name: results-codesize
         run: |
-          make -j1 clean code_size \
+          make code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
@@ -114,9 +113,9 @@ jobs:
               -DLFS_NO_ERROR" \
             SFLAGS+="-qo codesize.csv"
 
-          CONTEXT="results / codesize (${{matrix.arch}})"
-          DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
-          TARGET_URL="https://github.com/${{github.repository}}/\
+          export CONTEXT="results / codesize (${{matrix.arch}})"
+          export DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
+          export TARGET_URL="https://github.com/${{github.repository}}/\
           actions/runs/${{github.run_id}}"
           jq -nc '{
             state: "success",
@@ -124,10 +123,6 @@ jobs:
             description: env.DESCRIPTION,
             target_url: env.TARGET_URL}' \
             > status/results-${{matrix.arch}}.json
-
-          # display in log
-          echo
-          ./scripts/code_size.py -i codesize.csv
 
 
 ##          echo "::set-output name=description::$(./scripts/code_size.py -S)"
