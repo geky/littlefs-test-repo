@@ -50,6 +50,15 @@ jobs:
                       | "#step:\(.number):0") // "")'
               )
             )"
+            export TARGET_JOB="$(jq -er '.target_job' $s)"
+            export TARGET_STEP="$(jq -er '.target_step // ""')"
+            echo $TARGET_STEP
+            curl -sS -H "authorization: token ${{secrets.GITHUB_TOKEN}}" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/`
+              `${{github.event.workflow_run.id}}/jobs" \
+              | jq -er '.jobs[]
+                | select(.name == env.TARGET_JOB)
+                | .steps[] | select(.name == env.TARGET_STEP)'
             # TODO remove this
             # print for debugging
             echo $TARGET_URL
