@@ -106,6 +106,7 @@ jobs:
       - run: echo ${{toJSON(github.job)}}
       - run: echo ${{toJSON(github.job.id)}}
       - run: echo ${{toJSON(github.job.job_id)}}
+      - run: echo ${{toJSON(github)}}
       - name: results-codesize
         run: |
           make code_size \
