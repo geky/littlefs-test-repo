@@ -53,6 +53,11 @@ jobs:
             # TODO remove this
             # print for debugging
             echo $TARGET_URL
+            echo "$(jq -nc '{
+                state: env.STATE,
+                context: env.CONTEXT,
+                description: env.DESCRIPTION,
+                target_url: env.TARGET_URL}')"
             # update status
             curl -sS -H "authorization: token ${{secrets.GITHUB_TOKEN}}" \
               -X POST \
