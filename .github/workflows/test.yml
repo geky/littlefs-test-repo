@@ -102,7 +102,10 @@ jobs:
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
 
       # update results
-      - run: echo ${{job.id}}
+      - run: echo ${{toJSON(github.job_id)}}
+      - run: echo ${{toJSON(github.job)}}
+      - run: echo ${{toJSON(github.job.id)}}
+      - run: echo ${{toJSON(github.job.job_id)}}
       - name: results-codesize
         run: |
           make code_size \
