@@ -40,7 +40,7 @@ jobs:
               jq -er '.target_url // empty' $s || (
                 export TARGET_JOB="$(jq -er '.target_job' $s)"
                 export TARGET_STEP="$(jq -er '.target_step // ""')"
-                curl -sS -H "authorization: token $GITHUB_TOKEN" \
+                curl -sS -H "authorization: Bearer $GITHUB_TOKEN" \
                   "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/`
                   `${{github.event.workflow_run.id}}/jobs" \
                   | jq '.jobs[]
