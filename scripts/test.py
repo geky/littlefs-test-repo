@@ -31,7 +31,7 @@ $(foreach target,$(SRC),$(eval $(FLATTEN)))
 -include tests/*.d
 
 .SECONDARY:
-%.test: %.test.o $(foreach f,$(subst /,.,$(SRC:.c=.o)),%.$f)
+%.test: %.test.o $(foreach f,$(subst /,.,$(OBJ)),%.$f)
     $(CC) $(CFLAGS) $^ $(LFLAGS) -o $@
 """
 GLOBALS = """
