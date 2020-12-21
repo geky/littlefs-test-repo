@@ -113,7 +113,7 @@ jobs:
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR" \
-            SFLAGS+="-o codesize.csv"
+            SFLAGS+="-o codesize.csv -v"
 
           CONTEXT="results / codesize (${{matrix.arch}})"
           DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
