@@ -115,17 +115,18 @@ jobs:
 
           export CONTEXT="results / codesize (${{matrix.arch}})"
           export DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
-          export TARGET_URL="$(curl -sS \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/\
-          actions/runs/$GITHUB_RUN_ID/jobs" \
-            | jq '.jobs[]
-                | select(.name=="test (${{matrix.arch}})")
-                | .html_url')"
+#          export TARGET_URL="$(curl -sS \
+#            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/\
+#          actions/runs/$GITHUB_RUN_ID/jobs" \
+#            | jq '.jobs[]
+#                | select(.name=="test (${{matrix.arch}})")
+#                | .html_url')"
           jq -nc '{
             state: "success",
             context: env.CONTEXT,
             description: env.DESCRIPTION,
-            target_url: env.TARGET_URL}' \
+            target_job: "test (${{matrix.arch}})",
+            target_step: "results-codesize"}' \
             > status/results-${{matrix.arch}}.json
 
 
