@@ -16,13 +16,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: install
+      - id: install
         run: |
           # need toml, also pip3 isn't installed by default?
           sudo apt-get install python3 python3-pip
           sudo pip3 install toml
       # cross-compile with ARM Thumb (32-bit, little-endian)
-      - name: install-thumb
+      - id: install-thumb
         if: matrix.arch == 'thumb'
         run: |
           sudo apt-get install \
@@ -34,7 +34,7 @@ jobs:
           arm-linux-gnueabi-gcc --version
           qemu-arm -version
       # cross-compile with MIPS (32-bit, big-endian)
-      - name: install-mips
+      - id: install-mips
         if: matrix.arch == 'mips'
         run: |
           sudo apt-get install \
@@ -46,7 +46,7 @@ jobs:
           mips-linux-gnu-gcc --version
           qemu-mips -version
       # cross-compile with PowerPC (32-bit, big-endian)
-      - name: install-powerpc
+      - id: install-powerpc
         if: matrix.arch == 'powerpc'
         run: |
           sudo apt-get install \
@@ -59,7 +59,7 @@ jobs:
           qemu-ppc -version
       # test configurations
       # make sure example can at least compile
-      - name: test-example
+      - id: test-example
         run: |
           sed -n '/``` c/,/```/{/```/d; p}' README.md > test.c && \
           make all CFLAGS+=" \
@@ -69,45 +69,45 @@ jobs:
             -Duser_provided_block_device_sync=NULL \
             -include stdio.h"
 #      # normal+reentrant tests
-#      - name: test-default
+#      - id: test-default
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #      # NOR flash: read/prog = 1 block = 4KiB
-#      - name: test-nor
+#      - id: test-nor
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096
 #      # SD/eMMC: read/prog = 512 block = 512
-#      - name: test-emmc
+#      - id: test-emmc
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_READ_SIZE=512 -DLFS_BLOCK_SIZE=512
 #      # NAND flash: read/prog = 4KiB block = 32KiB
-#      - name: test-nand
+#      - id: test-nand
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_READ_SIZE=4096 -DLFS_BLOCK_SIZE=\(32*1024\)
 #      # other extreme geometries that are useful for various corner cases
-#      - name: test-no-intrinsics
+#      - id: test-no-intrinsics
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_NO_INTRINSICS
-#      - name: test-byte-writes
+#      - id: test-byte-writes
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_READ_SIZE=1 -DLFS_CACHE_SIZE=1
-#      - name: test-block-cycles
+#      - id: test-block-cycles
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_BLOCK_CYCLES=1
-#      - name: test-odd-block-count
+#      - id: test-odd-block-count
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_BLOCK_COUNT=1023 -DLFS_LOOKAHEAD_SIZE=256
-#      - name: test-odd-block-size
+#      - id: test-odd-block-size
 #        run: ./scripts/test.py -nrk --exec=$EXEC
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
       # update results
-      - name: results
+      - id: results
         run: |
-          mkdir statuses
-          echo "hi" > statuses/hi-${{matrix.arch}}.txt
-      - name: results-status
+          mkdir status
+          echo "hi" > status/hi-${{matrix.arch}}.txt
+      - id: results-status
         uses: actions/upload-artifact@v2
         with:
-          name: statuses
-          path: statuses
+          name: status
+          path: status
           retention-days: 1
 

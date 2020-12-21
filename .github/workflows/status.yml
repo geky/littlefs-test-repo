@@ -1,11 +1,11 @@
-name: statuses
+name: status
 on:
   workflow_run:
     workflows: test
     types: completed
 
 jobs:
-  statuses:
+  status:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,13 +16,13 @@ jobs:
         with:
           workflow: ${{github.event.workflow_run.name}}
           run_id: ${{github.event.workflow_run.id}}
-          name: statuses
-          path: statuses
+          name: status
+          path: status
       - name: status-test
         run: cat statuses/x86_64.txt
-      - id: status
-        run: |
-          echo "::set-output name=description::$(cat statuses/x86_64.txt | tr '\n' ' ')"
+#      - id: status
+#        run: |
+#          echo "::set-output name=description::$(cat statuses/x86_64.txt | tr '\n' ' ')"
 #      - uses: octokit/request-action@v2.x
 #        with:
 #          route: POST /repos/{repo}/status/{sha}
