@@ -63,13 +63,13 @@ jobs:
                 description: env.DESCRIPTION,
                 target_url: env.TARGET_URL}')"
 
-#            if jq -er '.target_url' $s
-#            then
-#              export TARGET_URL="$(jq -er '.target_url' $s)"
-#            elif jq -er '.target_job' $s
-#            then
-#              
-#            fi
+            #if jq -er '.target_url' $s
+            #then
+            #  export TARGET_URL="$(jq -er '.target_url' $s)"
+            #elif jq -er '.target_job' $s
+            #then
+            #  
+            #fi
             
           done
 
