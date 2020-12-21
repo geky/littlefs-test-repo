@@ -105,6 +105,7 @@ jobs:
       - run: echo "${{toJSON(job)}}"
       - name: results-codesize
         run: |
+          echo "$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')"
           make -j1 clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
             CFLAGS+=" \
