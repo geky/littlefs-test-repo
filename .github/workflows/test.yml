@@ -19,6 +19,7 @@ jobs:
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
+          sudo apt-get update
           sudo apt-get install python3 python3-pip
           sudo pip3 install toml
           mkdir status
@@ -212,10 +213,12 @@ jobs:
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
+          sudo apt-get update
           sudo apt-get install python3 python3-pip
           sudo pip3 install toml
       - name: install-valgrind
         run: |
+          sudo apt-get update
           sudo apt-get install valgrind
           valgrind --version
       # normal tests, we don't need to test all geometries
