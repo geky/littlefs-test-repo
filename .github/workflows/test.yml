@@ -104,7 +104,7 @@ jobs:
       # update results
       - name: results-codesize
         run: |
-          make code_size \
+          make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
@@ -124,7 +124,7 @@ jobs:
             > status/results-${{matrix.arch}}.json
       - name: results-codesize-readonly
         run: |
-          make code_size \
+          make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
@@ -145,7 +145,7 @@ jobs:
             > status/results-${{matrix.arch}}-readonly.json
       - name: results-codesize-threadsafe
         run: |
-          make code_size \
+          make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
@@ -166,7 +166,7 @@ jobs:
             > status/results-${{matrix.arch}}-threadsafe.json
       - name: results-codesize-migrate
         run: |
-          make code_size \
+          make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
