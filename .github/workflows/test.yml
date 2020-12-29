@@ -121,10 +121,12 @@ jobs:
             -DLFS_NO_ERROR"
           if [ -d master ]
           then
-            make -C master clean code_size SFLAGS+="-o code.csv" \
+            make -C master clean code_size OBJ="$OBJ" \
+              SFLAGS+="-o code.csv" \
               && export SFLAGS+="-d master/code.csv"
           fi
-          make clean code_size SFLAGS+="-o code.csv"
+          make clean code_size OBJ="$OBJ" \
+            SFLAGS+="-o code.csv"
       - name: results-code-readonly
         continue-on-error: true
         run: |
@@ -137,10 +139,13 @@ jobs:
             -DLFS_READONLY"
           if [ -d master ]
           then
-            make -C master clean code_size SFLAGS+="-o code-readonly.csv" \
+            make -C master clean code_size OBJ="$OBJ" \
+              SFLAGS+="-o code-readonly.csv" \
               && export SFLAGS+="-d master/code-readonly.csv"
           fi
-          make clean code_size SFLAGS+="-o code-readonly.csv"
+          # TODO remove this OBJ
+          make clean code_size OBJ="$OBJ" \
+            SFLAGS+="-o code-readonly.csv"
       - name: results-code-threadsafe
         continue-on-error: true
         run: |
@@ -153,10 +158,12 @@ jobs:
             -DLFS_THREADSAFE"
           if [ -d master ]
           then
-            make -C master clean code_size SFLAGS+="-o code-threadsafe.csv" \
+            make -C master clean code_size OBJ="$OBJ" \
+              SFLAGS+="-o code-threadsafe.csv" \
               && export SFLAGS+="-d master/code-threadsafe.csv"
           fi
-          make clean code_size SFLAGS+="-o code-threadsafe.csv"
+          make clean code_size OBJ="$OBJ" \
+            SFLAGS+="-o code-threadsafe.csv"
       - name: results-code-migrate
         continue-on-error: true
         run: |
@@ -169,10 +176,12 @@ jobs:
             -DLFS_MIGRATE"
           if [ -d master ]
           then
-            make -C master clean code_size SFLAGS+="-o code-migrate.csv" \
+            make -C master clean code_size OBJ="$OBJ" \
+              SFLAGS+="-o code-migrate.csv" \
               && export SFLAGS+="-d master/code-migrate.csv"
           fi
-          make clean code_size SFLAGS+="-o code-migrate.csv"
+          make clean code_size OBJ="$OBJ" \
+            SFLAGS+="-o code-migrate.csv"
       # limit reporting to Thumb, otherwise there would be too many numbers
       # flying around for the results to be easily readable
       - name: collect-status
