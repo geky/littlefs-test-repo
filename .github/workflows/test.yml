@@ -165,7 +165,7 @@ jobs:
                 description: env.DESCRIPTION,
                 target_job: "test (${{matrix.arch}})",
                 target_step: env.STEP}' \
-                > status/results-${{matrix.arch}}-migrate.json
+                > status/code$(echo $f | sed -n 's/code-\(.*\).csv/-\1/p').json
           done
       - name: upload-status
         if: matrix.arch == 'thumb'
