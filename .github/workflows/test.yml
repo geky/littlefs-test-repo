@@ -180,6 +180,7 @@ jobs:
         if: matrix.arch == 'thumb'
         run: |
           mkdir -p status
+          shopt -s nullglob
           for f in code*.csv
           do
               export STEP="results-code$(

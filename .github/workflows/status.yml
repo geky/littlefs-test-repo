@@ -28,6 +28,7 @@ jobs:
             cat $f
           done
 
+          shopt -s nullglob
           for s in status/*.json
           do
             # parse requested status
