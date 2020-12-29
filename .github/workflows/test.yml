@@ -197,7 +197,7 @@ jobs:
               export CONTEXT="results / code$(
                 echo $f | sed -n 's/code-\(.*\).csv/ (\1)/p')"
               export DESCRIPTION="Code size is $(
-                ./scripts/code_size.py -i $f -S
+                ./scripts/code_size.py -i $f -S \
                   $([ -e master/$f ] && echo "-d master/$f"))"
               jq -nc '{
                 state: "success",
