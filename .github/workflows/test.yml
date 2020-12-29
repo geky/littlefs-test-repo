@@ -70,21 +70,21 @@ jobs:
             -Duser_provided_block_device_erase=NULL \
             -Duser_provided_block_device_sync=NULL \
             -include stdio.h"
-      # normal+reentrant tests
-      - name: test-default
-        run: make test SCRIPTFLAGS+="-nrk"
-      # NOR flash: read/prog = 1 block = 4KiB
-      - name: test-nor
-        run: make test SCRIPTFLAGS+="-nrk
-          -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096"
-      # SD/eMMC: read/prog = 512 block = 512
-      - name: test-emmc
-        run: make test SCRIPTFLAGS+="-nrk
-          -DLFS_READ_SIZE=512 -DLFS_BLOCK_SIZE=512"
-      # NAND flash: read/prog = 4KiB block = 32KiB
-      - name: test-nand
-        run: make test SCRIPTFLAGS+="-nrk
-          -DLFS_READ_SIZE=4096 -DLFS_BLOCK_SIZE=\(32*1024\)"
+#      # normal+reentrant tests
+#      - name: test-default
+#        run: make test SCRIPTFLAGS+="-nrk"
+#      # NOR flash: read/prog = 1 block = 4KiB
+#      - name: test-nor
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096"
+#      # SD/eMMC: read/prog = 512 block = 512
+#      - name: test-emmc
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_READ_SIZE=512 -DLFS_BLOCK_SIZE=512"
+#      # NAND flash: read/prog = 4KiB block = 32KiB
+#      - name: test-nand
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_READ_SIZE=4096 -DLFS_BLOCK_SIZE=\(32*1024\)"
 #      # other extreme geometries that are useful for various corner cases
 #      - name: test-no-intrinsics
 #        run: make test SCRIPTFLAGS+="-nrk
