@@ -70,37 +70,37 @@ jobs:
             -Duser_provided_block_device_erase=NULL \
             -Duser_provided_block_device_sync=NULL \
             -include stdio.h"
-#      # normal+reentrant tests
-#      - name: test-default
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#      # NOR flash: read/prog = 1 block = 4KiB
-#      - name: test-nor
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096
-#      # SD/eMMC: read/prog = 512 block = 512
-#      - name: test-emmc
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_READ_SIZE=512 -DLFS_BLOCK_SIZE=512
-#      # NAND flash: read/prog = 4KiB block = 32KiB
-#      - name: test-nand
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_READ_SIZE=4096 -DLFS_BLOCK_SIZE=\(32*1024\)
+      # normal+reentrant tests
+      - name: test-default
+        run: make test SCRIPTFLAGS+="-nrk"
+      # NOR flash: read/prog = 1 block = 4KiB
+      - name: test-nor
+        run: make test SCRIPTFLAGS+="-nrk
+          -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096"
+      # SD/eMMC: read/prog = 512 block = 512
+      - name: test-emmc
+        run: make test SCRIPTFLAGS+="-nrk
+          -DLFS_READ_SIZE=512 -DLFS_BLOCK_SIZE=512"
+      # NAND flash: read/prog = 4KiB block = 32KiB
+      - name: test-nand
+        run: make test SCRIPTFLAGS+="-nrk
+          -DLFS_READ_SIZE=4096 -DLFS_BLOCK_SIZE=\(32*1024\)"
 #      # other extreme geometries that are useful for various corner cases
 #      - name: test-no-intrinsics
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_NO_INTRINSICS
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_NO_INTRINSICS"
 #      - name: test-byte-writes
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_READ_SIZE=1 -DLFS_CACHE_SIZE=1
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_READ_SIZE=1 -DLFS_CACHE_SIZE=1"
 #      - name: test-block-cycles
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_BLOCK_CYCLES=1
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_BLOCK_CYCLES=1"
 #      - name: test-odd-block-count
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_BLOCK_COUNT=1023 -DLFS_LOOKAHEAD_SIZE=256
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_BLOCK_COUNT=1023 -DLFS_LOOKAHEAD_SIZE=256"
 #      - name: test-odd-block-size
-#        run: ./scripts/test.py -nrk --exec=$EXEC
-#          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
+#        run: make test SCRIPTFLAGS+="-nrk
+#          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704"
 
       # update results
       - uses: actions/checkout@v2
@@ -109,7 +109,7 @@ jobs:
         with:
           ref: master
           path: master
-        
+
       - name: results-code
         continue-on-error: true
         run: |
@@ -122,11 +122,11 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-qo code.csv" \
-              && export SFLAGS+="-d master/code.csv"
+              SCRIPTFLAGS+="-qo code.csv" \
+              && export SCRIPTFLAGS+="-d master/code.csv"
           fi
           make clean code_size OBJ="$OBJ" \
-            SFLAGS+="-o code.csv"
+            SCRIPTFLAGS+="-o code.csv"
       - name: results-code-readonly
         continue-on-error: true
         run: |
@@ -140,12 +140,12 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-qo code-readonly.csv" \
-              && export SFLAGS+="-d master/code-readonly.csv"
+              SCRIPTFLAGS+="-qo code-readonly.csv" \
+              && export SCRIPTFLAGS+="-d master/code-readonly.csv"
           fi
           # TODO remove this OBJ
           make clean code_size OBJ="$OBJ" \
-            SFLAGS+="-o code-readonly.csv"
+            SCRIPTFLAGS+="-o code-readonly.csv"
       - name: results-code-threadsafe
         continue-on-error: true
         run: |
@@ -159,11 +159,11 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-qo code-threadsafe.csv" \
-              && export SFLAGS+="-d master/code-threadsafe.csv"
+              SCRIPTFLAGS+="-qo code-threadsafe.csv" \
+              && export SCRIPTFLAGS+="-d master/code-threadsafe.csv"
           fi
           make clean code_size OBJ="$OBJ" \
-            SFLAGS+="-o code-threadsafe.csv"
+            SCRIPTFLAGS+="-o code-threadsafe.csv"
       - name: results-code-migrate
         continue-on-error: true
         run: |
@@ -177,11 +177,11 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-qo code-migrate.csv" \
-              && export SFLAGS+="-d master/code-migrate.csv"
+              SCRIPTFLAGS+="-qo code-migrate.csv" \
+              && export SCRIPTFLAGS+="-d master/code-migrate.csv"
           fi
           make clean code_size OBJ="$OBJ" \
-            SFLAGS+="-o code-migrate.csv"
+            SCRIPTFLAGS+="-o code-migrate.csv"
       # limit reporting to Thumb, otherwise there would be too many numbers
       # flying around for the results to be easily readable
       - name: collect-status
@@ -197,8 +197,8 @@ jobs:
               export CONTEXT="results / code$(
                 echo $f | sed -n 's/code-\(.*\).csv/ (\1)/p')"
               export DESCRIPTION="Code size is $(
-                ./scripts/code_size.py -i $f -S \
-                  $([ -e master/$f ] && echo "-d master/$f"))"
+                ./scripts/code_size.py -i $f -S $(
+                  [ -e master/$f ] && echo "-d master/$f"))"
               jq -nc '{
                 state: "success",
                 context: env.CONTEXT,
@@ -235,4 +235,4 @@ jobs:
           valgrind --version
 #      # normal tests, we don't need to test all geometries
 #      - name: test-valgrind
-#        run: ./scripts/test.py -k --valgrind
+#        run: make test SCRIPTFLAGS+="-k --valgrind"
