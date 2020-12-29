@@ -6,9 +6,9 @@ env:
   MAKEFLAGS: -j
 
 jobs:
+  # run tests
   test:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
@@ -70,9 +70,9 @@ jobs:
             -Duser_provided_block_device_erase=NULL \
             -Duser_provided_block_device_sync=NULL \
             -include stdio.h"
-      # normal+reentrant tests
-      - name: test-default
-        run: ./scripts/test.py -nrk --exec=$EXEC
+#      # normal+reentrant tests
+#      - name: test-default
+#        run: ./scripts/test.py -nrk --exec=$EXEC
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
 #        run: ./scripts/test.py -nrk --exec=$EXEC
@@ -103,7 +103,7 @@ jobs:
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704
 
       # update results
-      - name: results-codesize
+      - name: results-code
         run: |
           make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
@@ -112,18 +112,18 @@ jobs:
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR" \
-            SFLAGS+="-o codesize.csv"
+            SFLAGS+="-o code.csv"
 
-          export CONTEXT="results / codesize (${{matrix.arch}})"
-          export DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
+          export CONTEXT="results/code (${{matrix.arch}})"
+          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
           jq -nc '{
             state: "success",
             context: env.CONTEXT,
             description: env.DESCRIPTION,
             target_job: "test (${{matrix.arch}})",
-            target_step: "results-codesize"}' \
+            target_step: "results-code"}' \
             > status/results-${{matrix.arch}}.json
-      - name: results-codesize-readonly
+      - name: results-code-readonly
         run: |
           make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
@@ -133,18 +133,18 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_READONLY" \
-            SFLAGS+="-o codesize.csv"
+            SFLAGS+="-o code.csv"
 
-          export CONTEXT="results / codesize (${{matrix.arch}}, readonly)"
-          export DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
+          export CONTEXT="results/code (${{matrix.arch}}, readonly)"
+          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
           jq -nc '{
             state: "success",
             context: env.CONTEXT,
             description: env.DESCRIPTION,
             target_job: "test (${{matrix.arch}})",
-            target_step: "results-codesize-readonly"}' \
+            target_step: "results-code-readonly"}' \
             > status/results-${{matrix.arch}}-readonly.json
-      - name: results-codesize-threadsafe
+      - name: results-code-threadsafe
         run: |
           make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
@@ -154,18 +154,18 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_THREADSAFE" \
-            SFLAGS+="-o codesize.csv"
+            SFLAGS+="-o code.csv"
 
-          export CONTEXT="results / codesize (${{matrix.arch}}, threadsafe)"
-          export DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
+          export CONTEXT="results/code (${{matrix.arch}}, threadsafe)"
+          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
           jq -nc '{
             state: "success",
             context: env.CONTEXT,
             description: env.DESCRIPTION,
             target_job: "test (${{matrix.arch}})",
-            target_step: "results-codesize-threadsafe"}' \
+            target_step: "results-code-threadsafe"}' \
             > status/results-${{matrix.arch}}-threadsafe.json
-      - name: results-codesize-migrate
+      - name: results-code-migrate
         run: |
           make clean code_size \
             OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')" \
@@ -175,28 +175,17 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_MIGRATE" \
-            SFLAGS+="-o codesize.csv"
+            SFLAGS+="-o code.csv"
 
-          export CONTEXT="results / codesize (${{matrix.arch}}, migrate)"
-          export DESCRIPTION="$(./scripts/code_size.py -i codesize.csv -S)"
+          export CONTEXT="results/code (${{matrix.arch}}, migrate)"
+          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
           jq -nc '{
             state: "success",
             context: env.CONTEXT,
             description: env.DESCRIPTION,
             target_job: "test (${{matrix.arch}})",
-            target_step: "results-codesize-migrate"}' \
+            target_step: "results-code-migrate"}' \
             > status/results-${{matrix.arch}}-migrate.json
-
-
-##          echo "::set-output name=description::$(./scripts/code_size.py -S)"
-##      - name: results
-##        run: |
-##          mkdir status
-##          CONTEXT="results / codesize (${{matrix.arch}})"
-##          STATE="success"
-##          DESCRIPTION=
-##          TARGET_URL=
-##          echo "hi" > status/hi-${{matrix.arch}}.txt
       - name: upload-status
         uses: actions/upload-artifact@v2
         with:
@@ -205,7 +194,7 @@ jobs:
           retention-days: 1
 
   # run under Valgrind to check for memory errors
-  test-valgrind:
+  valgrind:
     runs-on: ubuntu-latest
 
     steps:
@@ -221,6 +210,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install valgrind
           valgrind --version
-      # normal tests, we don't need to test all geometries
-      - name: test-valgrind
-        run: ./scripts/test.py -k --valgrind
+#      # normal tests, we don't need to test all geometries
+#      - name: test-valgrind
+#        run: ./scripts/test.py -k --valgrind
