@@ -113,16 +113,6 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR" \
             SFLAGS+="-o code.csv"
-
-          export CONTEXT="results/code (${{matrix.arch}})"
-          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
-          jq -nc '{
-            state: "success",
-            context: env.CONTEXT,
-            description: env.DESCRIPTION,
-            target_job: "test (${{matrix.arch}})",
-            target_step: "results-code"}' \
-            > status/results-${{matrix.arch}}.json
       - name: results-code-readonly
         run: |
           make clean code_size \
@@ -133,17 +123,7 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_READONLY" \
-            SFLAGS+="-o code.csv"
-
-          export CONTEXT="results/code (${{matrix.arch}}, readonly)"
-          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
-          jq -nc '{
-            state: "success",
-            context: env.CONTEXT,
-            description: env.DESCRIPTION,
-            target_job: "test (${{matrix.arch}})",
-            target_step: "results-code-readonly"}' \
-            > status/results-${{matrix.arch}}-readonly.json
+            SFLAGS+="-o code-readonly.csv"
       - name: results-code-threadsafe
         run: |
           make clean code_size \
@@ -154,17 +134,7 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_THREADSAFE" \
-            SFLAGS+="-o code.csv"
-
-          export CONTEXT="results/code (${{matrix.arch}}, threadsafe)"
-          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
-          jq -nc '{
-            state: "success",
-            context: env.CONTEXT,
-            description: env.DESCRIPTION,
-            target_job: "test (${{matrix.arch}})",
-            target_step: "results-code-threadsafe"}' \
-            > status/results-${{matrix.arch}}-threadsafe.json
+            SFLAGS+="-o code-threadsafe.csv"
       - name: results-code-migrate
         run: |
           make clean code_size \
@@ -175,18 +145,30 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_MIGRATE" \
-            SFLAGS+="-o code.csv"
-
-          export CONTEXT="results/code (${{matrix.arch}}, migrate)"
-          export DESCRIPTION="$(./scripts/code_size.py -i code.csv -S)"
-          jq -nc '{
-            state: "success",
-            context: env.CONTEXT,
-            description: env.DESCRIPTION,
-            target_job: "test (${{matrix.arch}})",
-            target_step: "results-code-migrate"}' \
-            > status/results-${{matrix.arch}}-migrate.json
+            SFLAGS+="-o code-migrate.csv"
+      # limit reporting to Thumb, otherwise there would be too many numbers
+      # flying around for the results to be easily readable
+      - name: collect-status
+        if: matrix.arch == 'thumb'
+        run: |
+          mkdir -p status
+          for f in code*.csv
+          do
+              export STEP="results-code$(
+                echo $f | sed -n 's/code-\(.*\).csv/-\1/p')"
+              export CONTEXT="results / code$(
+                echo $f | sed -n 's/code-\(.*\).csv/ (\1)/p')"
+              export DESCRIPTION="$(./scripts/code_size.py -i $f -S)"
+              jq -nc '{
+                state: "success",
+                context: env.CONTEXT,
+                description: env.DESCRIPTION,
+                target_job: "test (${{matrix.arch}})",
+                target_step: env.STEP}' \
+                > status/results-${{matrix.arch}}-migrate.json
+          done
       - name: upload-status
+        if: matrix.arch == 'thumb'
         uses: actions/upload-artifact@v2
         with:
           name: status
