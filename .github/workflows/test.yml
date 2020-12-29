@@ -122,7 +122,7 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-o code.csv" \
+              SFLAGS+="-qo code.csv" \
               && export SFLAGS+="-d master/code.csv"
           fi
           make clean code_size OBJ="$OBJ" \
@@ -140,7 +140,7 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-o code-readonly.csv" \
+              SFLAGS+="-qo code-readonly.csv" \
               && export SFLAGS+="-d master/code-readonly.csv"
           fi
           # TODO remove this OBJ
@@ -159,7 +159,7 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-o code-threadsafe.csv" \
+              SFLAGS+="-qo code-threadsafe.csv" \
               && export SFLAGS+="-d master/code-threadsafe.csv"
           fi
           make clean code_size OBJ="$OBJ" \
@@ -177,7 +177,7 @@ jobs:
           if [ -d master ]
           then
             make -C master clean code_size OBJ="$OBJ" \
-              SFLAGS+="-o code-migrate.csv" \
+              SFLAGS+="-qo code-migrate.csv" \
               && export SFLAGS+="-d master/code-migrate.csv"
           fi
           make clean code_size OBJ="$OBJ" \
@@ -197,7 +197,8 @@ jobs:
               export CONTEXT="results / code$(
                 echo $f | sed -n 's/code-\(.*\).csv/ (\1)/p')"
               export DESCRIPTION="Code size is $(
-                ./scripts/code_size.py -i $f -S)"
+                ./scripts/code_size.py -i $f -S
+                  $([ -e master/$f ] && echo "-d master/$f")"
               jq -nc '{
                 state: "success",
                 context: env.CONTEXT,
