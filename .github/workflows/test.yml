@@ -73,7 +73,7 @@ jobs:
             -include stdio.h"
       # normal+reentrant tests
       - name: test-default
-        run: make test SCRIPTFLAGS+="-nrk"
+        run: make test SCRIPTFLAGS+="-nrk -v"
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
 #        run: make test SCRIPTFLAGS+="-nrk
