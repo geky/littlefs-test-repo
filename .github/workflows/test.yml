@@ -4,6 +4,7 @@ on: [push, pull_request]
 env:
   CFLAGS: -Werror
   MAKEFLAGS: -j
+  COVERAGE: 1
 
 jobs:
   # run tests
@@ -101,6 +102,18 @@ jobs:
 #      - name: test-odd-block-size
 #        run: make test SCRIPTFLAGS+="-nrk
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704"
+
+      # collect coverage
+      - name: collect-coverage
+        run: |
+          mkdir -p coverage
+          mv results/coverage.gcov coverage/${{github.job}}.gcov
+      - name: upload-coverage
+        continue-on-error: true
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: coverage
 
       # update results
       - uses: actions/checkout@v2

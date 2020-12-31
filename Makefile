@@ -50,6 +50,9 @@ size: $(OBJ)
 code:
 	./scripts/code.py $(SCRIPTFLAGS)
 
+coverage:
+	./scripts/coverage.py $(SCRIPTFLAGS)
+
 test:
 	./scripts/test.py $(TESTFLAGS) $(SCRIPTFLAGS)
 .SECONDEXPANSION:
