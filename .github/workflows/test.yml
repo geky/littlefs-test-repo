@@ -71,9 +71,9 @@ jobs:
             -Duser_provided_block_device_erase=NULL \
             -Duser_provided_block_device_sync=NULL \
             -include stdio.h"
-#      # normal+reentrant tests
-#      - name: test-default
-#        run: make test SCRIPTFLAGS+="-nrk"
+      # normal+reentrant tests
+      - name: test-default
+        run: make test SCRIPTFLAGS+="-nrk"
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
 #        run: make test SCRIPTFLAGS+="-nrk
@@ -105,6 +105,7 @@ jobs:
 
       # collect coverage
       - name: collect-coverage
+        continue-on-error: true
         run: |
           mkdir -p coverage
           mv results/coverage.gcov coverage/${{github.job}}.gcov
