@@ -106,9 +106,13 @@ jobs:
 
       - name: test-default-what
         run: |
-            ls
+            echo "version"
+            gcov --version
+            echo "tests"
             ls tests
-            ls results
+            echo "hmm"
+            cat tests/*.gcov
+            echo "woah"
 
       # collect coverage
       - name: collect-coverage
