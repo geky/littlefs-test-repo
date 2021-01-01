@@ -73,7 +73,8 @@ jobs:
             -include stdio.h"
       # normal+reentrant tests
       - name: test-default
-        run: make test SCRIPTFLAGS+="-nrk -v"
+        continue-on-error: true
+        run: make test SCRIPTFLAGS+="-nrk"
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
 #        run: make test SCRIPTFLAGS+="-nrk
@@ -102,6 +103,12 @@ jobs:
 #      - name: test-odd-block-size
 #        run: make test SCRIPTFLAGS+="-nrk
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704"
+
+      - name: test-default-what
+        run: |
+            ls
+            ls tests
+            ls results
 
       # collect coverage
       - name: collect-coverage
