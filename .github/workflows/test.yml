@@ -138,6 +138,7 @@ jobs:
       - name: results-code
         continue-on-error: true
         run: |
+          mkdir -p results
           export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
@@ -155,6 +156,7 @@ jobs:
       - name: results-code-readonly
         continue-on-error: true
         run: |
+          mkdir -p results
           export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
@@ -174,6 +176,7 @@ jobs:
       - name: results-code-threadsafe
         continue-on-error: true
         run: |
+          mkdir -p results
           export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
@@ -192,6 +195,7 @@ jobs:
       - name: results-code-migrate
         continue-on-error: true
         run: |
+          mkdir -p results
           export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
