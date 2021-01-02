@@ -24,7 +24,6 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -qq python3 python3-pip lcov
           sudo pip3 install toml
-          mkdir status
       # cross-compile with ARM Thumb (32-bit, little-endian)
       - name: install-thumb
         if: matrix.arch == 'thumb'
@@ -285,6 +284,7 @@ jobs:
           ./scripts/coverage.py coverage/total.info -o coverage.csv
       - name: collect-status
         run: |
+          mkdir -p status
           export STEP="results-coverage"
           export CONTEXT="results / coverage"
           export DESCRIPTION="Coverage is $(
