@@ -7,7 +7,6 @@ CC ?= gcc
 AR ?= ar
 SIZE ?= size
 NM ?= nm
-GCOV ?= gcov
 LCOV ?= lcov
 
 SRC += $(wildcard *.c bd/*.c)
@@ -76,9 +75,6 @@ lfs: $(OBJ)
 
 %.s: %.c
 	$(CC) -S $(CFLAGS) $< -o $@
-
-%.gcda.gcov: %.gcda
-	( cd $(dir $@) ; $(GCOV) -ri $(notdir $<) )
 
 .PHONY: clean
 clean:

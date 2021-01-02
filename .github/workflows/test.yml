@@ -21,15 +21,15 @@ jobs:
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
-          sudo apt-get -q update
-          sudo apt-get -q install python3 python3-pip lcov
+          sudo apt-get update -qq
+          sudo apt-get install -qq python3 python3-pip lcov
           sudo pip3 install toml
           mkdir status
       # cross-compile with ARM Thumb (32-bit, little-endian)
       - name: install-thumb
         if: matrix.arch == 'thumb'
         run: |
-          sudo apt-get -q install \
+          sudo apt-get install -qq \
             gcc-arm-linux-gnueabi \
             libc6-dev-armel-cross \
             qemu-user
@@ -41,7 +41,7 @@ jobs:
       - name: install-mips
         if: matrix.arch == 'mips'
         run: |
-          sudo apt-get -q install \
+          sudo apt-get install -qq \
             gcc-mips-linux-gnu \
             libc6-dev-mips-cross \
             qemu-user
@@ -53,7 +53,7 @@ jobs:
       - name: install-powerpc
         if: matrix.arch == 'powerpc'
         run: |
-          sudo apt-get -q install \
+          sudo apt-get install -qq \
             gcc-powerpc-linux-gnu \
             libc6-dev-powerpc-cross \
             qemu-user
@@ -75,7 +75,7 @@ jobs:
       # normal+reentrant tests
       - name: test-default
         continue-on-error: true
-        run: make test SCRIPTFLAGS+="-nrk"
+        run: make test_dirs SCRIPTFLAGS+="-nrk" VERBOSE=1
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
 #        run: make test SCRIPTFLAGS+="-nrk
@@ -109,6 +109,10 @@ jobs:
       - name: collect-coverage
         continue-on-error: true
         run: |
+          echo "ls ."
+          ls -lha .
+          echo "ls tests"
+          ls -lha tests
           mkdir -p coverage
           lcov $(for f in tests/*.toml.cumul.info ; do echo "-a $f" ; done) \
             -o coverage/${{github.job}}.info
@@ -245,13 +249,13 @@ jobs:
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
-          sudo apt-get -q update
-          sudo apt-get -q install python3 python3-pip
+          sudo apt-get update -qq
+          sudo apt-get install -qq python3 python3-pip
           sudo pip3 install toml
       - name: install-valgrind
         run: |
-          sudo apt-get -q update
-          sudo apt-get -q install valgrind
+          sudo apt-get update -qq
+          sudo apt-get install -qq valgrind
           valgrind --version
 #      # normal tests, we don't need to test all geometries
 #      - name: test-valgrind
