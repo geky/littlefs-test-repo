@@ -84,4 +84,3 @@ clean:
 	rm -f $(ASM)
 	rm -f tests/*.toml.*
 	rm -f sizes/*
-	rm -f results/*
