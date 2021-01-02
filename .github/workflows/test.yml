@@ -318,7 +318,7 @@ jobs:
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
             | jq -re "select(.sha != env.GITHUB_SHA) | .statuses[]
               | select(.context == env.CONTEXT).description
-              | capture(\"Coverage is (?<result>[0-9\.]+)\").result" \
+              | capture(\"Coverage is (?<result>[0-9\\.]+)\").result" \
             || echo 0)"
           export DESCRIPTION="$(./script/coverage.py -i $f -s
             | awk -F '[ /%]+' '
