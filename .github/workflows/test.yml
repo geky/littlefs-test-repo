@@ -290,7 +290,7 @@ jobs:
             | jq -re "select(.sha != env.GITHUB_SHA)
               | .statuses[]
               | select(.context == \"results / coverage\").description
-              | capture(\"Coverage is (?P<coverage>[0-9]+)\").coverage"
+              | capture(\"Coverage is (?P<coverage>[0-9]+)\").coverage" \
             || echo 0)"
           export STEP="results-coverage"
           export CONTEXT="results / coverage"
