@@ -38,7 +38,7 @@ COVERAGE_RULES = """
 %(path)s.test: override CFLAGS += -fprofile-arcs -ftest-coverage
 
 # delete lingering coverage
-%(path)s.test: | %(path)s.info.clean
+%(path)s.test: | %(path)s.clean
 .PHONY: %(path)s.clean
 %(path)s.clean:
     rm -f %(path)s*.gcda

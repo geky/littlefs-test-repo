@@ -110,10 +110,11 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p coverage
-          lcov -a TODO -o coverage/${{github.job}}.info
-          # we only care about littlefs's actual source
-          lcov -e coverage/${{github.job}}.info lfs*.c \
+          lcov $(for f in tests/*.toml.cumul.info ; do echo "-a $f" ; done) \
             -o coverage/${{github.job}}.info
+          # we only care about littlefs's actual source
+          lcov -e coverage/${{github.job}}-${{matrix.arch}}.info lfs*.c \
+            -o coverage/${{github.job}}-${{matrix.arch}}.info
       - name: upload-coverage
         continue-on-error: true
         uses: actions/upload-artifact@v2
@@ -132,7 +133,7 @@ jobs:
       - name: results-code
         continue-on-error: true
         run: |
-          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -149,7 +150,7 @@ jobs:
       - name: results-code-readonly
         continue-on-error: true
         run: |
-          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -168,7 +169,7 @@ jobs:
       - name: results-code-threadsafe
         continue-on-error: true
         run: |
-          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -186,7 +187,7 @@ jobs:
       - name: results-code-migrate
         continue-on-error: true
         run: |
-          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -222,7 +223,7 @@ jobs:
                 state: "success",
                 context: env.CONTEXT,
                 description: env.DESCRIPTION,
-                target_job: "test (${{matrix.arch}})",
+                target_job: "${{github.job}} (${{matrix.arch}})",
                 target_step: env.STEP}' \
                 > status/code$(echo $f | sed -n 's/code-\(.*\).csv/-\1/p').json
           done
