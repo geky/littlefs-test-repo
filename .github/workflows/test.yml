@@ -4,7 +4,6 @@ on: [push, pull_request]
 env:
   CFLAGS: -Werror
   MAKEFLAGS: -j
-  COVERAGE: 1
 
 jobs:
   # run tests
@@ -14,21 +13,23 @@ jobs:
       fail-fast: false
       matrix:
         arch: [x86_64, thumb, mips, powerpc]
+    env:
+      TESTFLAGS: --coverage
 
     steps:
       - uses: actions/checkout@v2
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
-          sudo apt-get update
-          sudo apt-get install python3 python3-pip
+          sudo apt-get -q update
+          sudo apt-get -q install python3 python3-pip lcov
           sudo pip3 install toml
           mkdir status
       # cross-compile with ARM Thumb (32-bit, little-endian)
       - name: install-thumb
         if: matrix.arch == 'thumb'
         run: |
-          sudo apt-get install \
+          sudo apt-get -q install \
             gcc-arm-linux-gnueabi \
             libc6-dev-armel-cross \
             qemu-user
@@ -40,7 +41,7 @@ jobs:
       - name: install-mips
         if: matrix.arch == 'mips'
         run: |
-          sudo apt-get install \
+          sudo apt-get -q install \
             gcc-mips-linux-gnu \
             libc6-dev-mips-cross \
             qemu-user
@@ -52,7 +53,7 @@ jobs:
       - name: install-powerpc
         if: matrix.arch == 'powerpc'
         run: |
-          sudo apt-get install \
+          sudo apt-get -q install \
             gcc-powerpc-linux-gnu \
             libc6-dev-powerpc-cross \
             qemu-user
@@ -104,22 +105,15 @@ jobs:
 #        run: make test SCRIPTFLAGS+="-nrk
 #          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704"
 
-      - name: test-default-what
-        run: |
-            echo "version"
-            gcov --version
-            echo "tests"
-            ls tests
-            echo "hmm"
-            cat tests/*.gcov
-            echo "woah"
-
       # collect coverage
       - name: collect-coverage
         continue-on-error: true
         run: |
           mkdir -p coverage
-          mv results/coverage.gcov coverage/${{github.job}}.gcov
+          lcov -a TODO -o coverage/${{github.job}}.info
+          # we only care about littlefs's actual source
+          lcov -e coverage/${{github.job}}.info lfs*.c \
+            -o coverage/${{github.job}}.info
       - name: upload-coverage
         continue-on-error: true
         uses: actions/upload-artifact@v2
@@ -138,7 +132,7 @@ jobs:
       - name: results-code
         continue-on-error: true
         run: |
-          export OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -155,7 +149,7 @@ jobs:
       - name: results-code-readonly
         continue-on-error: true
         run: |
-          export OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -174,7 +168,7 @@ jobs:
       - name: results-code-threadsafe
         continue-on-error: true
         run: |
-          export OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -192,7 +186,7 @@ jobs:
       - name: results-code-migrate
         continue-on-error: true
         run: |
-          export OBJ="$(ls lfs*.c | sed 's/\.c/\.o/' | tr '\n' ' ')"
+          export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
             -DLFS_NO_DEBUG \
@@ -250,13 +244,13 @@ jobs:
       - name: install
         run: |
           # need toml, also pip3 isn't installed by default?
-          sudo apt-get update
-          sudo apt-get install python3 python3-pip
+          sudo apt-get -q update
+          sudo apt-get -q install python3 python3-pip
           sudo pip3 install toml
       - name: install-valgrind
         run: |
-          sudo apt-get update
-          sudo apt-get install valgrind
+          sudo apt-get -q update
+          sudo apt-get -q install valgrind
           valgrind --version
 #      # normal tests, we don't need to test all geometries
 #      - name: test-valgrind
