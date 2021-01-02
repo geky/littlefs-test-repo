@@ -109,10 +109,10 @@ jobs:
       - name: collect-coverage
         continue-on-error: true
         run: |
-#          echo "ls ."
-#          ls -lha .
-#          echo "ls tests"
-#          ls -lha tests
+          #echo "ls ."
+          #ls -lha .
+          #echo "ls tests"
+          #ls -lha tests
           mkdir -p coverage
           lcov $(for f in tests/*.toml.cumul.info ; do echo "-a $f" ; done) \
             -o coverage/${{github.job}}-${{matrix.arch}}.info
