@@ -115,7 +115,7 @@ jobs:
           ls -lha tests
           mkdir -p coverage
           lcov $(for f in tests/*.toml.cumul.info ; do echo "-a $f" ; done) \
-            -o coverage/${{github.job}}.info
+            -o coverage/${{github.job}}-${{matrix.arch}}.info
           # we only care about littlefs's actual source
           lcov -e coverage/${{github.job}}-${{matrix.arch}}.info lfs*.c \
             -o coverage/${{github.job}}-${{matrix.arch}}.info
