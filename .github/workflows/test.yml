@@ -125,6 +125,7 @@ jobs:
         with:
           name: coverage
           path: coverage
+          retention-days: 1
 
       # update results
       - uses: actions/checkout@v2
@@ -206,6 +207,12 @@ jobs:
           fi
           make clean code OBJ="$OBJ" \
             SCRIPTFLAGS+="-o code-migrate.csv"
+      - name: upload-results
+        continue-on-error: true
+        uses: actions/upload-artifact@v2
+        with:
+          name: results
+          path: results
       # limit reporting to Thumb, otherwise there would be too many numbers
       # flying around for the results to be easily readable
       - name: collect-status
@@ -219,16 +226,24 @@ jobs:
                 echo $f | sed -n 's/code-\(.*\).csv/-\1/p')"
               export CONTEXT="results / code$(
                 echo $f | sed -n 's/code-\(.*\).csv/ (\1)/p')"
-              export DESCRIPTION="Code size is $(
-                ./scripts/code.py -i $f -S $(
-                  [ -e master/$f ] && echo "-d master/$f"))"
-              jq -nc '{
+              export PREV="$(curl -sS \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
+                | jq -re "select(.sha != env.GITHUB_SHA) | .statuses[]
+                  | select(.context == env.CONTEXT).description
+                  | capture(\"Coverage is (?<coverage>[0-9\.]+)\").coverage" \
+                || echo 0)"
+              export DESCRIPTION="$(./scripts/code.py -i $f -s | awk '
+                NR==2 {printf "Code size is %d",$2}
+                NR==2 && ENVIRON["PREV"] != 0 {
+                    printf " (%+.2f%%)",100*$2/ENVIRON["PREV"]}')"
+              jq -n '{
                 state: "success",
                 context: env.CONTEXT,
                 description: env.DESCRIPTION,
                 target_job: "${{github.job}} (${{matrix.arch}})",
                 target_step: env.STEP}' \
-                > status/code$(echo $f | sed -n 's/code-\(.*\).csv/-\1/p').json
+                | tee status/code$(
+                    echo $f | sed -n 's/code-\(.*\).csv/-\1/p').json
           done
       - name: upload-status
         continue-on-error: true
@@ -277,34 +292,40 @@ jobs:
           path: coverage
       - name: results-coverage
         run: |
+          mkdir -p results
           lcov $(for f in coverage/*.info ; do echo "-a $f" ; done) \
             -o coverage/total.info
           # TODO diff against master status? running full master tests would
           # take too long...
-          ./scripts/coverage.py coverage/total.info -o coverage.csv
+          ./scripts/coverage.py coverage/total.info -o results/coverage.csv
+      - name: upload-results
+        continue-on-error: true
+        uses: actions/upload-artifact@v2
+        with:
+          name: results
+          path: results
       - name: collect-status
         run: |
           mkdir -p status
           export PREV="$(curl -sS \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
-            | jq -re "select(.sha != env.GITHUB_SHA)
-              | .statuses[]
+            | jq -re "select(.sha != env.GITHUB_SHA) | .statuses[]
               | select(.context == \"results / coverage\").description
-              | capture(\"Coverage is (?<coverage>[0-9]+)\").coverage" \
+              | capture(\"Coverage is (?<coverage>[0-9\.]+)\").coverage" \
             || echo 0)"
           export STEP="results-coverage"
           export CONTEXT="results / coverage"
           # TODO make nicer
           export DESCRIPTION="Coverage is `
-            `$(./scripts/coverage.py -i coverage.csv -S)`
+            `$(./scripts/coverage.py -i results/coverage.csv -S)`
             `$([ "$PREV" -ne 0 ] && echo " was $PREV")"
-          jq -nc '{
+          jq -n '{
             state: "success",
             context: env.CONTEXT,
             description: env.DESCRIPTION,
             target_job: "${{github.job}}",
             target_step: env.STEP}' \
-            > status/coverage.json
+            | tee status/coverage.json
       - name: upload-status
         uses: actions/upload-artifact@v2
         with:
