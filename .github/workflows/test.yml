@@ -153,6 +153,10 @@ jobs:
           fi
           make clean code OBJ="$OBJ" \
             SCRIPTFLAGS+="-o results/code.csv"
+          echo "env:"
+          env
+          echo "results:"
+          ls results
       - name: results-code-readonly
         continue-on-error: true
         run: |
@@ -173,6 +177,10 @@ jobs:
           # TODO remove this OBJ
           make clean code OBJ="$OBJ" \
             SCRIPTFLAGS+="-o results/code-readonly.csv"
+          echo "env:"
+          env
+          echo "results:"
+          ls results
       - name: results-code-threadsafe
         continue-on-error: true
         run: |
@@ -192,10 +200,18 @@ jobs:
           fi
           make clean code OBJ="$OBJ" \
             SCRIPTFLAGS+="-o results/code-threadsafe.csv"
+          echo "env:"
+          env
+          echo "results:"
+          ls results
       - name: results-code-migrate
         continue-on-error: true
         run: |
+          echo "results:"
+          ls results
           mkdir -p results
+          echo "results:"
+          ls results
           export OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')"
           export CFLAGS+=" \
             -DLFS_NO_ASSERT \
@@ -211,6 +227,10 @@ jobs:
           fi
           make clean code OBJ="$OBJ" \
             SCRIPTFLAGS+="-o results/code-migrate.csv"
+          echo "env:"
+          env
+          echo "results:"
+          ls results
       - name: upload-results
         continue-on-error: true
         uses: actions/upload-artifact@v2
@@ -240,7 +260,7 @@ jobs:
               export DESCRIPTION="$(./scripts/code.py -i $f -s | awk '
                 NR==2 {printf "Code size is %d B",$2}
                 NR==2 && ENVIRON["PREV"] != 0 {
-                    printf " (%+.2f%%)",100*$2/ENVIRON["PREV"]}')"
+                    printf " (%+.2f%%)",100*($2-ENVIRON["PREV"])/$2}')"
               jq -n '{
                 state: "success",
                 context: env.CONTEXT,
