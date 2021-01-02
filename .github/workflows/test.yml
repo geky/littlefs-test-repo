@@ -240,7 +240,7 @@ jobs:
               export DESCRIPTION="$(./scripts/code.py -i $f -s | awk '
                 NR==2 {printf "Code size is %d B",$2}
                 NR==2 && ENVIRON["PREV"] != 0 {
-                    printf " (%+.2f%%)",100*($2-ENVIRON["PREV"])/$2}')"
+                  printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/$2}')"
               jq -n '{
                 state: "success",
                 context: env.CONTEXT,
@@ -248,7 +248,7 @@ jobs:
                 target_job: "${{github.job}} (${{matrix.arch}})",
                 target_step: env.STEP}' \
                 | tee status/code$(
-                    echo $f | sed -n 's/.*code-\(.*\).csv/-\1/p').json
+                  echo $f | sed -n 's/.*code-\(.*\).csv/-\1/p').json
           done
       - name: upload-status
         continue-on-error: true
@@ -312,18 +312,19 @@ jobs:
       - name: collect-status
         run: |
           mkdir -p status
+          export STEP="results-coverage"
+          export CONTEXT="results / coverage"
           export PREV="$(curl -sS \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
             | jq -re "select(.sha != env.GITHUB_SHA) | .statuses[]
-              | select(.context == \"results / coverage\").description
+              | select(.context == env.CONTEXT).description
               | capture(\"Coverage is (?<result>[0-9\.]+)\").result" \
             || echo 0)"
-          export STEP="results-coverage"
-          export CONTEXT="results / coverage"
-          # TODO make nicer
-          export DESCRIPTION="Coverage is `
-            `$(./scripts/coverage.py -i results/coverage.csv -S)`
-            `$([ "$PREV" -ne 0 ] && echo " was $PREV")"
+          export DESCRIPTION="$(./script/coverage.py -i $f -s
+            | awk -F '[ /%]+' '
+              NR==2 {printf "Coverage is %.1f%% of %d lines",$4,$3}
+              NR==2 && ENVIRON["PREV"] != 0 {
+                printf " (%+.1f%%)",$4-ENVIRON["PREV"]}')"
           jq -n '{
             state: "success",
             context: env.CONTEXT,

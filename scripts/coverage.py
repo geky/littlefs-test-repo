@@ -130,93 +130,91 @@ def main(**args):
         return entries
 
     def diff_entries(olds, news):
-        diff = co.defaultdict(lambda: (None, None, None, None, None, None))
+        diff = co.defaultdict(lambda: (0, 0, 0, 0, 0, 0, 0))
         for name, (new_hits, new_count) in news.items():
             diff[name] = (
                 0, 0,
                 new_hits, new_count,
-                new_hits, new_count)
+                new_hits, new_count,
+                (new_hits/new_count if new_count else 1.0) - 1.0)
         for name, (old_hits, old_count) in olds.items():
-            new_hits = diff[name][2] or 0
-            new_count = diff[name][3] or 0
+            _, _, new_hits, new_count, _, _, _ = diff[name]
             diff[name] = (
                 old_hits, old_count,
                 new_hits, new_count,
-                new_hits-old_hits, new_count-old_count)
+                new_hits-old_hits, new_count-old_count,
+                ((new_hits/new_count if new_count else 1.0)
+                    - (old_hits/old_count if old_count else 1.0)))
         return diff
 
     def print_header(by=''):
         if not args.get('diff', False):
-            print('%-36s %11s' % (by, 'hits/count'))
+            print('%-36s %19s' % (by, 'hits/line'))
         else:
-            print('%-36s %11s %11s %11s' % (by, 'old', 'new', 'diff'))
+            print('%-36s %19s %19s %11s' % (by, 'old', 'new', 'diff'))
 
     def print_entries(by='function'):
         entries = dedup_entries(results, by=by)
 
         if not args.get('diff', None):
             print_header(by=by)
-            for name, (hits, count) in sorted(entries.items(),
-                    key=lambda x: (-(x[1][1]-x[1][0]), -x[1][1], x)):
-                print("%-36s %11s (%.2f%%)" % (name,
-                    '%d/%d' % (hits, count),
-                    100*(hits/count if count else 1.0)))
+            for name, (hits, count) in sorted(entries.items()):
+                print("%-36s %11s %7s" % (name,
+                    '%d/%d' % (hits, count)
+                        if count else '-',
+                    '%.1f%%' % (100*hits/count)
+                        if count else '-'))
         else:
             prev_entries = dedup_entries(prev_results, by=by)
             diff = diff_entries(prev_entries, entries)
             print_header(by='%s (%d added, %d removed)' % (by,
-                sum(1 for _, old, _, _, _, _ in diff.values() if not old),
-                sum(1 for _, _, _, new, _, _ in diff.values() if not new)))
+                sum(1 for _, old, _, _, _, _, _ in diff.values() if not old),
+                sum(1 for _, _, _, new, _, _, _ in diff.values() if not new)))
             for name, (
                     old_hits, old_count,
                     new_hits, new_count,
-                    diff_hits, diff_count) in sorted(diff.items(),
-                        key=lambda x: (
-                            -(x[1][5]-x[1][4]), -x[1][5], -x[1][3], x)):
-                ratio = ((new_hits/new_count if new_count else 1.0)
-                    - (old_hits/old_count if old_count else 1.0))
-                if diff_hits or diff_count or args.get('all', False):
-                    print("%-36s %11s %11s %11s%s" % (name,
+                    diff_hits, diff_count, ratio) in sorted(diff.items(),
+                        key=lambda x: (-x[1][6], x)):
+                if ratio or args.get('all', False):
+                    print("%-36s %11s %7s %11s %7s %11s%s" % (name,
                         '%d/%d' % (old_hits, old_count)
+                            if old_count else '-',
+                        '%.1f%%' % (100*old_hits/old_count)
                             if old_count else '-',
                         '%d/%d' % (new_hits, new_count)
                             if new_count else '-',
+                        '%.1f%%' % (100*new_hits/new_count)
+                            if new_count else '-',
                         '%+d/%+d' % (diff_hits, diff_count),
-                        ' (%+.2f%%)' % (100*ratio) if ratio else ''))
+                        ' (%+.1f%%)' % (100*ratio) if ratio else ''))
 
     def print_totals():
         if not args.get('diff', None):
-            print("%-36s %11s (%.2f%%)" % ('TOTALS',
-                '%d/%d' % (total_hits, total_count),
-                100*(total_hits/total_count if total_count else 1.0)))
+            print("%-36s %11s %7s" % ('TOTAL',
+                '%d/%d' % (total_hits, total_count)
+                    if total_count else '-',
+                '%.1f%%' % (100*total_hits/total_count)
+                    if total_count else '-'))
         else:
             ratio = ((total_hits/total_count
                     if total_count else 1.0)
                 - (prev_total_hits/prev_total_count
                     if prev_total_count else 1.0))
-            print("%-36s %11s %11s %11s%s" % ('TOTALS',
-                '%d/%d' % (prev_total_hits, prev_total_count),
-                '%d/%d' % (total_hits, total_count),
+            print("%-36s %11s %7s %11s %7s %11s%s" % ('TOTAL',
+                '%d/%d' % (prev_total_hits, prev_total_count)
+                    if prev_total_count else '-',
+                '%.1f%%' % (100*prev_total_hits/prev_total_count)
+                    if prev_total_count else '-',
+                '%d/%d' % (total_hits, total_count)
+                    if total_count else '-',
+                '%.1f%%' % (100*total_hits/total_count)
+                    if total_count else '-',
                 '%+d/%+d' % (total_hits-prev_total_hits,
                     total_count-prev_total_count),
-                ' (%+.2f%%)' % (100*ratio) if ratio else ''))
-
-    def print_status():
-        if not args.get('diff', None):
-            print("%d/%d (%.2f%%)" % (total_hits, total_count,
-                100*(total_hits/total_count if total_count else 1.0)))
-        else:
-            ratio = ((total_hits/total_count
-                    if total_count else 1.0)
-                - (prev_total_hits/prev_total_count
-                    if prev_total_count else 1.0))
-            print("%d/%d (%+.2f%%)" % (total_hits, total_count,
-                (100*ratio) if ratio else ''))
+                ' (%+.1f%%)' % (100*ratio) if ratio else ''))
 
     if args.get('quiet', False):
         pass
-    elif args.get('status', False):
-        print_status()
     elif args.get('summary', False):
         print_header()
         print_totals()
@@ -250,8 +248,6 @@ if __name__ == "__main__":
         help="Show file-level coverage.")
     parser.add_argument('-s', '--summary', action='store_true',
         help="Only show the total coverage.")
-    parser.add_argument('-S', '--status', action='store_true',
-        help="Show minimum info useful for a single-line status.")
     parser.add_argument('-q', '--quiet', action='store_true',
         help="Don't show anything, useful with -o.")
     sys.exit(main(**vars(parser.parse_args())))
