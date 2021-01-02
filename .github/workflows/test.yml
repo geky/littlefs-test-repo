@@ -75,7 +75,7 @@ jobs:
       # normal+reentrant tests
       - name: test-default
         continue-on-error: true
-        run: make test_dirs SCRIPTFLAGS+="-nrk" VERBOSE=1
+        run: make test_dirs SCRIPTFLAGS+="-nrk"
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
 #        run: make test SCRIPTFLAGS+="-nrk
@@ -109,15 +109,16 @@ jobs:
       - name: collect-coverage
         continue-on-error: true
         run: |
-          echo "ls ."
-          ls -lha .
-          echo "ls tests"
-          ls -lha tests
+#          echo "ls ."
+#          ls -lha .
+#          echo "ls tests"
+#          ls -lha tests
           mkdir -p coverage
           lcov $(for f in tests/*.toml.cumul.info ; do echo "-a $f" ; done) \
             -o coverage/${{github.job}}-${{matrix.arch}}.info
           # we only care about littlefs's actual source
-          lcov -e coverage/${{github.job}}-${{matrix.arch}}.info lfs*.c \
+          lcov -e coverage/${{github.job}}-${{matrix.arch}}.info \
+            $(for f in lfs*.c ; do echo "/$f" ; done) \
             -o coverage/${{github.job}}-${{matrix.arch}}.info
       - name: upload-coverage
         continue-on-error: true
@@ -213,7 +214,6 @@ jobs:
         if: matrix.arch == 'thumb'
         run: |
           mkdir -p status
-          shopt -s nullglob
           for f in code*.csv
           do
               export STEP="results-code$(
@@ -243,7 +243,6 @@ jobs:
   # run under Valgrind to check for memory errors
   valgrind:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: install
@@ -260,3 +259,47 @@ jobs:
 #      # normal tests, we don't need to test all geometries
 #      - name: test-valgrind
 #        run: make test SCRIPTFLAGS+="-k --valgrind"
+
+  # collect coverage info
+  coverage:
+    runs-on: ubuntu-latest
+    needs: [test]
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq python3 python3-pip lcov
+          sudo pip3 install toml
+      - uses: actions/download-artifact@v2
+        with:
+          name: coverage
+          path: coverage
+      - name: results-coverage
+        run: |
+          lcov $(for f in coverage/*.info ; do echo "-a $f" ; done) \
+            -o coverage/total.info
+          # TODO diff against master status? running full master tests would
+          # take too long...
+          ./scripts/coverage.py coverage/total.info -o coverage.csv
+      - name: collect-status
+        run: |
+          export STEP="results-coverage"
+          export CONTEXT="results / coverage"
+          export DESCRIPTION="Coverage is $(
+            ./scripts/coverage.py -i coverage.csv -S)"
+          jq -nc '{
+            state: "success",
+            context: env.CONTEXT,
+            description: env.DESCRIPTION,
+            target_job: "${{github.job}} (${{matrix.arch}})",
+            target_step: env.STEP}' \
+            > status/coverage.json
+      - name: upload-status
+        if: matrix.arch == 'thumb'
+        uses: actions/upload-artifact@v2
+        with:
+          name: status
+          path: status
+          retention-days: 1
