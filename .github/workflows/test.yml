@@ -302,7 +302,7 @@ jobs:
             state: "success",
             context: env.CONTEXT,
             description: env.DESCRIPTION,
-            target_job: "${{github.job}} (${{matrix.arch}})",
+            target_job: "${{github.job}}",
             target_step: env.STEP}' \
             > status/coverage.json
       - name: upload-status
