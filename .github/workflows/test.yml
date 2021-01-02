@@ -297,7 +297,6 @@ jobs:
             target_step: env.STEP}' \
             > status/coverage.json
       - name: upload-status
-        if: matrix.arch == 'thumb'
         uses: actions/upload-artifact@v2
         with:
           name: status
