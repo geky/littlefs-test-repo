@@ -230,10 +230,10 @@ jobs:
                 "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
                 | jq -re "select(.sha != env.GITHUB_SHA) | .statuses[]
                   | select(.context == env.CONTEXT).description
-                  | capture(\"Coverage is (?<coverage>[0-9\.]+)\").coverage" \
+                  | capture(\"Code size is (?<result>[0-9]+)\").result" \
                 || echo 0)"
               export DESCRIPTION="$(./scripts/code.py -i $f -s | awk '
-                NR==2 {printf "Code size is %d",$2}
+                NR==2 {printf "Code size is %d B",$2}
                 NR==2 && ENVIRON["PREV"] != 0 {
                     printf " (%+.2f%%)",100*$2/ENVIRON["PREV"]}')"
               jq -n '{
@@ -311,7 +311,7 @@ jobs:
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
             | jq -re "select(.sha != env.GITHUB_SHA) | .statuses[]
               | select(.context == \"results / coverage\").description
-              | capture(\"Coverage is (?<coverage>[0-9\.]+)\").coverage" \
+              | capture(\"Coverage is (?<result>[0-9\.]+)\").result" \
             || echo 0)"
           export STEP="results-coverage"
           export CONTEXT="results / coverage"
