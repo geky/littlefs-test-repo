@@ -715,7 +715,7 @@ def main(**args):
         for perm in suite.perms:
             total += perm.shouldtest(**args)
     if total != sum(len(suite.perms) for suite in suites):
-        print('total down to %d permutations' % total)
+        print('filtered down to %d permutations' % total)
 
     # only requested to build?
     if args.get('build', False):
@@ -761,7 +761,8 @@ def main(**args):
 
     if args.get('coverage', False):
         # collect coverage info
-        cmd = (['make', '-f', 'Makefile'] +
+        # why -j1? lcov doesn't work in parallel because of gcov issues
+        cmd = (['make', '-j1', '-f', 'Makefile'] +
             list(it.chain.from_iterable(['-f', m] for m in makefiles)) +
             [re.sub('\.test$', '.cumul.info', target) for target in targets])
         if args.get('verbose', False):
