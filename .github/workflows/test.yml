@@ -140,7 +140,8 @@ jobs:
         run: |
           mkdir -p results
           # TODO remove the need for OBJ
-          make clean code \
+          make clean
+          make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
             CFLAGS+="\
               -DLFS_NO_ASSERT \
@@ -152,7 +153,8 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p results
-          make clean code \
+          make clean
+          make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
             CFLAGS+="\
               -DLFS_NO_ASSERT \
@@ -165,7 +167,8 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p results
-          make clean code \
+          make clean
+          make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
             CFLAGS+="\
               -DLFS_NO_ASSERT \
@@ -178,7 +181,8 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p results
-          make clean code \
+          make clean
+          make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
             CFLAGS+="\
               -DLFS_NO_ASSERT \
