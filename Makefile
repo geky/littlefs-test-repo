@@ -23,17 +23,19 @@ NM ?= nm
 LCOV ?= lcov
 
 SRC ?= $(wildcard *.c bd/*.c)
-OBJ := $(SRC:%.c=$(BUILDDIR)%.o)
-DEP := $(SRC:%.c=$(BUILDDIR)%.d)
-ASM := $(SRC:%.c=$(BUILDDIR)%.s)
+OBJ := $(SRC:%.c=%.o)
+DEP := $(SRC:%.c=%.d)
+ASM := $(SRC:%.c=%.s)
+ifdef BUILDDIR
+override OBJ := $(addprefix $(BUILDDIR),$(OBJ))
+override DEP := $(addprefix $(BUILDDIR),$(DEP))
+override ASM := $(addprefix $(BUILDDIR),$(ASM))
+endif
 
 ifdef DEBUG
 override CFLAGS += -O0 -g3
 else
 override CFLAGS += -Os
-endif
-ifdef WORD
-override CFLAGS += -m$(WORD)
 endif
 ifdef TRACE
 override CFLAGS += -DLFS_YES_TRACE
@@ -43,13 +45,19 @@ override CFLAGS += -std=c99 -Wall -pedantic
 override CFLAGS += -Wextra -Wshadow -Wjump-misses-init -Wundef
 
 ifdef VERBOSE
-override SCRIPTFLAGS += -v
+override TESTFLAGS += -v
+override CODEFLAGS += -v
+override COVERAGEFLAGS += -v
 endif
 ifdef EXEC
-override TESTFLAGS += $(patsubst %,--exec=%,$(EXEC))
+override TESTFLAGS += --exec="$(EXEC)"
 endif
 ifdef BUILDDIR
-override TESTFLAGS += --build-dir=$(BUILDDIR:/=)
+override TESTFLAGS += --build-dir="$(BUILDDIR:/=)"
+override CODEFLAGS += --build-dir="$(BUILDDIR:/=)"
+endif
+ifneq ($(NM),nm)
+override CODEFLAGS += --nm-tool="$(NM)"
 endif
 
 
@@ -65,23 +73,23 @@ size: $(OBJ)
 	$(SIZE) -t $^
 
 .PHONY: code
-code:
-	./scripts/code.py $(SCRIPTFLAGS)
+code: $(OBJ)
+	./scripts/code.py $^ $(CODEFLAGS)
 
 .PHONY: coverage
 coverage:
-	$(strip ./scripts/coverage.py $(SCRIPTFLAGS) \
-		$(BUILDDIR)tests/*.toml.info)
+	./scripts/coverage.py $(BUILDDIR)tests/*.toml.info $(COVERAGEFLAGS)
 
 .PHONY: test
 test:
-	./scripts/test.py $(TESTFLAGS) $(SCRIPTFLAGS)
+	./scripts/test.py $(TESTFLAGS)
 .SECONDEXPANSION:
 test%: tests/test$$(firstword $$(subst \#, ,%)).toml
-	./scripts/test.py $@ $(TESTFLAGS) $(SCRIPTFLAGS)
+	./scripts/test.py $@ $(TESTFLAGS)
 
 # rules
 -include $(DEP)
+.SUFFIXES:
 
 $(BUILDDIR)lfs: $(OBJ)
 	$(CC) $(CFLAGS) $^ $(LFLAGS) -o $@
@@ -95,11 +103,11 @@ $(BUILDDIR)%.o: %.c
 $(BUILDDIR)%.s: %.c
 	$(CC) -S $(CFLAGS) $< -o $@
 
+# clean everything
 .PHONY: clean
 clean:
 	rm -f $(TARGET)
 	rm -f $(OBJ)
 	rm -f $(DEP)
 	rm -f $(ASM)
-	rm -f tests/*.toml.*
-	rm -f sizes/*
+	rm -f $(BUILDDIR)tests/*.toml.*
