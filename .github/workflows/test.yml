@@ -296,6 +296,67 @@ jobs:
           ls -flh
           make -B test
 
+  # test migration using littlefs-fuse
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need toml, also pip3 isn't installed by default?
+          sudo apt-get update -qq
+          sudo apt-get install -qq python3 python3-pip libfuse-dev
+          sudo pip3 install toml
+          fusermount -V
+          gcc --version
+      - uses: actions/checkout@v2
+        with:
+          repository: littlefs-project/littlefs-fuse
+          ref: v2
+          path: littlefs-fuse
+      - name: setup
+        run: |
+          # copy our new version into littlefs-fuse
+          rm -rf littlefs-fuse/littlefs/*
+          cp -r $(git ls-tree --name-only HEAD) littlefs-fuse/littlefs
+
+          # setup disk for littlefs-fuse
+          mkdir mount
+          sudo chmod a+rw /dev/loop0
+          dd if=/dev/zero bs=512 count=128K of=disk
+          losetup /dev/loop0 disk
+      - name: test
+        run: |
+          # compile v1 and v2
+          make -C v1
+          make -C v2
+
+          # run self-host test with v1
+          v1/lfs --format /dev/loop0
+          v1/lfs /dev/loop0 mount
+
+          ls mount
+          mkdir mount/littlefs
+          cp -r $(git ls-tree --name-only HEAD) mount/littlefs
+          cd mount/littlefs
+          stat .
+          ls -flh
+          make -B test
+
+          # attempt to migrate
+          cd ../..
+          fusermount -u mount
+
+          v2/lfs --migrate /dev/loop0
+          v2/lfs /dev/loop0 mount
+
+          # run self-host test with v2 right where we left off
+          ls mount
+          cd mount/littlefs
+          stat .
+          ls -flh
+          make -B test
+
   # collect coverage info
   coverage:
     runs-on: ubuntu-latest
