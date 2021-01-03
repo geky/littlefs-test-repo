@@ -313,12 +313,17 @@ jobs:
         with:
           repository: littlefs-project/littlefs-fuse
           ref: v2
-          path: littlefs-fuse
+          path: v2
+      - uses: actions/checkout@v2
+        with:
+          repository: littlefs-project/littlefs-fuse
+          ref: v1
+          path: v1
       - name: setup
         run: |
           # copy our new version into littlefs-fuse
-          rm -rf littlefs-fuse/littlefs/*
-          cp -r $(git ls-tree --name-only HEAD) littlefs-fuse/littlefs
+          rm -rf v2/littlefs/*
+          cp -r $(git ls-tree --name-only HEAD) v2/littlefs
 
           # setup disk for littlefs-fuse
           mkdir mount
