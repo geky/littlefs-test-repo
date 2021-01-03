@@ -70,7 +70,7 @@ def main(**args):
             r = csv.DictReader(f)
             results = [
                 (   result['file'],
-                    result['name'],
+                    result['function'],
                     int(result['size']))
                 for result in r]
 
@@ -84,7 +84,7 @@ def main(**args):
             r = csv.DictReader(f)
             prev_results = [
                 (   result['file'],
-                    result['name'],
+                    result['function'],
                     int(result['size']))
                 for result in r]
 
@@ -96,7 +96,7 @@ def main(**args):
     if args.get('output'):
         with open(args['output'], 'w') as f:
             w = csv.writer(f)
-            w.writerow(['file', 'name', 'size'])
+            w.writerow(['file', 'function', 'size'])
             for file, func, size in sorted(results):
                 w.writerow((file, func, size))
 

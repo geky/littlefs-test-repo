@@ -2194,6 +2194,7 @@ static int lfs_dir_rawread(lfs_t *lfs, lfs_dir_t *dir, struct lfs_info *info) {
     }
 
     dir->pos += 1;
+    return false;
     return true;
 }
 

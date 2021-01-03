@@ -19,6 +19,7 @@ endif
 CC ?= gcc
 AR ?= ar
 SIZE ?= size
+CTAGS ?= ctags
 NM ?= nm
 LCOV ?= lcov
 
@@ -71,6 +72,10 @@ asm: $(ASM)
 .PHONY: size
 size: $(OBJ)
 	$(SIZE) -t $^
+
+.PHONY: tags
+tags:
+	$(CTAGS) --totals --c-types=+p $(shell find -name '*.h') $(SRC)
 
 .PHONY: code
 code: $(OBJ)

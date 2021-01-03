@@ -703,7 +703,7 @@ def main(**args):
         if not args.get('verbose', False):
             for line in stdout:
                 sys.stdout.write(line)
-        sys.exit(-3)
+        sys.exit(-1)
 
     print('built %d test suites, %d test cases, %d permutations' % (
         len(suites),
@@ -741,7 +741,7 @@ def main(**args):
             else:
                 sys.stdout.write(
                     "\033[01m{path}:{lineno}:\033[01;31mfailure:\033[m "
-                    "{perm} failed with {returncode}\n".format(
+                    "{perm} failed\n".format(
                         perm=perm, path=perm.suite.path, lineno=perm.lineno,
                         returncode=perm.result.returncode or 0))
                 if perm.result.stdout:
@@ -770,7 +770,7 @@ def main(**args):
             stdout=sp.DEVNULL if not args.get('verbose', False) else None)
         proc.wait()
         if proc.returncode != 0:
-            sys.exit(-3)
+            sys.exit(-1)
 
     if args.get('gdb', False):
         failure = None

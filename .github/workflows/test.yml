@@ -298,7 +298,7 @@ jobs:
               | select(.context == env.CONTEXT).description
               | capture(\"Coverage is (?<result>[0-9\\\\.]+)\").result" \
             || echo 0)"
-          export DESCRIPTION="$(./script/coverage.py -u $f -s \
+          export DESCRIPTION="$(./scripts/coverage.py -u $f -s \
             | awk -F '[ /%]+' '
               NR==2 {printf "Coverage is %.1f%% of %d lines",$4,$3}
               NR==2 && ENVIRON["PREV"] != 0 {
