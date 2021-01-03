@@ -74,34 +74,34 @@ jobs:
       # normal+reentrant tests
       - name: test-default
         run: make test_dirs TESTFLAGS+="-nrk"
-#      # NOR flash: read/prog = 1 block = 4KiB
-#      - name: test-nor
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096"
-#      # SD/eMMC: read/prog = 512 block = 512
-#      - name: test-emmc
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_READ_SIZE=512 -DLFS_BLOCK_SIZE=512"
-#      # NAND flash: read/prog = 4KiB block = 32KiB
-#      - name: test-nand
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_READ_SIZE=4096 -DLFS_BLOCK_SIZE=\(32*1024\)"
-#      # other extreme geometries that are useful for various corner cases
-#      - name: test-no-intrinsics
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_NO_INTRINSICS"
-#      - name: test-byte-writes
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_READ_SIZE=1 -DLFS_CACHE_SIZE=1"
-#      - name: test-block-cycles
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_BLOCK_CYCLES=1"
-#      - name: test-odd-block-count
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_BLOCK_COUNT=1023 -DLFS_LOOKAHEAD_SIZE=256"
-#      - name: test-odd-block-size
-#        run: make test TESTFLAGS+="-nrk
-#          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704"
+      # NOR flash: read/prog = 1 block = 4KiB
+      - name: test-nor
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096"
+      # SD/eMMC: read/prog = 512 block = 512
+      - name: test-emmc
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_READ_SIZE=512 -DLFS_BLOCK_SIZE=512"
+      # NAND flash: read/prog = 4KiB block = 32KiB
+      - name: test-nand
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_READ_SIZE=4096 -DLFS_BLOCK_SIZE=\(32*1024\)"
+      # other extreme geometries that are useful for various corner cases
+      - name: test-no-intrinsics
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_NO_INTRINSICS"
+      - name: test-byte-writes
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_READ_SIZE=1 -DLFS_CACHE_SIZE=1"
+      - name: test-block-cycles
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_BLOCK_CYCLES=1"
+      - name: test-odd-block-count
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_BLOCK_COUNT=1023 -DLFS_LOOKAHEAD_SIZE=256"
+      - name: test-odd-block-size
+        run: make test TESTFLAGS+="-nrk
+          -DLFS_READ_SIZE=11 -DLFS_BLOCK_SIZE=704"
 
       # collect coverage
       - name: collect-coverage
@@ -247,9 +247,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -qq valgrind
           valgrind --version
-#      # normal tests, we don't need to test all geometries
-#      - name: test-valgrind
-#        run: make test TESTFLAGS+="-k --valgrind"
+      # normal tests, we don't need to test all geometries
+      - name: test-valgrind
+        run: make test TESTFLAGS+="-k --valgrind"
 
   # self-host with littlefs-fuse for a fuzz-like test
   fuse:
