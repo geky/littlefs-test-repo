@@ -254,6 +254,7 @@ jobs:
   # self-host with littlefs-fuse for a fuzz-like test
   fuse:
     runs-on: ubuntu-latest
+    if: !endsWith(github.ref, -prefix)
     steps:
       - uses: actions/checkout@v2
       - name: install
@@ -299,6 +300,7 @@ jobs:
   # test migration using littlefs-fuse
   migrate:
     runs-on: ubuntu-latest
+    if: !endsWith(github.ref, -prefix)
     steps:
       - uses: actions/checkout@v2
       - name: install
