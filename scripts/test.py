@@ -42,7 +42,7 @@ COVERAGE_RULES = """
 %(path)s.test: | %(path)s.clean
 .PHONY: %(path)s.clean
 %(path)s.clean:
-    rm -f %(path)s*.gcda
+    rm -f %(path)s*.gcda %(path)s*.gcno
 
 # accumulate coverage info
 .PHONY: %(path)s.info
