@@ -251,6 +251,51 @@ jobs:
 #      - name: test-valgrind
 #        run: make test TESTFLAGS+="-k --valgrind"
 
+  # self-host with littlefs-fuse for a fuzz-like test
+  fuse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need toml, also pip3 isn't installed by default?
+          sudo apt-get update -qq
+          sudo apt-get install -qq python3 python3-pip libfuse-dev
+          sudo pip3 install toml
+          fusermount -V
+          gcc --version
+      - uses: actions/checkout@v2
+        with:
+          repository: littlefs-project/littlefs-fuse
+          ref: v2
+          path: littlefs-fuse
+      - name: setup
+        run: |
+          # copy our new version into littlefs-fuse
+          rm -rf littlefs-fuse/littlefs/*
+          cp -r $(git ls-tree --name-only HEAD) littlefs-fuse/littlefs
+
+          # setup disk for littlefs-fuse
+          mkdir mount
+          sudo chmod a+rw /dev/loop0
+          dd if=/dev/zero bs=512 count=128K of=disk
+          losetup /dev/loop0 disk
+      - name: test
+        run: |
+          # self-host test
+          make -C littlefs-fuse
+
+          littlefs-fuse/lfs --format /dev/loop0
+          littlefs-fuse/lfs /dev/loop0 mount
+
+          ls mount
+          mkdir mount/littlefs
+          cp -r $(git ls-tree --name-only HEAD) mount/littlefs
+          cd mount/littlefs
+          stat .
+          ls -flh
+          make -B test
+
   # collect coverage info
   coverage:
     runs-on: ubuntu-latest
