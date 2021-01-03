@@ -73,7 +73,6 @@ jobs:
             -include stdio.h"
       # normal+reentrant tests
       - name: test-default
-        continue-on-error: true
         run: make test_dirs TESTFLAGS+="-nrk"
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
