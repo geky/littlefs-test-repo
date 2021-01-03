@@ -128,13 +128,6 @@ jobs:
           retention-days: 1
 
       # update results
-      - uses: actions/checkout@v2
-        if: github.ref != 'refs/heads/master'
-        continue-on-error: true
-        with:
-          ref: master
-          path: master
-
       - name: results-code
         continue-on-error: true
         run: |
@@ -143,7 +136,7 @@ jobs:
           make clean
           make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
-            CFLAGS+="\
+            CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
@@ -156,12 +149,12 @@ jobs:
           make clean
           make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
-            CFLAGS+="\
+            CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
-              -DLFS_READONLY"
+              -DLFS_READONLY" \
             CODEFLAGS+="-o results/code-readonly.csv"
       - name: results-code-threadsafe
         continue-on-error: true
@@ -170,12 +163,12 @@ jobs:
           make clean
           make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
-            CFLAGS+="\
+            CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
-              -DLFS_THREADSAFE"
+              -DLFS_THREADSAFE" \
             CODEFLAGS+="-o results/code-threadsafe.csv"
       - name: results-code-migrate
         continue-on-error: true
@@ -184,12 +177,12 @@ jobs:
           make clean
           make code \
             OBJ="$(echo lfs*.c | sed 's/\.c/\.o/g')" \
-            CFLAGS+="\
+            CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
-              -DLFS_MIGRATE"
+              -DLFS_MIGRATE" \
             CODEFLAGS+="-o results/code-migrate.csv"
       - name: upload-results
         continue-on-error: true
@@ -298,8 +291,8 @@ jobs:
               | select(.context == env.CONTEXT).description
               | capture(\"Coverage is (?<result>[0-9\\\\.]+)\").result" \
             || echo 0)"
-          export DESCRIPTION="$(./scripts/coverage.py -u $f -s \
-            | awk -F '[ /%]+' '
+          export DESCRIPTION="$(
+            ./scripts/coverage.py -u results/coverage.csv -s | awk -F '[ /%]+' '
               NR==2 {printf "Coverage is %.1f%% of %d lines",$4,$3}
               NR==2 && ENVIRON["PREV"] != 0 {
                 printf " (%+.1f%%)",$4-ENVIRON["PREV"]}')"
