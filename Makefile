@@ -1,6 +1,19 @@
-TARGET = lfs.a
+ifdef BUILDDIR
+# make sure BUILDDIR ends with a slash
+override BUILDDIR := $(BUILDDIR)/
+# bit of a hack, but we want to make sure BUILDDIR directory structure
+# is correct before any commands
+$(if $(findstring n,$(MAKEFLAGS)),, $(shell mkdir -p \
+	$(BUILDDIR) \
+	$(BUILDDIR)bd \
+	$(BUILDDIR)tests))
+endif
+
+# overridable target/src/tools/flags/etc
 ifneq ($(wildcard test.c main.c),)
-override TARGET = lfs
+TARGET ?= $(BUILDDIR)lfs
+else
+TARGET ?= $(BUILDDIR)lfs.a
 endif
 
 CC ?= gcc
@@ -9,10 +22,10 @@ SIZE ?= size
 NM ?= nm
 LCOV ?= lcov
 
-SRC += $(wildcard *.c bd/*.c)
-OBJ := $(SRC:.c=.o)
-DEP := $(SRC:.c=.d)
-ASM := $(SRC:.c=.s)
+SRC ?= $(wildcard *.c bd/*.c)
+OBJ := $(SRC:%.c=$(BUILDDIR)%.o)
+DEP := $(SRC:%.c=$(BUILDDIR)%.d)
+ASM := $(SRC:%.c=$(BUILDDIR)%.s)
 
 ifdef DEBUG
 override CFLAGS += -O0 -g3
@@ -35,8 +48,12 @@ endif
 ifdef EXEC
 override TESTFLAGS += $(patsubst %,--exec=%,$(EXEC))
 endif
+ifdef BUILDDIR
+override TESTFLAGS += --build-dir=$(BUILDDIR:/=)
+endif
 
 
+# commands
 .PHONY: all build
 all build: $(TARGET)
 
@@ -53,7 +70,8 @@ code:
 
 .PHONY: coverage
 coverage:
-	./scripts/coverage.py $(SCRIPTFLAGS)
+	$(strip ./scripts/coverage.py $(SCRIPTFLAGS) \
+		$(BUILDDIR)tests/*.toml.info)
 
 .PHONY: test
 test:
@@ -62,18 +80,19 @@ test:
 test%: tests/test$$(firstword $$(subst \#, ,%)).toml
 	./scripts/test.py $@ $(TESTFLAGS) $(SCRIPTFLAGS)
 
+# rules
 -include $(DEP)
 
-lfs: $(OBJ)
+$(BUILDDIR)lfs: $(OBJ)
 	$(CC) $(CFLAGS) $^ $(LFLAGS) -o $@
 
-%.a: $(OBJ)
+$(BUILDDIR)%.a: $(OBJ)
 	$(AR) rcs $@ $^
 
-%.o: %.c
+$(BUILDDIR)%.o: %.c
 	$(CC) -c -MMD $(CFLAGS) $< -o $@
 
-%.s: %.c
+$(BUILDDIR)%.s: %.c
 	$(CC) -S $(CFLAGS) $< -o $@
 
 .PHONY: clean
