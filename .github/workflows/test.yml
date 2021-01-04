@@ -24,6 +24,11 @@ jobs:
           sudo pip3 install toml
           gcc --version
 
+          # setup a ram-backed disk to speed up reentrant tests
+          mkdir disks
+          sudo mount -t tmpfs -o size=100m tmpfs disks
+          echo "TESTFLAGS=$TESTFLAGS --disk=disks/disk" >> $GITHUB_ENV
+
           # collect coverage
           mkdir -p coverage
           echo "TESTFLAGS=$TESTFLAGS --coverage=`
