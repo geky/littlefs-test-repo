@@ -60,9 +60,8 @@ jobs:
                 target_url: env.TARGET_URL}')"
             # update status
             curl -sS -H "authorization: token ${{secrets.BOT_TOKEN}}" \
-              -X POST \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/`
-              `${{github.event.workflow_run.head_sha}}" \
+              -X POST "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/`
+                `${{github.event.workflow_run.head_sha}}" \
               -d "$(jq -nc '{
                 state: env.STATE,
                 context: env.CONTEXT,
