@@ -5,6 +5,8 @@ on:
     branches: master
     types: completed
 
+# TODO check most recent commit?
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -42,59 +44,59 @@ jobs:
           echo "LFS_VERSION_MINOR=$LFS_VERSION_MINOR" >> $GITHUB_ENV
           echo "LFS_VERSION_PATCH=$LFS_VERSION_PATCH" >> $GITHUB_ENV
 
-        # try to find previous version?
-        - name: find-prev-version
-          continue-on-error: true
-          run: |
-            LFS_PREV_VERSION="$(git describe --tags --abbrev=0 --match 'v*')"
-            echo "LFS_PREV_VERSION=$LFS_PREV_VERSION"
-            echo "LFS_PREV_VERSION=$LFS_PREV_VERSION" >> $GITHUB_ENV
+      # try to find previous version?
+      - name: find-prev-version
+        continue-on-error: true
+        run: |
+          LFS_PREV_VERSION="$(git describe --tags --abbrev=0 --match 'v*')"
+          echo "LFS_PREV_VERSION=$LFS_PREV_VERSION"
+          echo "LFS_PREV_VERSION=$LFS_PREV_VERSION" >> $GITHUB_ENV
 
-        # create and update major branches (vN and vN-prefix)
-        - name: build-major-branches
-          run: |
-            # create major branch
-            git branch "v$LFS_VERSION_MAJOR" HEAD
+      # create and update major branches (vN and vN-prefix)
+      - name: build-major-branches
+        run: |
+          # create major branch
+          git branch "v$LFS_VERSION_MAJOR" HEAD
 
-            # create major prefix branch
-            git config user.name ${{secrets.BOT_USERNAME}}
-            git config user.email ${{secrets.BOT_EMAIL}}
-            git fetch "https://github.com/$GITHUB_REPOSITORY.git" \
-              "v$LFS_VERSION_MAJOR-prefix" || true
-            ./scripts/prefix.py "lfs$LFS_VERSION_MAJOR"
-            git branch "v$LFS_VERSION_MAJOR-prefix" $( \
-              git commit-tree $(git write-tree) \
-                $(git rev-parse --verify -q FETCH_HEAD | sed -e 's/^/-p /') \
-                -p HEAD \
-                -m "Generated v$LFS_VERSION_MAJOR prefixes")
-            git reset --hard
+          # create major prefix branch
+          git config user.name ${{secrets.BOT_USERNAME}}
+          git config user.email ${{secrets.BOT_EMAIL}}
+          git fetch "https://github.com/$GITHUB_REPOSITORY.git" \
+            "v$LFS_VERSION_MAJOR-prefix" || true
+          ./scripts/prefix.py "lfs$LFS_VERSION_MAJOR"
+          git branch "v$LFS_VERSION_MAJOR-prefix" $( \
+            git commit-tree $(git write-tree) \
+              $(git rev-parse --verify -q FETCH_HEAD | sed -e 's/^/-p /') \
+              -p HEAD \
+              -m "Generated v$LFS_VERSION_MAJOR prefixes")
+          git reset --hard
 
-            # push!
-            git push --atomic \
-              "https://${{secrets.BOT_USERNAME}}:${{secrets.BOT_TOKEN}}`
-                `@github.com/$GITHUB_REPOSITORY.git" \
-              "v$LFS_VERSION_MAJOR" \
-              "v$LFS_VERSION_MAJOR-prefix"
+          # push!
+          git push --atomic \
+            "https://${{secrets.BOT_USERNAME}}:${{secrets.BOT_TOKEN}}`
+              `@github.com/$GITHUB_REPOSITORY.git" \
+            "v$LFS_VERSION_MAJOR" \
+            "v$LFS_VERSION_MAJOR-prefix"
 
-        # build release notes
-        - name: build-release
-          run: |
-            # find changes since last release
-            if [ ! -z "$LFS_PREV_VERSION" ]
-            then
-              export CHANGES="$(git log --oneline $LFS_PREV_VERSION.. \
-                --grep='^Merge' --invert-grep)"
-              printf "CHANGES\n%s\n\n" "$CHANGES"
-            fi
+      # build release notes
+      - name: build-release
+        run: |
+          # find changes since last release
+          if [ ! -z "$LFS_PREV_VERSION" ]
+          then
+            export CHANGES="$(git log --oneline $LFS_PREV_VERSION.. \
+              --grep='^Merge' --invert-grep)"
+            printf "CHANGES\n%s\n\n" "$CHANGES"
+          fi
 
-            # create release and patch version tag (vN.N.N)
-            # only draft if not a patch release
-            curl -sS -H "authorization: token ${{secrets.BOT_TOKEN}}" \
-              -X POST "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases" \
-              -d "$(jq -nc '{
-                tag_name: env.LFS_VERSION,
-                name: env.LFS_VERSION | sub("\\\\.0$"; ""),
-                target_commitish: "${{github.event.workflow_run.head_sha}}",
-                draft: env.LFS_VERSION | endswith(".0"),
-                body: env.CHANGES // ""}')"
+          # create release and patch version tag (vN.N.N)
+          # only draft if not a patch release
+          curl -sS -H "authorization: token ${{secrets.BOT_TOKEN}}" \
+            -X POST "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases" \
+            -d "$(jq -nc '{
+              tag_name: env.LFS_VERSION,
+              name: env.LFS_VERSION | sub("\\\\.0$"; ""),
+              target_commitish: "${{github.event.workflow_run.head_sha}}",
+              draft: env.LFS_VERSION | endswith(".0"),
+              body: env.CHANGES // ""}')"
 
