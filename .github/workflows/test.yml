@@ -275,9 +275,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -qq valgrind
           valgrind --version
-      # normal tests, we don't need to test all geometries
-      - name: test-valgrind
-        run: make test TESTFLAGS+="-k --valgrind"
+#      # normal tests, we don't need to test all geometries
+#      - name: test-valgrind
+#        run: make test TESTFLAGS+="-k --valgrind"
 
   # self-host with littlefs-fuse for a fuzz-like test
   fuse:
