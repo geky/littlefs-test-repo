@@ -88,7 +88,7 @@ jobs:
         run: |
           make clean
           make test TESTFLAGS+="-nrk \
-            -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096" VERBOSE=1
+            -DLFS_READ_SIZE=1 -DLFS_BLOCK_SIZE=4096"
       # SD/eMMC: read/prog = 512 block = 512
       - name: test-emmc
         run: |
@@ -108,6 +108,9 @@ jobs:
           make test TESTFLAGS+="-nrk \
             -DLFS_NO_INTRINSICS"
       - name: test-byte-writes
+        # it just takes too long to test byte-level writes when in qemu,
+        # should be plenty covered by the other configurations
+        if: matrix.arch == 'x86_64'
         run: |
           make clean
           make test TESTFLAGS+="-nrk \
