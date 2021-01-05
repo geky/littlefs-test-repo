@@ -8,11 +8,12 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    # need to manually check for success
+
+    # need to manually check for a couple things
+    # - tests passed?
+    # - we are the most recent commit on master?
     if: |
-      # tests passed?
       github.event.workflow_run.conclusion == 'success' &&
-      # we are most recent commit on master?
       github.event.workflow_run.head_sha == github.sha
 
     steps:
