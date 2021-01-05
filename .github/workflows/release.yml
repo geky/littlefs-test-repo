@@ -139,13 +139,13 @@ jobs:
       # build release notes
       - name: build-release
         run: |
-#          # find changes since last release
-#          if [ ! -z "$LFS_PREV_VERSION" ]
-#          then
-#            export CHANGES="$(git log --oneline "$LFS_PREV_VERSION.." \
-#              --grep='^Merge' --invert-grep)"
-#            printf "CHANGES\n%s\n\n" "$CHANGES"
-#          fi
+          # find changes since last release
+          #if [ ! -z "$LFS_PREV_VERSION" ]
+          #then
+          #  export CHANGES="$(git log --oneline "$LFS_PREV_VERSION.." \
+          #    --grep='^Merge' --invert-grep)"
+          #  printf "CHANGES\n%s\n\n" "$CHANGES"
+          #fi
 
           # create release and patch version tag (vN.N.N)
           # only draft if not a patch release
