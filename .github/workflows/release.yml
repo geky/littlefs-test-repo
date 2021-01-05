@@ -93,24 +93,24 @@ jobs:
             >> results.csv
 
           [ -e results.csv ] || exit 0
-          RESULTS="$(awk -F ',' '
+          awk -F ',' '
             {label[NR]=$1; value[NR]=$2}
             END {
               for (r=1; r<=NR; r++) {printf "| %s ",label[r]}; printf "|\n";
               for (r=1; r<=NR; r++) {printf "|--:"}; printf "|\n";
               for (r=1; r<=NR; r++) {printf "| %s ",value[r]}; printf "|\n"}' \
-            results.csv)"
-          printf "RESULTS\n%s\n\n" "$RESULTS"
-          echo "RESULTS=$RESULTS" >> $GITHUB_ENV
+            results.csv > results.txt
+          echo "RESULTS:"
+          cat results.txt
 
       # find changes from history
       - name: collect-changes
         run: |
           [ ! -z "$LFS_PREV_VERSION" ] || exit 0
-          export CHANGES="$(git log --oneline \
-            "$LFS_PREV_VERSION.." --grep='^Merge' --invert-grep)"
-          printf "CHANGES\n%s\n\n" "$CHANGES"
-          echo "CHANGES=$CHANGES" >> $GITHUB_ENV
+          git log --oneline "$LFS_PREV_VERSION.." \
+            --grep='^Merge' --invert-grep > changes.txt
+          echo "CHANGES:"
+          cat changes.txt
         
       # create and update major branches (vN and vN-prefix)
       - name: build-major-branches
@@ -149,9 +149,11 @@ jobs:
 
           # create release and patch version tag (vN.N.N)
           # only draft if not a patch release
+          [ -e results.txt ] && export RESULTS="$(cat results.txt)"
+          [ -e changes.txt ] && export CHANGES="$(cat changes.txt)"
           curl -sS -H "authorization: token ${{secrets.BOT_TOKEN}}" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases" \
-            -d "$(jq -n '{
+            -d "$(jq -sR '{
               tag_name: env.LFS_VERSION,
               name: env.LFS_VERSION | sub("\\\\.0$"; ""),
               target_commitish: "${{github.event.workflow_run.head_sha}}",
