@@ -5,15 +5,15 @@ on:
     branches: [master]
     types: [completed]
 
-# TODO check most recent commit?
-
 jobs:
   release:
     runs-on: ubuntu-latest
     # need to manually check for success
     if: ${{
-      github.event.workflow_run.conclusion == 'success'
-      }}
+      # tests passed?
+      github.event.workflow_run.conclusion == 'success' &&
+      # we are most recent commit on master?
+      github.event.workflow_run.head_sha == github.sha}}
 
     steps:
       - uses: actions/checkout@v2
@@ -96,12 +96,12 @@ jobs:
           # create release and patch version tag (vN.N.N)
           # only draft if not a patch release
           curl -sS -H "authorization: token ${{secrets.BOT_TOKEN}}" \
-            -X POST "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases" \
             -d "$(jq -n '{
               tag_name: env.LFS_VERSION,
               name: env.LFS_VERSION | sub("\\\\.0$"; ""),
               target_commitish: "${{github.event.workflow_run.head_sha}}",
               draft: env.LFS_VERSION | endswith(".0"),
               body: (env.CHANGES // "")}' \
-              | tee /dev/stderr)"
+              | tee /dev/stderr)" > /dev/null
 
