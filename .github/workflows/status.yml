@@ -8,10 +8,7 @@ jobs:
   status:
     runs-on: ubuntu-18.04
     continue-on-error: true
-
     steps:
-      - run: echo "${{toJSON(github.event.workflow_run)}}"
-
       # custom statuses?
       - uses: dawidd6/action-download-artifact@v2
         with:
@@ -21,6 +18,7 @@ jobs:
           path: status
       - name: update-status
         run: |
+          ls status
           for s in $(shopt -s nullglob ; echo status/*.json)
           do
             # parse requested status
