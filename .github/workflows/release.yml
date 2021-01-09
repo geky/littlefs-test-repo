@@ -85,6 +85,8 @@ jobs:
                   | capture("Code size is (?<result>[0-9]+)").result' \
                 prev-results.json || echo 0)"
             echo "a $PREV"
+            echo "a $PREV"
+            echo "a $PREV"
             ./scripts/code.py -u results/code-thumb.csv -s | awk '
               NR==2 {printf "Code size,%d B",$2}
               NR==2 && ENVIRON["PREV"] != 0 {
@@ -96,7 +98,9 @@ jobs:
                   select(.context == "results / code (readonly)").description
                   | capture("Code size is (?<result>[0-9]+)").result' \
                 prev-results.json || echo 0)"
-            echo "a $PREV"
+            echo "b $PREV"
+            echo "b $PREV"
+            echo "b $PREV"
             ./scripts/code.py -u results/code-thumb-readonly.csv -s | awk '
               NR==2 {printf "Code size (readonly),%d B",$2}
               NR==2 && ENVIRON["PREV"] != 0 {
