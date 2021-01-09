@@ -12,9 +12,8 @@ jobs:
     # need to manually check for a couple things
     # - tests passed?
     # - we are the most recent commit on master?
-    if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_sha == github.sha
+    if: ${{github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_sha == github.sha}}
 
     steps:
       - uses: actions/checkout@v2
