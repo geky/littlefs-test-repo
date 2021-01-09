@@ -107,8 +107,13 @@ jobs:
       - name: collect-changes
         run: |
           [ -n "$LFS_PREV_VERSION" ] || exit 0
-          git log --oneline "$LFS_PREV_VERSION.." \
-            --grep='^Merge' --invert-grep > changes.txt
+          # use explicit link to github commit so that release notes can
+          # be copied elsewhere
+          git log "$LFS_PREV_VERSION.." \
+            --grep='^Merge' --invert-grep \
+            --format="format:[\`%h\`](`
+              `https://github.com/$GITHUB_REPOSITORY/commit/%h) %s" \
+            > changes.txt
           echo "CHANGES:"
           cat changes.txt
         
