@@ -107,7 +107,7 @@ jobs:
       # find changes from history
       - name: collect-changes
         run: |
-          [ ! -z "$LFS_PREV_VERSION" ] || exit 0
+          [ -n "$LFS_PREV_VERSION" ] || exit 0
           git log --oneline "$LFS_PREV_VERSION.." \
             --grep='^Merge' --invert-grep > changes.txt
           echo "CHANGES:"
