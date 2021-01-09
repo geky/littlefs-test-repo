@@ -87,7 +87,7 @@ jobs:
             ./scripts/code.py -u results/code-thumb.csv -s | awk '
               NR==2 {printf "Code size,%d B",$2}
               NR==2 && ENVIRON["PREV"] != 0 {
-                printf " (%+.1f%%),100*($2-ENVIRON["PREV"])/$2}
+                printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/$2}
               NR==2 {printf "\n"}' \
             >> results.csv)
           [ -e results/code-thumb-readonly.csv ] && ( \
@@ -98,7 +98,7 @@ jobs:
             ./scripts/code.py -u results/code-thumb-readonly.csv -s | awk '
               NR==2 {printf "Code size (readonly),%d B",$2}
               NR==2 && ENVIRON["PREV"] != 0 {
-                printf " (%+.1f%%),100*($2-ENVIRON["PREV"])/$2}
+                printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/$2}
               NR==2 {printf "\n"}' \
             >> results.csv)
           [ -e results/code-thumb-threadsafe.csv ] && ( \
@@ -109,7 +109,7 @@ jobs:
             ./scripts/code.py -u results/code-thumb-threadsafe.csv -s | awk '
               NR==2 {printf "Code size (threadsafe),%d B",$2}
               NR==2 && ENVIRON["PREV"] != 0 {
-                printf " (%+.1f%%),100*($2-ENVIRON["PREV"])/$2}
+                printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/$2}
               NR==2 {printf "\n"}' \
             >> results.csv)
           [ -e results/code-thumb-migrate.csv ] && ( \
@@ -120,7 +120,7 @@ jobs:
             ./scripts/code.py -u results/code-thumb-migrate.csv -s | awk '
               NR==2 {printf "Code size (migrate),%d B",$2}
               NR==2 && ENVIRON["PREV"] != 0 {
-                printf " (%+.1f%%),100*($2-ENVIRON["PREV"])/$2}
+                printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/$2}
               NR==2 {printf "\n"}' \
             >> results.csv)
           [ -e results/coverage.csv ] && ( \
@@ -131,7 +131,7 @@ jobs:
             ./scripts/code.py -u results/coverage.csv -s | awk -F '[ /%]+' '
               NR==2 {printf "Coverage,%.1f%% of %d lines",$4,$3}
               NR==2 && ENVIRON["PREV"] != 0 {
-                printf " (%+.1f%%),$4-ENVIRON["PREV"]}
+                printf " (%+.1f%%)",$4-ENVIRON["PREV"]}
               NR==2 {printf "\n"}' \
             >> results.csv)
 
