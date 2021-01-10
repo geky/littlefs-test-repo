@@ -168,7 +168,7 @@ jobs:
           git branch "v$LFS_VERSION_MAJOR" HEAD
 
           # create major prefix branch
-          git config user.name ${{secrets.BOT_USERNAME}}
+          git config user.name ${{secrets.BOT_USER}}
           git config user.email ${{secrets.BOT_EMAIL}}
           git fetch "https://github.com/$GITHUB_REPOSITORY.git" \
             "v$LFS_VERSION_MAJOR-prefix" || true
