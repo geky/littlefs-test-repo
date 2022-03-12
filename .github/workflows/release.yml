@@ -73,7 +73,7 @@ jobs:
           # previous results to compare against?
           [ -n "$LFS_PREV_VERSION" ] && curl -sS \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/`
-              `status/$LFS_PREV_VERSION" \
+              `status/$LFS_PREV_VERSION?per_page=100" \
             | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]' \
             >> prev-results.json \
             || true
