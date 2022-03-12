@@ -93,12 +93,13 @@ jobs:
             -include stdio.h"
           rm test.c
 
-#      # test configurations
-#      # normal+reentrant tests
-#      - name: test-default
-#        run: |
-#          make clean
-#          make test TESTFLAGS+="-nrk"
+      # test configurations
+      # normal+reentrant tests
+      - name: test-default
+        run: |
+          make clean
+          #make test TESTFLAGS+="-nrk"
+          make test_dirs TESTFLAGS+="-nk"
 # TODO for testing
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
@@ -450,11 +451,11 @@ jobs:
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
             | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
               | select(.context == env.CONTEXT).description
-              | capture("Coverage is (?<result>[0-9\\.]+)").result' \
+              | capture("(?<result>[0-9\\.]+)").result' \
             || echo 0)"
           export DESCRIPTION="$(
-            ./scripts/coverage.py -u results/coverage.csv --summary | awk -F '[ /%]+' '
-              NR==2 {printf "Coverage is %.1f%% of %d lines",$4,$3}
+            ./scripts/coverage.py -u results/coverage.csv -Y | awk -F '[ /%]+' '
+              NR==2 {printf "%.1f%% of %d lines",$4,$3}
               NR==2 && ENVIRON["PREV"]+0 != 0 {
                 printf " (%+.1f%%)",$4-ENVIRON["PREV"]}')"
           jq -n '{
