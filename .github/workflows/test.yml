@@ -236,8 +236,8 @@ jobs:
               echo $f | sed -n 's/.*-\(.*\).csv/-\1/p')"
             for r in code stack structs
             do
-              export CONTEXT="results / $r (${{matrix.arch}}$(
-                echo $f | sed -n 's/.*-\(.*\).csv/, \1/p'))"
+              export CONTEXT="results (${{matrix.arch}}$(
+                echo $f | sed -n 's/.*-\(.*\).csv/, \1/p')) / $r"
               export PREV="$(curl -sS \
                 "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
                 | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
