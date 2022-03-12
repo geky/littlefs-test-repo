@@ -82,9 +82,10 @@ jobs:
           echo "<table>" >> results.txt
           echo "<thead>" >> results.txt
           echo "<tr>" >> results.txt
-          for r in configuration code stack structs coverage
+          echo "<th align=left>configuration</th>" >> results.txt
+          for r in code stack structs coverage
           do
-            echo "<th>$r</th>" >> results.txt
+            echo "<th align=right>$r</th>" >> results.txt
           done
           echo "</tr>" >> results.txt
           echo "</thead>" >> results.txt
@@ -93,11 +94,11 @@ jobs:
           for c in "" readonly threadsafe migrate error-asserts
           do
             echo "<tr>" >> results.txt
-            echo "<td>${c:-default}</td>" >> results.txt
+            echo "<td align=left>${c:-default}</td>" >> results.txt
             for r in code stack structs
             do
               # per-config results
-              echo "<td>" >> results.txt
+              echo "<td align=right>" >> results.txt
               [ -e results/thumb${c:+-$c}.csv ] && ( \
                 export PREV="$(jq -re '
                       select(.context == "results (thumb${c:+, $c}) / $r").description
@@ -114,7 +115,7 @@ jobs:
             # coverage results
             if [ -z $c ]
             then
-              echo "<td rowspan=100>" >> results.txt
+              echo "<td rowspan=100 align=right>" >> results.txt
               [ -e results/coverage.csv ] && ( \
                 export PREV="$(jq -re '
                       select(.context == "results / coverage").description
