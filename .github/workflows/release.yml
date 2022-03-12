@@ -82,8 +82,8 @@ jobs:
           echo "<table>" >> results.txt
           echo "<thead>" >> results.txt
           echo "<tr>" >> results.txt
-          echo "<th align=left>configuration</th>" >> results.txt
-          for r in code stack structs coverage
+          echo "<th align=left>Configuration</th>" >> results.txt
+          for r in Code Stack Structs Coverage
           do
             echo "<th align=right>$r</th>" >> results.txt
           done
@@ -94,7 +94,8 @@ jobs:
           for c in "" readonly threadsafe migrate error-asserts
           do
             echo "<tr>" >> results.txt
-            echo "<td align=left>${c:-default}</td>" >> results.txt
+            c_or_default=${c:-default}
+            echo "<td align=left>${c_or_default^}</td>" >> results.txt
             for r in code stack structs
             do
               # per-config results
