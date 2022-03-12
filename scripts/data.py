@@ -32,7 +32,7 @@ def collect(paths, **args):
             stdout=sp.PIPE,
             stderr=sp.PIPE if not args.get('verbose') else None,
             universal_newlines=True,
-            errors='ignore')
+            errors='replace')
         for line in proc.stdout:
             m = pattern.match(line)
             if m:
