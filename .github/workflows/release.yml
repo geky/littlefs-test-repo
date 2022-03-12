@@ -102,7 +102,7 @@ jobs:
               echo "<td align=right>" >> results.txt
               [ -e results/thumb${c:+-$c}.csv ] && ( \
                 export PREV="$(jq -re '
-                      select(.context == "results (thumb${c:+, $c}) / $r").description
+                      select(.context == "'"results (thumb${c:+, $c}) / $r"'").description
                       | capture("(?<result>[0-9∞]+)").result' \
                     prev-results.json || echo 0)"
                 ./scripts/summary.py results/thumb${c:+-$c}.csv -f $r -Y | awk '
