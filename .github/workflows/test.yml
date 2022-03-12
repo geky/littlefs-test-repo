@@ -149,102 +149,109 @@ jobs:
           retention-days: 1
 
       # update results
-      - name: results-code
+      - name: results
         run: |
           mkdir -p results
           make clean
-          make code \
+          make lfs.csv \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
-              -DLFS_NO_ERROR" \
-            CODEFLAGS+="-o results/code-${{matrix.arch}}.csv"
-      - name: results-code-readonly
+              -DLFS_NO_ERROR"
+          cp lfs.csv results/${{matrix.arch}}.csv
+          ./scripts/summary results/${{matrix.arch}}.csv
+      - name: results-readonly
         run: |
           mkdir -p results
           make clean
-          make code \
-            CFLAGS+=" \
-              -DLFS_NO_ASSERT \
-              -DLFS_NO_DEBUG \
-              -DLFS_NO_WARN \
-              -DLFS_NO_ERROR \
-              -DLFS_READONLY" \
-            CODEFLAGS+="-o results/code-${{matrix.arch}}-readonly.csv"
-      - name: results-code-threadsafe
-        run: |
-          mkdir -p results
-          make clean
-          make code \
+          make lfs.csv \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
-              -DLFS_THREADSAFE" \
-            CODEFLAGS+="-o results/code-${{matrix.arch}}-threadsafe.csv"
-      - name: results-code-migrate
+              -DLFS_READONLY"
+          cp lfs.csv results/${{matrix.arch}}-readonly.csv
+          ./scripts/summary results/${{matrix.arch}}-readonly.csv
+      - name: results-threadsafe
         run: |
           mkdir -p results
           make clean
-          make code \
+          make lfs.csv \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
-              -DLFS_MIGRATE" \
-            CODEFLAGS+="-o results/code-${{matrix.arch}}-migrate.csv"
-      - name: results-code-error-asserts
+              -DLFS_THREADSAFE"
+          cp lfs.csv results/${{matrix.arch}}-threadsafe.csv
+          ./scripts/summary results/${{matrix.arch}}-threadsafe.csv
+      - name: results-migrate
         run: |
           mkdir -p results
           make clean
-          make code \
+          make lfs.csv \
             CFLAGS+=" \
+              -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
-              -D'LFS_ASSERT(test)=do {if(!(test)) {return -1;}} while(0)'" \
-            CODEFLAGS+="-o results/code-${{matrix.arch}}-error-asserts.csv"
+              -DLFS_MIGRATE"
+          cp lfs.csv results/${{matrix.arch}}-migrate.csv
+          ./scripts/summary results/${{matrix.arch}}-migrate.csv
+      - name: results-error-asserts
+        run: |
+          mkdir -p results
+          make clean
+          make lfs.csv \
+            CFLAGS+=" \
+              -DLFS_NO_ASSERT \
+              -DLFS_NO_DEBUG \
+              -DLFS_NO_WARN \
+              -DLFS_NO_ERROR \
+              -D'LFS_ASSERT(test)=do {if(!(test)) {return -1;}} while(0)'"
+          cp lfs.csv results/${{matrix.arch}}-error-asserts.csv
+          ./scripts/summary results/${{matrix.arch}}-error-asserts.csv
       - name: upload-results
         uses: actions/upload-artifact@v2
         with:
           name: results
           path: results
-      # limit reporting to Thumb, otherwise there would be too many numbers
-      # flying around for the results to be easily readable
+
+      # create statuses with results
       - name: collect-status
-        if: ${{matrix.arch == 'thumb'}}
         run: |
           mkdir -p status
-          for f in $(shopt -s nullglob ; echo results/code*.csv)
+          for f in $(shopt -s nullglob ; echo results/*.csv)
           do
-            export STEP="results-code$(
-              echo $f | sed -n 's/.*code-.*-\(.*\).csv/-\1/p')"
-            export CONTEXT="results / code$(
-              echo $f | sed -n 's/.*code-.*-\(.*\).csv/ (\1)/p')"
-            export PREV="$(curl -sS \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
-              | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
-                | select(.context == env.CONTEXT).description
-                | capture("Code size is (?<result>[0-9]+)").result' \
-              || echo 0)"
-            export DESCRIPTION="$(./scripts/code.py -u $f --summary | awk '
-              NR==2 {printf "Code size is %d B",$2}
-              NR==2 && ENVIRON["PREV"]+0 != 0 {
-                printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/ENVIRON["PREV"]}')"
-            jq -n '{
-              state: "success",
-              context: env.CONTEXT,
-              description: env.DESCRIPTION,
-              target_job: "${{github.job}} (${{matrix.arch}})",
-              target_step: env.STEP}' \
-              | tee status/code$(
-                echo $f | sed -n 's/.*code-.*-\(.*\).csv/-\1/p').json
+            export STEP="results-$(
+              echo $f | sed -n 's/.*-\(.*\).csv/-\1/p')"
+            for r in code stack structs
+            do
+              export CONTEXT="results / $r (${{matrix.arch}}$(
+                echo $f | sed -n 's/.*-\(.*\).csv/, \1/p'))"
+              export PREV="$(curl -sS \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
+                | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
+                  | select(.context == env.CONTEXT).description
+                  | capture("(?<result>[0-9]+)").result' \
+                || echo 0)"
+              export DESCRIPTION="$(./scripts/summary.py $f -f $r -Y | awk '
+                NR==2 {printf "%d B",$2}
+                NR==2 && ENVIRON["PREV"]+0 != 0 {
+                  printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/ENVIRON["PREV"]}')"
+              jq -n '{
+                state: "success",
+                context: env.CONTEXT,
+                description: env.DESCRIPTION,
+                target_job: "${{github.job}} (${{matrix.arch}})",
+                target_step: env.STEP}' \
+                | tee status/$r-${{matrix.arch}}$(
+                  echo $f | sed -n 's/.*-\(.*\).csv/-\1/p').json
+            done
           done
       - name: upload-status
-        if: ${{matrix.arch == 'thumb'}}
         uses: actions/upload-artifact@v2
         with:
           name: status
