@@ -140,6 +140,7 @@ $(BUILDDIR)lfs.a: $(OBJ)
 
 $(BUILDDIR)lfs.csv: $(OBJ) $(CGI)
 	cp lfs.o results/lfs.o || true
+	cp lfs_util.o results/lfs.o || true
 	./scripts/code.py $(OBJ) -q $(CODEFLAGS) -o $@
 	./scripts/data.py $(OBJ) -q -m $@ $(DATAFLAGS) -o $@
 	./scripts/stack.py $(CGI) -q -m $@ $(STACKFLAGS) -o $@
