@@ -162,7 +162,7 @@ jobs:
         run: |
           mkdir -p results
           make clean
-          make lfs.o
+          make lfs.o lfs_util.o
           nm --size-sort lfs.o
           nm --size-sort lfs_util.o
           make lfs.csv \
@@ -177,7 +177,7 @@ jobs:
         run: |
           mkdir -p results
           make clean
-          make lfs.o
+          make lfs.o lfs_util.o
           nm --size-sort lfs.o
           nm --size-sort lfs_util.o
           make lfs.csv \
@@ -193,7 +193,7 @@ jobs:
         run: |
           mkdir -p results
           make clean
-          make lfs.o
+          make lfs.o lfs_util.o
           nm --size-sort lfs.o
           nm --size-sort lfs_util.o
           make lfs.csv \
@@ -209,7 +209,7 @@ jobs:
         run: |
           mkdir -p results
           make clean
-          make lfs.o
+          make lfs.o lfs_util.o
           nm --size-sort lfs.o
           nm --size-sort lfs_util.o
           make lfs.csv \
@@ -225,7 +225,7 @@ jobs:
         run: |
           mkdir -p results
           make clean
-          make lfs.o
+          make lfs.o lfs_util.o
           nm --size-sort lfs.o
           nm --size-sort lfs_util.o
           make lfs.csv \
