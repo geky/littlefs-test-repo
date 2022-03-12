@@ -139,8 +139,6 @@ $(BUILDDIR)lfs.a: $(OBJ)
 	$(AR) rcs $@ $^
 
 $(BUILDDIR)lfs.csv: $(OBJ) $(CGI)
-	cp lfs.o results/lfs.o || true
-	cp lfs_util.o results/lfs.o || true
 	./scripts/code.py $(OBJ) -q $(CODEFLAGS) -o $@
 	./scripts/data.py $(OBJ) -q -m $@ $(DATAFLAGS) -o $@
 	./scripts/stack.py $(CGI) -q -m $@ $(STACKFLAGS) -o $@
@@ -155,8 +153,12 @@ $(BUILDDIR)%.o: %.c
 $(BUILDDIR)%.s: %.c
 	$(CC) -S $(CFLAGS) $< -o $@
 
-$(BUILDDIR)%.ci: %.c
-	$(CC) -c -MMD -fcallgraph-info=su $(CFLAGS) $< -o $(@:.ci=.o)
+# gcc depends on the output file for intermediate file names, so
+# we can't omit to .o output. We also need to serialize with the
+# normal .o rule because otherwise we can end up with multiprocess
+# problems with two instances of gcc modifying the same .o
+$(BUILDDIR)%.ci: %.c | %.o
+	$(CC) -c -MMD -fcallgraph-info=su $(CFLAGS) $< -o $|
 
 # clean everything
 .PHONY: clean
