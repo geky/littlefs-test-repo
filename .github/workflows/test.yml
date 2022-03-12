@@ -18,11 +18,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: install
         run: |
-          # need toml, also pip3 isn't installed by default?
+          # need a few additional tools
           sudo apt-get update -qq
           sudo apt-get install -qq python3 python3-pip lcov
           sudo pip3 install toml
           gcc --version
+          python3 --version
 
           # setup a ram-backed disk to speed up reentrant tests
           mkdir disks
@@ -36,6 +37,14 @@ jobs:
 
           echo "TESTFLAGS=$TESTFLAGS" >> $GITHUB_ENV
 
+      # we're not cross-compiling with x86, but we do need the newest
+      # version of gcc for the -fcallgraph-info=su flag
+      - name: install-x86_64
+        if: ${{matrix.arch == 'x86_64'}}
+        run: |
+          sudo apt-get install -qq gcc-10
+          echo "CC=gcc-10" >> $GITHUB_ENV
+          gcc-10 --version
       # cross-compile with ARM Thumb (32-bit, little-endian)
       - name: install-thumb
         if: ${{matrix.arch == 'thumb'}}
