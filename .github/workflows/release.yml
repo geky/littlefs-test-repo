@@ -93,6 +93,7 @@ jobs:
           for c in "" readonly threadsafe migrate error-asserts
           do
             echo "<tr>" >> results.txt
+            echo "<td>${c:-default}</td>" >> results.txt
             for r in code stack structs
             do
               # per-config results
