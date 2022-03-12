@@ -94,12 +94,12 @@ jobs:
             -include stdio.h"
           rm test.c
 
-      # test configurations
-      # normal+reentrant tests
-      - name: test-default
-        run: |
-          make clean
-          make test TESTFLAGS+="-nrk"
+#      # test configurations
+#      # normal+reentrant tests
+#      - name: test-default
+#        run: |
+#          make clean
+#          make test TESTFLAGS+="-nrk"
 # TODO for testing
 #      # NOR flash: read/prog = 1 block = 4KiB
 #      - name: test-nor
