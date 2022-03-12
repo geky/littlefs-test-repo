@@ -135,6 +135,9 @@ jobs:
           echo "</tbody>" >> results.txt
           echo "</table>" >> results.txt
 
+          # GitHub has wide margins, and is quick to smoosh tables, force nbsp
+          # to avoid that
+          sed -i results.txt -e 's/ /\&nbsp;/g'
           cat results.txt
 
       # find changes from history
