@@ -110,6 +110,7 @@ jobs:
                   NR==2 && ENVIRON["PREV"]+0 != 0 {
                     printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/ENVIRON["PREV"]}
                   NR==2 {printf "\n"}' \
+                | sed -e 's/ /\&nbsp;/g' \
                 >> results.txt)
               echo "</td>" >> results.txt
             done
@@ -127,6 +128,7 @@ jobs:
                   NR==2 && ENVIRON["PREV"]+0 != 0 {
                     printf " (%+.1f%%)",$4-ENVIRON["PREV"]}
                   NR==2 {printf "\n"}' \
+                | sed -e 's/ /\&nbsp;/g' \
                 >> results.txt)
               echo "</td>" >> results.txt
             fi
@@ -135,9 +137,6 @@ jobs:
           echo "</tbody>" >> results.txt
           echo "</table>" >> results.txt
 
-          # GitHub has wide margins, and is quick to smoosh tables, force nbsp
-          # to avoid that
-          sed -i results.txt -e 's/ /\&nbsp;/g'
           cat results.txt
 
       # find changes from history
