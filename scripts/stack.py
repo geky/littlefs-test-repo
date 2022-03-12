@@ -207,11 +207,14 @@ def main(**args):
             merged_results[(file, func)]['stack_frame'] = frame
             merged_results[(file, func)]['stack_limit'] = limit
 
-        with openio(args['output'], 'w') as f:
-            w = csv.DictWriter(f, ['file', 'name', *other_fields, 'stack_frame', 'stack_limit'])
-            w.writeheader()
-            for (file, func), result in sorted(merged_results.items()):
-                w.writerow({'file': file, 'name': func, **result})
+        try:
+            with openio(args['output'], 'w') as f:
+                w = csv.DictWriter(f, ['file', 'name', *other_fields, 'stack_frame', 'stack_limit'])
+                w.writeheader()
+                for (file, func), result in sorted(merged_results.items()):
+                    w.writerow({'file': file, 'name': func, **result})
+        except BrokenPipeError:
+            pass
 
     # print results
     def dedup_entries(results, by='name'):

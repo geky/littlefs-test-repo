@@ -142,11 +142,14 @@ def main(**args):
         for file, func, size in results:
             merged_results[(file, func)]['data_size'] = size
 
-        with openio(args['output'], 'w') as f:
-            w = csv.DictWriter(f, ['file', 'name', *other_fields, 'data_size'])
-            w.writeheader()
-            for (file, func), result in sorted(merged_results.items()):
-                w.writerow({'file': file, 'name': func, **result})
+        try:
+            with openio(args['output'], 'w') as f:
+                w = csv.DictWriter(f, ['file', 'name', *other_fields, 'data_size'])
+                w.writeheader()
+                for (file, func), result in sorted(merged_results.items()):
+                    w.writerow({'file': file, 'name': func, **result})
+        except BrokenPipeError:
+            pass
 
     # print results
     def dedup_entries(results, by='name'):

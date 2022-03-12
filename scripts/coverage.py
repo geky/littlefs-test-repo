@@ -153,11 +153,14 @@ def main(**args):
             merged_results[(file, func)]['coverage_hits'] = hits
             merged_results[(file, func)]['coverage_count'] = count
 
-        with openio(args['output'], 'w') as f:
-            w = csv.DictWriter(f, ['file', 'name', *other_fields, 'coverage_hits', 'coverage_count'])
-            w.writeheader()
-            for (file, func), result in sorted(merged_results.items()):
-                w.writerow({'file': file, 'name': func, **result})
+        try:
+            with openio(args['output'], 'w') as f:
+                w = csv.DictWriter(f, ['file', 'name', *other_fields, 'coverage_hits', 'coverage_count'])
+                w.writeheader()
+                for (file, func), result in sorted(merged_results.items()):
+                    w.writerow({'file': file, 'name': func, **result})
+        except BrokenPipeError:
+            pass
 
     # print results
     def dedup_entries(results, by='name'):
