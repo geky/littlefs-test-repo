@@ -242,10 +242,10 @@ jobs:
                 "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
                 | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
                   | select(.context == env.CONTEXT).description
-                  | capture("(?<result>[0-9]+)").result' \
+                  | capture("(?<result>[0-9∞]+)").result' \
                 || echo 0)"
               export DESCRIPTION="$(./scripts/summary.py $f -f $r -Y | awk '
-                NR==2 {printf "%d B",$2}
+                NR==2 {printf "%s B",$2}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
                   printf " (%+.1f%%)",100*($2-ENVIRON["PREV"])/ENVIRON["PREV"]}')"
               jq -n '{
