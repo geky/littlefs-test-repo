@@ -244,11 +244,11 @@ jobs:
           for f in $(shopt -s nullglob ; echo results/*.csv)
           do
             export STEP="results$(
-              echo $f | sed -n 's/.*-\(.*\).csv/-\1/p')"
+              echo $f | sed -n 's/[^-]*-\(.*\).csv/-\1/p')"
             for r in code stack structs
             do
               export CONTEXT="results (${{matrix.arch}}$(
-                echo $f | sed -n 's/.*-\(.*\).csv/, \1/p')) / $r"
+                echo $f | sed -n 's/[^-]*-\(.*\).csv/, \1/p')) / $r"
               export PREV="$(curl -sS \
                 "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master" \
                 | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
@@ -266,7 +266,7 @@ jobs:
                 target_job: "${{github.job}} (${{matrix.arch}})",
                 target_step: env.STEP}' \
                 | tee status/$r-${{matrix.arch}}$(
-                  echo $f | sed -n 's/.*-\(.*\).csv/-\1/p').json
+                  echo $f | sed -n 's/[^-]*-\(.*\).csv/-\1/p').json
             done
           done
       - name: upload-status
