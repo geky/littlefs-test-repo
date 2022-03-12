@@ -22,7 +22,6 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -qq python3 python3-pip lcov
           sudo pip3 install toml
-          gcc --version
           python3 --version
 
           # setup a ram-backed disk to speed up reentrant tests
@@ -50,36 +49,36 @@ jobs:
         if: ${{matrix.arch == 'thumb'}}
         run: |
           sudo apt-get install -qq \
-            gcc-arm-linux-gnueabi \
+            gcc-10-arm-linux-gnueabi \
             libc6-dev-armel-cross \
             qemu-user
-          echo "CC=arm-linux-gnueabi-gcc -mthumb --static" >> $GITHUB_ENV
+          echo "CC=arm-linux-gnueabi-gcc-10 -mthumb --static" >> $GITHUB_ENV
           echo "EXEC=qemu-arm" >> $GITHUB_ENV
-          arm-linux-gnueabi-gcc --version
+          arm-linux-gnueabi-gcc-10 --version
           qemu-arm -version
       # cross-compile with MIPS (32-bit, big-endian)
       - name: install-mips
         if: ${{matrix.arch == 'mips'}}
         run: |
           sudo apt-get install -qq \
-            gcc-mips-linux-gnu \
+            gcc-10-mips-linux-gnu \
             libc6-dev-mips-cross \
             qemu-user
-          echo "CC=mips-linux-gnu-gcc --static" >> $GITHUB_ENV
+          echo "CC=mips-linux-gnu-gcc-10 --static" >> $GITHUB_ENV
           echo "EXEC=qemu-mips" >> $GITHUB_ENV
-          mips-linux-gnu-gcc --version
+          mips-linux-gnu-gcc-10 --version
           qemu-mips -version
       # cross-compile with PowerPC (32-bit, big-endian)
       - name: install-powerpc
         if: ${{matrix.arch == 'powerpc'}}
         run: |
           sudo apt-get install -qq \
-            gcc-powerpc-linux-gnu \
+            gcc-10-powerpc-linux-gnu \
             libc6-dev-powerpc-cross \
             qemu-user
-          echo "CC=powerpc-linux-gnu-gcc --static" >> $GITHUB_ENV
+          echo "CC=powerpc-linux-gnu-gcc-10 --static" >> $GITHUB_ENV
           echo "EXEC=qemu-ppc" >> $GITHUB_ENV
-          powerpc-linux-gnu-gcc --version
+          powerpc-linux-gnu-gcc-10 --version
           qemu-ppc -version
 
       # make sure example can at least compile
@@ -169,7 +168,7 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR"
           cp lfs.csv results/${{matrix.arch}}.csv
-          ./scripts/summary results/${{matrix.arch}}.csv
+          ./scripts/summary.py results/${{matrix.arch}}.csv
       - name: results-readonly
         run: |
           mkdir -p results
@@ -182,7 +181,7 @@ jobs:
               -DLFS_NO_ERROR \
               -DLFS_READONLY"
           cp lfs.csv results/${{matrix.arch}}-readonly.csv
-          ./scripts/summary results/${{matrix.arch}}-readonly.csv
+          ./scripts/summary.py results/${{matrix.arch}}-readonly.csv
       - name: results-threadsafe
         run: |
           mkdir -p results
@@ -195,7 +194,7 @@ jobs:
               -DLFS_NO_ERROR \
               -DLFS_THREADSAFE"
           cp lfs.csv results/${{matrix.arch}}-threadsafe.csv
-          ./scripts/summary results/${{matrix.arch}}-threadsafe.csv
+          ./scripts/summary.py results/${{matrix.arch}}-threadsafe.csv
       - name: results-migrate
         run: |
           mkdir -p results
@@ -208,20 +207,19 @@ jobs:
               -DLFS_NO_ERROR \
               -DLFS_MIGRATE"
           cp lfs.csv results/${{matrix.arch}}-migrate.csv
-          ./scripts/summary results/${{matrix.arch}}-migrate.csv
+          ./scripts/summary.py results/${{matrix.arch}}-migrate.csv
       - name: results-error-asserts
         run: |
           mkdir -p results
           make clean
           make lfs.csv \
             CFLAGS+=" \
-              -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -D'LFS_ASSERT(test)=do {if(!(test)) {return -1;}} while(0)'"
           cp lfs.csv results/${{matrix.arch}}-error-asserts.csv
-          ./scripts/summary results/${{matrix.arch}}-error-asserts.csv
+          ./scripts/summary.py results/${{matrix.arch}}-error-asserts.csv
       - name: upload-results
         uses: actions/upload-artifact@v2
         with:
@@ -234,7 +232,7 @@ jobs:
           mkdir -p status
           for f in $(shopt -s nullglob ; echo results/*.csv)
           do
-            export STEP="results-$(
+            export STEP="results$(
               echo $f | sed -n 's/.*-\(.*\).csv/-\1/p')"
             for r in code stack structs
             do
