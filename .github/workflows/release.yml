@@ -117,7 +117,7 @@ jobs:
             # coverage results
             if [ -z $c ]
             then
-              echo "<td rowspan=100 align=right>" >> results.txt
+              echo "<td rowspan=0 align=right>" >> results.txt
               [ -e results/coverage.csv ] && ( \
                 export PREV="$(jq -re '
                       select(.context == "results / coverage").description
