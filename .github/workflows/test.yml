@@ -168,6 +168,8 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR"
           cp lfs.csv results/${{matrix.arch}}.csv
+          nm --size-sort lfs.o
+          nm --size-sort lfs_util.o
           ./scripts/summary.py results/${{matrix.arch}}.csv
       - name: results-readonly
         run: |
@@ -180,6 +182,8 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_READONLY"
+          nm --size-sort lfs.o
+          nm --size-sort lfs_util.o
           cp lfs.csv results/${{matrix.arch}}-readonly.csv
           ./scripts/summary.py results/${{matrix.arch}}-readonly.csv
       - name: results-threadsafe
@@ -193,6 +197,8 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_THREADSAFE"
+          nm --size-sort lfs.o
+          nm --size-sort lfs_util.o
           cp lfs.csv results/${{matrix.arch}}-threadsafe.csv
           ./scripts/summary.py results/${{matrix.arch}}-threadsafe.csv
       - name: results-migrate
@@ -206,6 +212,8 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_MIGRATE"
+          nm --size-sort lfs.o
+          nm --size-sort lfs_util.o
           cp lfs.csv results/${{matrix.arch}}-migrate.csv
           ./scripts/summary.py results/${{matrix.arch}}-migrate.csv
       - name: results-error-asserts
@@ -218,6 +226,8 @@ jobs:
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -D'LFS_ASSERT(test)=do {if(!(test)) {return -1;}} while(0)'"
+          nm --size-sort lfs.o
+          nm --size-sort lfs_util.o
           cp lfs.csv results/${{matrix.arch}}-error-asserts.csv
           ./scripts/summary.py results/${{matrix.arch}}-error-asserts.csv
       - name: upload-results
