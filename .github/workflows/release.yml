@@ -113,7 +113,7 @@ jobs:
             # coverage results
             if [ $c = default ]
             then
-              echo "<td>" >> results.txt
+              echo "<td rowspan=100>" >> results.txt
               [ -e results/coverage.csv ] && ( \
                 export PREV="$(jq -re '
                       select(.context == "results / coverage").description
@@ -129,9 +129,9 @@ jobs:
             fi
             echo "</tr>" >> results.txt
           done
-
           echo "</tbody>" >> results.txt
           echo "</table>" >> results.txt
+
           cat results.txt
 
       # find changes from history
