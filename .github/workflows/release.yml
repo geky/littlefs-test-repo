@@ -112,7 +112,7 @@ jobs:
               echo "</td>" >> results.txt
             done
             # coverage results
-            if [ $c = default ]
+            if [ -z $c ]
             then
               echo "<td rowspan=100>" >> results.txt
               [ -e results/coverage.csv ] && ( \
