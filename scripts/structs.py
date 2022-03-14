@@ -16,16 +16,46 @@ import collections as co
 OBJ_PATHS = ['*.o']
 
 def collect(paths, **args):
+    # find files, we want to filter by structs in .h files
+    files = {}
+    pattern = re.compile(
+        '^\s+(?P<no>[0-9]+)\s+(?P<dir>[0-9]+).*:\s*(?P<file>.*)$')
+
+    for path in paths:
+        # note objdump-tool may contain extra args
+        cmd = args['objdump_tool'] + ['--dwarf=rawline', path]
+        if args.get('verbose'):
+            print(' '.join(shlex.quote(c) for c in cmd))
+        proc = sp.Popen(cmd,
+            stdout=sp.PIPE,
+            stderr=sp.PIPE if not args.get('verbose') else None,
+            universal_newlines=True,
+            errors='replace')
+        for line in proc.stdout:
+            # find file numbers
+            m = pattern.match(line)
+            if m:
+                files[int(m.group('no'))] = m.group('file')
+        proc.wait()
+        if proc.returncode != 0:
+            if not args.get('verbose'):
+                for line in proc.stderr:
+                    sys.stdout.write(line)
+            sys.exit(-1)
+
+    # find structs
     results = co.defaultdict(lambda: 0)
     pattern = re.compile(
         '^(?:.*DW_TAG_(?P<tag>[a-z_]+).*'
             '|^.*DW_AT_name.*:\s*(?P<name>[^:\s]+)\s*'
+            '|^.*DW_AT_decl_file.*:\s*(?P<file>[0-9]+)\s*'
             '|^.*DW_AT_byte_size.*:\s*(?P<size>[0-9]+)\s*)$')
 
     for path in paths:
         # collect structs as we parse dwarf info
         found = False
         name = None
+        file = None
         size = None
 
         # note objdump-tool may contain extra args
@@ -42,13 +72,18 @@ def collect(paths, **args):
             m = pattern.match(line)
             if m:
                 if m.group('tag'):
-                    if name is not None and size is not None:
-                        results[(path, name)] = size
+                    if (name is not None
+                            and file is not None
+                            and size is not None):
+                        results[(path, name)] = (file, size)
                     found = (m.group('tag') == 'structure_type')
                     name = None
+                    file = None
                     size = None
                 elif found and m.group('name'):
                     name = m.group('name')
+                elif found and name and m.group('file'):
+                    file = int(m.group('file'))
                 elif found and name and m.group('size'):
                     size = int(m.group('size'))
         proc.wait()
@@ -59,15 +94,20 @@ def collect(paths, **args):
             sys.exit(-1)
 
     flat_results = []
-    for (file, struct), size in results.items():
+    for (path, struct), (file, size) in results.items():
         # map to source files
         if args.get('build_dir'):
-            file = re.sub('%s/*' % re.escape(args['build_dir']), '', file)
+            path = re.sub('%s/*' % re.escape(args['build_dir']), '', path)
+        # only include structs declared in header files, ignore internal-only
+        # structs (these are represented in other measurements)
+        if not args.get('everything'):
+            if not files.get(file, '').endswith('.h'):
+                continue
         # replace .o with .c, different scripts report .o/.c, we need to
         # choose one if we want to deduplicate csv files
-        file = re.sub('\.o$', '.c', file)
+        path = re.sub('\.o$', '.c', path)
 
-        flat_results.append((file, struct, size))
+        flat_results.append((path, struct, size))
 
     return flat_results
 
