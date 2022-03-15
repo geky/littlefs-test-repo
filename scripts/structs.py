@@ -16,12 +16,21 @@ import collections as co
 OBJ_PATHS = ['*.o']
 
 def collect(paths, **args):
-    # find files, we want to filter by structs in .h files
-    files = {}
-    pattern = re.compile(
-        '^\s+(?P<no>[0-9]+)\s+(?P<dir>[0-9]+).*:\s*(?P<file>.*)$')
+    decl_pattern = re.compile(
+        '^\s+(?P<no>[0-9]+)'
+            '\s+(?P<dir>[0-9]+)'
+            '\s+.*'
+            '\s+(?P<file>[^\s]+)$')
+    struct_pattern = re.compile(
+        '^(?:.*DW_TAG_(?P<tag>[a-z_]+).*'
+            '|^.*DW_AT_name.*:\s*(?P<name>[^:\s]+)\s*'
+            '|^.*DW_AT_decl_file.*:\s*(?P<decl>[0-9]+)\s*'
+            '|^.*DW_AT_byte_size.*:\s*(?P<size>[0-9]+)\s*)$')
 
+    results = co.defaultdict(lambda: 0)
     for path in paths:
+        # find decl, we want to filter by structs in .h files
+        decls = {}
         # note objdump-tool may contain extra args
         cmd = args['objdump_tool'] + ['--dwarf=rawline', path]
         if args.get('verbose'):
@@ -33,9 +42,11 @@ def collect(paths, **args):
             errors='replace')
         for line in proc.stdout:
             # find file numbers
-            m = pattern.match(line)
+            m = decl_pattern.match(line)
             if m:
-                files[int(m.group('no'))] = m.group('file')
+                decls[int(m.group('no'))] = (
+                    m.group('file'),
+                    int(m.group('dir')))
         proc.wait()
         if proc.returncode != 0:
             if not args.get('verbose'):
@@ -43,19 +54,10 @@ def collect(paths, **args):
                     sys.stdout.write(line)
             sys.exit(-1)
 
-    # find structs
-    results = co.defaultdict(lambda: 0)
-    pattern = re.compile(
-        '^(?:.*DW_TAG_(?P<tag>[a-z_]+).*'
-            '|^.*DW_AT_name.*:\s*(?P<name>[^:\s]+)\s*'
-            '|^.*DW_AT_decl_file.*:\s*(?P<file>[0-9]+)\s*'
-            '|^.*DW_AT_byte_size.*:\s*(?P<size>[0-9]+)\s*)$')
-
-    for path in paths:
         # collect structs as we parse dwarf info
         found = False
         name = None
-        file = None
+        decl = None
         size = None
 
         # note objdump-tool may contain extra args
@@ -69,21 +71,22 @@ def collect(paths, **args):
             errors='replace')
         for line in proc.stdout:
             # state machine here to find structs
-            m = pattern.match(line)
+            m = struct_pattern.match(line)
             if m:
                 if m.group('tag'):
                     if (name is not None
-                            and file is not None
+                            and decl is not None
                             and size is not None):
-                        results[(path, name)] = (file, size)
+                        decl_file, decl_dir = decls.get(decl, ('', 0))
+                        results[(path, name)] = (size, decl_file, decl_dir)
                     found = (m.group('tag') == 'structure_type')
                     name = None
-                    file = None
+                    decl = None
                     size = None
                 elif found and m.group('name'):
                     name = m.group('name')
-                elif found and name and m.group('file'):
-                    file = int(m.group('file'))
+                elif found and name and m.group('decl'):
+                    decl = int(m.group('decl'))
                 elif found and name and m.group('size'):
                     size = int(m.group('size'))
         proc.wait()
@@ -94,14 +97,15 @@ def collect(paths, **args):
             sys.exit(-1)
 
     flat_results = []
-    for (path, struct), (file, size) in results.items():
+    for (path, struct), (size, decl_file, decl_dir) in results.items():
         # map to source files
         if args.get('build_dir'):
             path = re.sub('%s/*' % re.escape(args['build_dir']), '', path)
-        # only include structs declared in header files, ignore internal-only
-        # structs (these are represented in other measurements)
+        # only include structs declared in header files in the current
+        # directory, ignore internal-only # structs (these are represented
+        # in other measurements)
         if not args.get('everything'):
-            if not files.get(file, '').endswith('.h'):
+            if not (decl_file.endswith('.h') and decl_dir == 0):
                 continue
         # replace .o with .c, different scripts report .o/.c, we need to
         # choose one if we want to deduplicate csv files
@@ -110,6 +114,7 @@ def collect(paths, **args):
         flat_results.append((path, struct, size))
 
     return flat_results
+
 
 def main(**args):
     def openio(path, mode='r'):
