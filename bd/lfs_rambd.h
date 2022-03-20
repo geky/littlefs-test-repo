@@ -1,6 +1,7 @@
 /*
  * Block device emulated in RAM
  *
+ * Copyright (c) 2022, The littlefs project.
  * Copyright (c) 2017, Arm Limited. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  */
