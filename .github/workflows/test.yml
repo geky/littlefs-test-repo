@@ -19,74 +19,77 @@ jobs:
       - name: install
         run: |
           # need a few additional tools
-          #
-          # note this includes gcc-10, which is required for -fcallgraph-info=su
-          sudo apt-get update -qq
-          sudo apt-get install -qq gcc-10 python3 python3-pip lcov
-          sudo pip3 install toml
-          echo "CC=gcc-10" >> $GITHUB_ENV
-          gcc-10 --version
-          lcov --version
+          gcc --version
           python3 --version
 
-          # need newer lcov version for gcc-10
-          #sudo apt-get remove lcov
-          #wget https://launchpad.net/ubuntu/+archive/primary/+files/lcov_1.15-1_all.deb
-          #sudo apt install ./lcov_1.15-1_all.deb
-          #lcov --version
-          #which lcov
-          #ls -lha /usr/bin/lcov
-          wget https://github.com/linux-test-project/lcov/releases/download/v1.15/lcov-1.15.tar.gz
-          tar xf lcov-1.15.tar.gz
-          sudo make -C lcov-1.15 install
-
-          # setup a ram-backed disk to speed up reentrant tests
-          mkdir disks
-          sudo mount -t tmpfs -o size=100m tmpfs disks
-          TESTFLAGS="$TESTFLAGS --disk=disks/disk"
-
-          # collect coverage
-          mkdir -p coverage
-          TESTFLAGS="$TESTFLAGS --coverage=`
-            `coverage/${{github.job}}-${{matrix.arch}}.info"
-
-          echo "TESTFLAGS=$TESTFLAGS" >> $GITHUB_ENV
+#          #
+#          # note this includes gcc-10, which is required for -fcallgraph-info=su
+#          sudo apt-get update -qq
+#          sudo apt-get install -qq gcc-10 python3 python3-pip lcov
+#          sudo pip3 install toml
+#          echo "CC=gcc-10" >> $GITHUB_ENV
+#          gcc-10 --version
+#          lcov --version
+#          python3 --version
+#
+#          # need newer lcov version for gcc-10
+#          #sudo apt-get remove lcov
+#          #wget https://launchpad.net/ubuntu/+archive/primary/+files/lcov_1.15-1_all.deb
+#          #sudo apt install ./lcov_1.15-1_all.deb
+#          #lcov --version
+#          #which lcov
+#          #ls -lha /usr/bin/lcov
+#          wget https://github.com/linux-test-project/lcov/releases/download/v1.15/lcov-1.15.tar.gz
+#          tar xf lcov-1.15.tar.gz
+#          sudo make -C lcov-1.15 install
+#
+#          # setup a ram-backed disk to speed up reentrant tests
+#          mkdir disks
+#          sudo mount -t tmpfs -o size=100m tmpfs disks
+#          TESTFLAGS="$TESTFLAGS --disk=disks/disk"
+#
+#          # collect coverage
+#          mkdir -p coverage
+#          TESTFLAGS="$TESTFLAGS --coverage=`
+#            `coverage/${{github.job}}-${{matrix.arch}}.info"
+#
+#          echo "TESTFLAGS=$TESTFLAGS" >> $GITHUB_ENV
 
       # cross-compile with ARM Thumb (32-bit, little-endian)
       - name: install-thumb
         if: ${{matrix.arch == 'thumb'}}
         run: |
           sudo apt-get install -qq \
-            gcc-10-arm-linux-gnueabi \
+            gcc-arm-linux-gnueabi \
             libc6-dev-armel-cross \
             qemu-user
-          echo "CC=arm-linux-gnueabi-gcc-10 -mthumb --static" >> $GITHUB_ENV
+          echo "CC=arm-linux-gnueabi-gcc -mthumb --static" >> $GITHUB_ENV
           echo "EXEC=qemu-arm" >> $GITHUB_ENV
-          arm-linux-gnueabi-gcc-10 --version
+          arm-linux-gnueabi-gcc --version
           qemu-arm -version
       # cross-compile with MIPS (32-bit, big-endian)
       - name: install-mips
         if: ${{matrix.arch == 'mips'}}
         run: |
           sudo apt-get install -qq \
-            gcc-10-mips-linux-gnu \
+            gcc-mips-linux-gnu \
             libc6-dev-mips-cross \
             qemu-user
-          echo "CC=mips-linux-gnu-gcc-10 --static" >> $GITHUB_ENV
+          echo "CC=mips-linux-gnu-gcc --static" >> $GITHUB_ENV
           echo "EXEC=qemu-mips" >> $GITHUB_ENV
-          mips-linux-gnu-gcc-10 --version
+          mips-linux-gnu-gcc --version
           qemu-mips -version
       # cross-compile with PowerPC (32-bit, big-endian)
       - name: install-powerpc
         if: ${{matrix.arch == 'powerpc'}}
         run: |
           sudo apt-get install -qq \
-            gcc-10-powerpc-linux-gnu \
+            gcc-powerpc-linux-gnu \
             libc6-dev-powerpc-cross \
             qemu-user
-          echo "CC=powerpc-linux-gnu-gcc-10 --static" >> $GITHUB_ENV
+          echo "CC=powerpc-linux-gnu-gcc --static" >> $GITHUB_ENV
           echo "EXEC=qemu-ppc" >> $GITHUB_ENV
-          powerpc-linux-gnu-gcc-10 --version
+          powerpc-linux-gnu-gcc --version
           qemu-ppc -version
 
       # make sure example can at least compile
