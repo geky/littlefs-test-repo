@@ -4,6 +4,7 @@ on: [push, pull_request]
 env:
   CFLAGS: -Werror
   MAKEFLAGS: -j
+  TESTFLAGS: -k
 
 jobs:
   # run tests
@@ -117,13 +118,13 @@ jobs:
       - name: test-tests
         run: |
           make clean
-          make test TESTFLAGS+="-k"
+          make test
 
       # run with no intrinsics
       - name: test-no-intrinsics
         run: |
           make clean
-          make test TESTFLAGS+="-k -DLFS_NO_INTRINSICS"
+          make test CFLAGS+="-DLFS_NO_INTRINSICS"
 
 #      # find compile-time measurements
 #      - name: results
@@ -370,8 +371,10 @@ jobs:
           gcc --version
           python3 --version
           valgrind --version
+      # Valgrind takes a while with diminishing value, so only test
+      # on one geometry
       - name: test-valgrind
-        run: make test TESTFLAGS+="-k --valgrind"
+        run: make test TESTFLAGS+="--valgrind -Gdefault"
 
   # run benchmarks
   #
