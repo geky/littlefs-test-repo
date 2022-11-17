@@ -8,7 +8,7 @@ env:
 jobs:
   # run tests
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -274,7 +274,7 @@ jobs:
 
   # run under Valgrind to check for memory errors
   valgrind:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - name: install
@@ -294,7 +294,7 @@ jobs:
 
   # self-host with littlefs-fuse for a fuzz-like test
   fuse:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{!endsWith(github.ref, '-prefix')}}
     steps:
       - uses: actions/checkout@v2
@@ -342,7 +342,7 @@ jobs:
 
   # test migration using littlefs-fuse
   migrate:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{!endsWith(github.ref, '-prefix')}}
     steps:
       - uses: actions/checkout@v2
@@ -411,7 +411,7 @@ jobs:
 
   # collect coverage info
   coverage:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [test]
     steps:
       - uses: actions/checkout@v2
