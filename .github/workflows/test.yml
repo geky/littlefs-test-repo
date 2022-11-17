@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: install
         run: |
-          # need a few additional tools
+          # need a few things
           sudo apt-get install -qq gcc python3 python3-pip
           pip3 install toml
           gcc --version
@@ -94,9 +94,16 @@ jobs:
           powerpc-linux-gnu-gcc --version
           qemu-ppc -version
 
+      # does littlefs compile?
+      - name: test-build
+        run: |
+          make clean
+          make build
+
       # make sure example can at least compile
       - name: test-example
         run: |
+          make clean
           sed -n '/``` c/,/```/{/```/d; p}' README.md > test.c
           make all CFLAGS+=" \
             -Duser_provided_block_device_read=NULL \
@@ -109,7 +116,79 @@ jobs:
       # run the tests!
       - name: test-tests
         run: |
+          make clean
           make test TESTFLAGS+="-k"
+
+      # run with no intrinsics
+      - name: test-no-intrinsics
+        run: |
+          make clean
+          make test TESTFLAGS+="-k -DLFS_NO_INTRINSICS"
+
+#      # find compile-time measurements
+#      - name: results
+#        run: |
+#          mkdir -p results
+#          make clean
+#          make lfs.csv \
+#            CFLAGS+=" \
+#              -DLFS_NO_ASSERT \
+#              -DLFS_NO_DEBUG \
+#              -DLFS_NO_WARN \
+#              -DLFS_NO_ERROR"
+#          cp lfs.csv results/${{matrix.arch}}.csv
+#          ./scripts/summary.py results/${{matrix.arch}}.csv
+#      - name: results-readonly
+#        run: |
+#          mkdir -p results
+#          make clean
+#          make lfs.csv \
+#            CFLAGS+=" \
+#              -DLFS_NO_ASSERT \
+#              -DLFS_NO_DEBUG \
+#              -DLFS_NO_WARN \
+#              -DLFS_NO_ERROR \
+#              -DLFS_READONLY"
+#          cp lfs.csv results/${{matrix.arch}}-readonly.csv
+#          ./scripts/summary.py results/${{matrix.arch}}-readonly.csv
+#      - name: results-threadsafe
+#        run: |
+#          mkdir -p results
+#          make clean
+#          make lfs.csv \
+#            CFLAGS+=" \
+#              -DLFS_NO_ASSERT \
+#              -DLFS_NO_DEBUG \
+#              -DLFS_NO_WARN \
+#              -DLFS_NO_ERROR \
+#              -DLFS_THREADSAFE"
+#          cp lfs.csv results/${{matrix.arch}}-threadsafe.csv
+#          ./scripts/summary.py results/${{matrix.arch}}-threadsafe.csv
+#      - name: results-migrate
+#        run: |
+#          mkdir -p results
+#          make clean
+#          make lfs.csv \
+#            CFLAGS+=" \
+#              -DLFS_NO_ASSERT \
+#              -DLFS_NO_DEBUG \
+#              -DLFS_NO_WARN \
+#              -DLFS_NO_ERROR \
+#              -DLFS_MIGRATE"
+#          cp lfs.csv results/${{matrix.arch}}-migrate.csv
+#          ./scripts/summary.py results/${{matrix.arch}}-migrate.csv
+#      - name: results-error-asserts
+#        run: |
+#          mkdir -p results
+#          make clean
+#          make lfs.csv \
+#            CFLAGS+=" \
+#              -DLFS_NO_DEBUG \
+#              -DLFS_NO_WARN \
+#              -DLFS_NO_ERROR \
+#              -D'LFS_ASSERT(test)=do {if(!(test)) {return -1;}} while(0)'"
+#          cp lfs.csv results/${{matrix.arch}}-error-asserts.csv
+#          ./scripts/summary.py results/${{matrix.arch}}-error-asserts.csv
 
 # TODO no_intrinsics?
 
@@ -277,144 +356,164 @@ jobs:
 #          name: status
 #          path: status
 #          retention-days: 1
-#
-#  # run under Valgrind to check for memory errors
-#  valgrind:
-#    runs-on: ubuntu-22.04
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: install
-#        run: |
-#          # need toml, also pip3 isn't installed by default?
-#          sudo apt-get update -qq
-#          sudo apt-get install -qq python3 python3-pip
-#          sudo pip3 install toml
-#      - name: install-valgrind
-#        run: |
-#          sudo apt-get update -qq
-#          sudo apt-get install -qq valgrind
-#          valgrind --version
-#      # normal tests, we don't need to test all geometries
-#      - name: test-valgrind
-#        run: make test TESTFLAGS+="-k --valgrind"
-#
-#  # self-host with littlefs-fuse for a fuzz-like test
-#  fuse:
-#    runs-on: ubuntu-22.04
-#    if: ${{!endsWith(github.ref, '-prefix')}}
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: install
-#        run: |
-#          # need toml, also pip3 isn't installed by default?
-#          sudo apt-get update -qq
-#          sudo apt-get install -qq python3 python3-pip libfuse-dev
-#          sudo pip3 install toml
-#          fusermount -V
-#          gcc --version
-#      - uses: actions/checkout@v2
-#        with:
-#          repository: littlefs-project/littlefs-fuse
-#          ref: v2
-#          path: littlefs-fuse
-#      - name: setup
-#        run: |
-#          # copy our new version into littlefs-fuse
-#          rm -rf littlefs-fuse/littlefs/*
-#          cp -r $(git ls-tree --name-only HEAD) littlefs-fuse/littlefs
-#
-#          # setup disk for littlefs-fuse
-#          mkdir mount
-#          LOOP=$(sudo losetup -f)
-#          sudo chmod a+rw $LOOP
-#          dd if=/dev/zero bs=512 count=128K of=disk
-#          losetup $LOOP disk
-#          echo "LOOP=$LOOP" >> $GITHUB_ENV
-#      - name: test
-#        run: |
-#          # self-host test
-#          make -C littlefs-fuse
-#
-#          littlefs-fuse/lfs --format $LOOP
-#          littlefs-fuse/lfs $LOOP mount
-#
-#          ls mount
-#          mkdir mount/littlefs
-#          cp -r $(git ls-tree --name-only HEAD) mount/littlefs
-#          cd mount/littlefs
-#          stat .
-#          ls -flh
-#          make -B test
-#
-#  # test migration using littlefs-fuse
-#  migrate:
-#    runs-on: ubuntu-22.04
-#    if: ${{!endsWith(github.ref, '-prefix')}}
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: install
-#        run: |
-#          # need toml, also pip3 isn't installed by default?
-#          sudo apt-get update -qq
-#          sudo apt-get install -qq python3 python3-pip libfuse-dev
-#          sudo pip3 install toml
-#          fusermount -V
-#          gcc --version
-#      - uses: actions/checkout@v2
-#        with:
-#          repository: littlefs-project/littlefs-fuse
-#          ref: v2
-#          path: v2
-#      - uses: actions/checkout@v2
-#        with:
-#          repository: littlefs-project/littlefs-fuse
-#          ref: v1
-#          path: v1
-#      - name: setup
-#        run: |
-#          # copy our new version into littlefs-fuse
-#          rm -rf v2/littlefs/*
-#          cp -r $(git ls-tree --name-only HEAD) v2/littlefs
-#
-#          # setup disk for littlefs-fuse
-#          mkdir mount
-#          LOOP=$(sudo losetup -f)
-#          sudo chmod a+rw $LOOP
-#          dd if=/dev/zero bs=512 count=128K of=disk
-#          losetup $LOOP disk
-#          echo "LOOP=$LOOP" >> $GITHUB_ENV
-#      - name: test
-#        run: |
-#          # compile v1 and v2
-#          make -C v1
-#          make -C v2
-#
-#          # run self-host test with v1
-#          v1/lfs --format $LOOP
-#          v1/lfs $LOOP mount
-#
-#          ls mount
-#          mkdir mount/littlefs
-#          cp -r $(git ls-tree --name-only HEAD) mount/littlefs
-#          cd mount/littlefs
-#          stat .
-#          ls -flh
-#          make -B test
-#
-#          # attempt to migrate
-#          cd ../..
-#          fusermount -u mount
-#
-#          v2/lfs --migrate $LOOP
-#          v2/lfs $LOOP mount
-#
-#          # run self-host test with v2 right where we left off
-#          ls mount
-#          cd mount/littlefs
-#          stat .
-#          ls -flh
-#          make -B test
-#
+
+  # run under Valgrind to check for memory errors
+  valgrind:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need a few things
+          sudo apt-get install -qq gcc python3 python3-pip valgrind
+          pip3 install toml
+          gcc --version
+          python3 --version
+          valgrind --version
+      - name: test-valgrind
+        run: make test TESTFLAGS+="-k --valgrind"
+
+  # run benchmarks
+  #
+  # note there's no real benefit to running these on multiple archs
+  bench:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need a few things
+          sudo apt-get install -qq gcc python3 python3-pip valgrind
+          pip3 install toml
+          gcc --version
+          python3 --version
+          valgrind --version
+      - name: bench
+        run: make bench
+      # find perfbd results
+      - name: perfbd
+        run: make perfbd
+
+  # self-host with littlefs-fuse for a fuzz-like test
+  fuse:
+    runs-on: ubuntu-22.04
+    if: ${{!endsWith(github.ref, '-prefix')}}
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need a few things
+          sudo apt-get install -qq gcc python3 python3-pip libfuse-dev
+          sudo pip3 install toml
+          gcc --version
+          python3 --version
+          fusermount -V
+      - uses: actions/checkout@v2
+        with:
+          repository: littlefs-project/littlefs-fuse
+          ref: v2
+          path: littlefs-fuse
+      - name: setup
+        run: |
+          # copy our new version into littlefs-fuse
+          rm -rf littlefs-fuse/littlefs/*
+          cp -r $(git ls-tree --name-only HEAD) littlefs-fuse/littlefs
+
+          # setup disk for littlefs-fuse
+          mkdir mount
+          LOOP=$(sudo losetup -f)
+          sudo chmod a+rw $LOOP
+          dd if=/dev/zero bs=512 count=128K of=disk
+          losetup $LOOP disk
+          echo "LOOP=$LOOP" >> $GITHUB_ENV
+      - name: test
+        run: |
+          # self-host test
+          make -C littlefs-fuse
+
+          littlefs-fuse/lfs --format $LOOP
+          littlefs-fuse/lfs $LOOP mount
+
+          ls mount
+          mkdir mount/littlefs
+          cp -r $(git ls-tree --name-only HEAD) mount/littlefs
+          cd mount/littlefs
+          stat .
+          ls -flh
+          make -B test-runner
+          make -B test
+
+  # test migration using littlefs-fuse
+  migrate:
+    runs-on: ubuntu-22.04
+    if: ${{!endsWith(github.ref, '-prefix')}}
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need a few things
+          sudo apt-get install -qq gcc python3 python3-pip libfuse-dev
+          sudo pip3 install toml
+          gcc --version
+          python3 --version
+          fusermount -V
+      - uses: actions/checkout@v2
+        with:
+          repository: littlefs-project/littlefs-fuse
+          ref: v2
+          path: v2
+      - uses: actions/checkout@v2
+        with:
+          repository: littlefs-project/littlefs-fuse
+          ref: v1
+          path: v1
+      - name: setup
+        run: |
+          # copy our new version into littlefs-fuse
+          rm -rf v2/littlefs/*
+          cp -r $(git ls-tree --name-only HEAD) v2/littlefs
+
+          # setup disk for littlefs-fuse
+          mkdir mount
+          LOOP=$(sudo losetup -f)
+          sudo chmod a+rw $LOOP
+          dd if=/dev/zero bs=512 count=128K of=disk
+          losetup $LOOP disk
+          echo "LOOP=$LOOP" >> $GITHUB_ENV
+      - name: test
+        run: |
+          # compile v1 and v2
+          make -C v1
+          make -C v2
+
+          # run self-host test with v1
+          v1/lfs --format $LOOP
+          v1/lfs $LOOP mount
+
+          ls mount
+          mkdir mount/littlefs
+          cp -r $(git ls-tree --name-only HEAD) mount/littlefs
+          cd mount/littlefs
+          stat .
+          ls -flh
+          make -B test-runner
+          make -B test
+
+          # attempt to migrate
+          cd ../..
+          fusermount -u mount
+
+          v2/lfs --migrate $LOOP
+          v2/lfs $LOOP mount
+
+          # run self-host test with v2 right where we left off
+          ls mount
+          cd mount/littlefs
+          stat .
+          ls -flh
+          make -B test-runner
+          make -B test
+
 #  # collect coverage info
 #  coverage:
 #    runs-on: ubuntu-22.04
