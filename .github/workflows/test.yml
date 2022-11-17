@@ -19,6 +19,8 @@ jobs:
       - name: install
         run: |
           # need a few additional tools
+          sudo apt-get install -qq gcc python3 python3-pip
+          pip3 install toml
           gcc --version
           python3 --version
 
