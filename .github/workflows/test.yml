@@ -105,7 +105,6 @@ jobs:
             -Duser_provided_block_device_sync=NULL \
             -include stdio.h"
           rm test.c
-          make clean
 
       # run the tests!
       - name: test-tests
