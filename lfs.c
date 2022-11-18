@@ -1402,6 +1402,7 @@ nextname:
                     (strchr(name, '/') == NULL) ? id : NULL,
                     lfs_dir_find_match, &(struct lfs_dir_find_match){
                         lfs, name, namelen});
+            //printf("%s => 0x%x\n", name, tag);
             if (tag < 0) {
                 return tag;
             }
@@ -4507,40 +4508,40 @@ restart:
                     return tag;
                 }
 
-                // note we only check for full orphans if we may have had a
-                // power-loss, otherwise orphans are created intentionally
-                // during operations such as lfs_mkdir
-                if (tag == LFS_ERR_NOENT && powerloss) {
-                    // we are an orphan
-                    LFS_DEBUG("Fixing orphan {0x%"PRIx32", 0x%"PRIx32"}",
-                            pdir.tail[0], pdir.tail[1]);
-
-                    // steal state
-                    err = lfs_dir_getgstate(lfs, &dir, &lfs->gdelta);
-                    if (err) {
-                        return err;
-                    }
-
-                    // steal tail
-                    lfs_pair_tole32(dir.tail);
-                    int state = lfs_dir_orphaningcommit(lfs, &pdir, LFS_MKATTRS(
-                            {LFS_MKTAG(LFS_TYPE_TAIL + dir.split, 0x3ff, 8),
-                                dir.tail}));
-                    lfs_pair_fromle32(dir.tail);
-                    if (state < 0) {
-                        return state;
-                    }
-
-                    found += 1;
-
-                    // did our commit create more orphans?
-                    if (state == LFS_OK_ORPHANED) {
-                        goto restart;
-                    }
-
-                    // refetch tail
-                    continue;
-                }
+//                // note we only check for full orphans if we may have had a
+//                // power-loss, otherwise orphans are created intentionally
+//                // during operations such as lfs_mkdir
+//                if (tag == LFS_ERR_NOENT && powerloss) {
+//                    // we are an orphan
+//                    LFS_DEBUG("Fixing orphan {0x%"PRIx32", 0x%"PRIx32"}",
+//                            pdir.tail[0], pdir.tail[1]);
+//
+//                    // steal state
+//                    err = lfs_dir_getgstate(lfs, &dir, &lfs->gdelta);
+//                    if (err) {
+//                        return err;
+//                    }
+//
+//                    // steal tail
+//                    lfs_pair_tole32(dir.tail);
+//                    int state = lfs_dir_orphaningcommit(lfs, &pdir, LFS_MKATTRS(
+//                            {LFS_MKTAG(LFS_TYPE_TAIL + dir.split, 0x3ff, 8),
+//                                dir.tail}));
+//                    lfs_pair_fromle32(dir.tail);
+//                    if (state < 0) {
+//                        return state;
+//                    }
+//
+//                    found += 1;
+//
+//                    // did our commit create more orphans?
+//                    if (state == LFS_OK_ORPHANED) {
+//                        goto restart;
+//                    }
+//
+//                    // refetch tail
+//                    continue;
+//                }
 
                 if (tag != LFS_ERR_NOENT) {
                     lfs_block_t pair[2];
@@ -4592,6 +4593,118 @@ restart:
                         continue;
                     }
                 }
+            }
+
+            pdir = dir;
+        }
+    }
+
+    {
+        // Fix any orphans
+        lfs_mdir_t pdir = {.split = true, .tail = {0, 1}};
+        lfs_mdir_t dir;
+
+        // iterate over all directory directory entries
+        while (!lfs_pair_isnull(pdir.tail)) {
+            int err = lfs_dir_fetch(lfs, &dir, pdir.tail);
+            if (err) {
+                return err;
+            }
+
+            // check head blocks for orphans
+            if (!pdir.split) {
+                // check if we have a parent
+                lfs_mdir_t parent;
+                lfs_stag_t tag = lfs_fs_parent(lfs, pdir.tail, &parent);
+                if (tag < 0 && tag != LFS_ERR_NOENT) {
+                    return tag;
+                }
+
+                // note we only check for full orphans if we may have had a
+                // power-loss, otherwise orphans are created intentionally
+                // during operations such as lfs_mkdir
+                if (tag == LFS_ERR_NOENT && powerloss) {
+                    // we are an orphan
+                    LFS_DEBUG("Fixing orphan {0x%"PRIx32", 0x%"PRIx32"}",
+                            pdir.tail[0], pdir.tail[1]);
+
+                    // steal state
+                    err = lfs_dir_getgstate(lfs, &dir, &lfs->gdelta);
+                    if (err) {
+                        return err;
+                    }
+
+                    // steal tail
+                    lfs_pair_tole32(dir.tail);
+                    int state = lfs_dir_orphaningcommit(lfs, &pdir, LFS_MKATTRS(
+                            {LFS_MKTAG(LFS_TYPE_TAIL + dir.split, 0x3ff, 8),
+                                dir.tail}));
+                    lfs_pair_fromle32(dir.tail);
+                    if (state < 0) {
+                        return state;
+                    }
+
+                    found += 1;
+
+                    // did our commit create more orphans?
+                    if (state == LFS_OK_ORPHANED) {
+                        goto restart;
+                    }
+
+                    // refetch tail
+                    continue;
+                }
+
+//                if (tag != LFS_ERR_NOENT) {
+//                    lfs_block_t pair[2];
+//                    lfs_stag_t state = lfs_dir_get(lfs, &parent,
+//                            LFS_MKTAG(0x7ff, 0x3ff, 0), tag, pair);
+//                    if (state < 0) {
+//                        return state;
+//                    }
+//                    lfs_pair_fromle32(pair);
+//
+//                    if (!lfs_pair_sync(pair, pdir.tail)) {
+//                        // we have desynced
+//                        LFS_DEBUG("Fixing half-orphan "
+//                                "{0x%"PRIx32", 0x%"PRIx32"} "
+//                                "-> {0x%"PRIx32", 0x%"PRIx32"}",
+//                                pdir.tail[0], pdir.tail[1], pair[0], pair[1]);
+//
+//                        // fix pending move in this pair? this looks like an
+//                        // optimization but is in fact _required_ since
+//                        // relocating may outdate the move.
+//                        uint16_t moveid = 0x3ff;
+//                        if (lfs_gstate_hasmovehere(&lfs->gstate, pdir.pair)) {
+//                            moveid = lfs_tag_id(lfs->gstate.tag);
+//                            LFS_DEBUG("Fixing move while fixing orphans "
+//                                    "{0x%"PRIx32", 0x%"PRIx32"} 0x%"PRIx16"\n",
+//                                    pdir.pair[0], pdir.pair[1], moveid);
+//                            lfs_fs_prepmove(lfs, 0x3ff, NULL);
+//                        }
+//
+//                        lfs_pair_tole32(pair);
+//                        state = lfs_dir_orphaningcommit(lfs, &pdir, LFS_MKATTRS(
+//                                {LFS_MKTAG_IF(moveid != 0x3ff,
+//                                    LFS_TYPE_DELETE, moveid, 0), NULL},
+//                                {LFS_MKTAG(LFS_TYPE_SOFTTAIL, 0x3ff, 8),
+//                                    pair}));
+//                        lfs_pair_fromle32(pair);
+//                        if (state < 0) {
+//                            return state;
+//                        }
+//
+//                        found += 1;
+//
+//                        // did our commit create more orphans?
+//                        if (state == LFS_OK_ORPHANED) {
+//                            goto restart;
+//                        }
+//
+//                        // refetch tail
+//                        continue;
+//                    }
+//                }
             }
 
             pdir = dir;

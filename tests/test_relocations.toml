@@ -239,7 +239,8 @@ code = '''
 [cases.test_relocations_reentrant_renames]
 reentrant = true
 # TODO fix this case, caused by non-DAG trees
-if = '!(DEPTH == 3 && CACHE_SIZE != 64)'
+# NOTE the second condition is required
+if = '!(DEPTH == 3 && CACHE_SIZE != 64) && 2*FILES < BLOCK_COUNT'
 defines = [
     {FILES=6,  DEPTH=1, CYCLES=20, BLOCK_CYCLES=1},
     {FILES=26, DEPTH=1, CYCLES=20, BLOCK_CYCLES=1},
@@ -330,6 +331,7 @@ code = '''
                     strcpy(path, full_path);
                     path[2*d+2] = '\0';
                     err = lfs_remove(&lfs, path);
+                    printf("%d\n", err);
                     assert(!err || err == LFS_ERR_NOTEMPTY);
                 }
 

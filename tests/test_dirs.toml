@@ -179,8 +179,18 @@ code = '''
 
 [cases.test_dirs_many_reentrant]
 defines.N = [5, 11]
+if = 'BLOCK_COUNT >= 4*N'
 reentrant = true
 code = '''
+//    printf("initial state (%d %d %d %d)\n",
+//            READ_SIZE, PROG_SIZE, BLOCK_SIZE, BLOCK_COUNT);
+//    uint8_t buffer[BLOCK_SIZE];
+//    for (lfs_size_t i = 0; i < BLOCK_COUNT; i++) {
+//        cfg->read(cfg, i, 0, buffer, BLOCK_SIZE);
+//        uint32_t crc = lfs_crc(0, buffer, BLOCK_SIZE);
+//        printf("%d => 0x%08x\n", i, crc);
+//    }
+
     lfs_t lfs;
     int err = lfs_mount(&lfs, cfg);
     if (err) {
