@@ -120,6 +120,12 @@ jobs:
           make clean
           make test
 
+      # TODO include this by default?
+      - name: test-pls
+        run: |
+          make clean
+          make test TESTFLAGS+='-Plinear'
+
       # run with no intrinsics
       - name: test-no-intrinsics
         run: |
@@ -357,6 +363,35 @@ jobs:
 #          name: status
 #          path: status
 #          retention-days: 1
+
+  # run as many exhaustive tests as fits in GitHub's time limits
+  test-pl1:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need a few things
+          sudo apt-get install -qq gcc python3 python3-pip
+          pip3 install toml
+          gcc --version
+          python3 --version
+      - name: test-pl1
+        run: make test TESTFLAGS+="-P1"
+
+  test-pl2:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need a few things
+          sudo apt-get install -qq gcc python3 python3-pip
+          pip3 install toml
+          gcc --version
+          python3 --version
+      - name: test-pl2
+        run: make test TESTFLAGS+="-P2"
 
   # run under Valgrind to check for memory errors
   valgrind:
