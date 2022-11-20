@@ -122,22 +122,26 @@ jobs:
       - name: test-tests
         run: |
           make clean
-          make test
-
-      # TODO include this by default?
-      - name: test-pls
-        run: |
-          make clean
-          make test TESTFLAGS+='-Plinear'
+          # TODO include this by default?
+          make test TESTFLAGS+='-Pnone,linear'
 
       # collect coverage info
+      #
+      # Note the goal is to maximize coverage in the small, easy-to-run
+      # tests, so we intentionally exclude more aggressive powerloss testing
+      # from coverage results
       - name: cov
         if: ${{matrix.arch == 'x86_64'}}
         run: |
           make lfs.cov.csv
           ./scripts/cov.py -u lfs.cov.csv
-          mkdir -p results
-          cp lfs.cov.csv results/cov.csv
+          mkdir -p cov
+          cp lfs.cov.csv cov/${{matrix.arch}}.csv
+      - name: upload-cov
+        uses: actions/upload-artifact@v2
+        with:
+          name: cov
+          path: cov
 
       # run with no intrinsics
       - name: test-no-intrinsics
@@ -146,119 +150,114 @@ jobs:
           make test CFLAGS+="-DLFS_NO_INTRINSICS"
 
       # find compile-time measurements
-      - name: results
+      - name: sizes
         run: |
           make clean
-          make lfs.csv \
+          make lfs.code.csv lfs.data.csv lfs.stack.csv lfs.struct.csv \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR"
-          ./scripts/summary.py \
+          ./scripts/summary.py lfs.struct.csv \
             -bstruct \
-            -fsize=struct_size \
-            lfs.csv
-          ./scripts/summary.py \
+            -fsize=struct_size
+          ./scripts/summary.py lfs.code.csv lfs.data.csv lfs.stack.csv \
             -bfunction \
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack \
-            lfs.csv
-          mkdir -p results
-          cp lfs.csv results/${{matrix.arch}}.csv
-      - name: results-readonly
+            --max=stack
+          mkdir -p sizes
+          cp lfs.csv sizes/${{matrix.arch}}.csv
+      - name: sizes-readonly
         run: |
           make clean
-          make lfs.csv \
+          make lfs.code.csv lfs.data.csv lfs.stack.csv lfs.struct.csv \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_READONLY"
-          ./scripts/summary.py \
+          ./scripts/summary.py lfs.struct.csv \
             -bstruct \
-            -fsize=struct_size \
-            lfs.csv
-          ./scripts/summary.py \
+            -fsize=struct_size
+          ./scripts/summary.py lfs.code.csv lfs.data.csv lfs.stack.csv \
             -bfunction \
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack \
-            lfs.csv
-          mkdir -p results
-          cp lfs.csv results/${{matrix.arch}}-readonly.csv
-      - name: results-threadsafe
+            --max=stack
+          mkdir -p sizes
+          cp lfs.csv sizes/${{matrix.arch}}-readonly.csv
+      - name: sizes-threadsafe
         run: |
           make clean
-          make lfs.csv \
+          make lfs.code.csv lfs.data.csv lfs.stack.csv lfs.struct.csv \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_THREADSAFE"
-          ./scripts/summary.py \
+          ./scripts/summary.py lfs.struct.csv \
             -bstruct \
-            -fsize=struct_size \
-            lfs.csv
-          ./scripts/summary.py \
+            -fsize=struct_size
+          ./scripts/summary.py lfs.code.csv lfs.data.csv lfs.stack.csv \
             -bfunction \
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack \
-            lfs.csv
-          mkdir -p results
-          cp lfs.csv results/${{matrix.arch}}-threadsafe.csv
-      - name: results-migrate
+            --max=stack
+          mkdir -p sizes
+          cp lfs.csv sizes/${{matrix.arch}}-threadsafe.csv
+      - name: sizes-migrate
         run: |
           make clean
-          make lfs.csv \
+          make lfs.code.csv lfs.data.csv lfs.stack.csv lfs.struct.csv \
             CFLAGS+=" \
               -DLFS_NO_ASSERT \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -DLFS_MIGRATE"
-          ./scripts/summary.py \
+          ./scripts/summary.py lfs.struct.csv \
             -bstruct \
-            -fsize=struct_size \
-            lfs.csv
-          ./scripts/summary.py \
+            -fsize=struct_size
+          ./scripts/summary.py lfs.code.csv lfs.data.csv lfs.stack.csv \
             -bfunction \
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack \
-            lfs.csv
-          mkdir -p results
-          cp lfs.csv results/${{matrix.arch}}-migrate.csv
-      - name: results-error-asserts
+            --max=stack
+          mkdir -p sizes
+          cp lfs.csv sizes/${{matrix.arch}}-migrate.csv
+      - name: sizes-error-asserts
         run: |
           make clean
-          make lfs.csv \
+          make lfs.code.csv lfs.data.csv lfs.stack.csv lfs.struct.csv \
             CFLAGS+=" \
               -DLFS_NO_DEBUG \
               -DLFS_NO_WARN \
               -DLFS_NO_ERROR \
               -D'LFS_ASSERT(test)=do {if(!(test)) {return -1;}} while(0)'"
-          ./scripts/summary.py \
+          ./scripts/summary.py lfs.struct.csv \
             -bstruct \
-            -fsize=struct_size \
-            lfs.csv
-          ./scripts/summary.py \
+            -fsize=struct_size
+          ./scripts/summary.py lfs.code.csv lfs.data.csv lfs.stack.csv \
             -bfunction \
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack \
-            lfs.csv
-          mkdir -p results
-          cp lfs.csv results/${{matrix.arch}}-error-asserts.csv
+            --max=stack
+          mkdir -p sizes
+          cp lfs.csv sizes/${{matrix.arch}}-error-asserts.csv
+      - name: upload-sizes
+        uses: actions/upload-artifact@v2
+        with:
+          name: sizes
+          path: sizes
 
 
 # TODO no_intrinsics?
@@ -503,8 +502,14 @@ jobs:
         run: |
           make lfs.perfbd.csv
           ./scripts/perfbd.py -u lfs.perfbd.csv
-          mkdir -p results
-          cp lfs.perfbd.csv results/perfbd.csv
+          mkdir -p perfbd 
+          cp lfs.perfbd.csv perfbd/perfbd.csv
+
+      - name: upload-perfbd
+        uses: actions/upload-artifact@v2
+        with:
+          name: perfbd
+          path: perfbd
 
   # self-host with littlefs-fuse for a fuzz-like test
   fuse:
