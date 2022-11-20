@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 defaults:
   run:
-    shell: bash -euvo pipefail {0}
+    shell: bash -euv -o pipefail {0}
 
 env:
   CFLAGS: -Werror
@@ -130,6 +130,15 @@ jobs:
           make clean
           make test TESTFLAGS+='-Plinear'
 
+      # collect coverage info
+      - name: cov
+        if: ${{matrix.arch == 'x86_64'}}
+        run: |
+          make lfs.cov.csv
+          ./scripts/cov.py -u lfs.cov.csv
+          mkdir -p results
+          cp lfs.cov.csv results/cov.csv
+
       # run with no intrinsics
       - name: test-no-intrinsics
         run: |
@@ -139,7 +148,6 @@ jobs:
       # find compile-time measurements
       - name: results
         run: |
-          mkdir -p results
           make clean
           make lfs.csv \
             CFLAGS+=" \
@@ -158,10 +166,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack \
             lfs.csv
+          mkdir -p results
           cp lfs.csv results/${{matrix.arch}}.csv
       - name: results-readonly
         run: |
-          mkdir -p results
           make clean
           make lfs.csv \
             CFLAGS+=" \
@@ -181,10 +189,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack \
             lfs.csv
+          mkdir -p results
           cp lfs.csv results/${{matrix.arch}}-readonly.csv
       - name: results-threadsafe
         run: |
-          mkdir -p results
           make clean
           make lfs.csv \
             CFLAGS+=" \
@@ -204,10 +212,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack \
             lfs.csv
+          mkdir -p results
           cp lfs.csv results/${{matrix.arch}}-threadsafe.csv
       - name: results-migrate
         run: |
-          mkdir -p results
           make clean
           make lfs.csv \
             CFLAGS+=" \
@@ -227,10 +235,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack \
             lfs.csv
+          mkdir -p results
           cp lfs.csv results/${{matrix.arch}}-migrate.csv
       - name: results-error-asserts
         run: |
-          mkdir -p results
           make clean
           make lfs.csv \
             CFLAGS+=" \
@@ -249,7 +257,9 @@ jobs:
             -fstack=stack_limit \
             --max=stack \
             lfs.csv
+          mkdir -p results
           cp lfs.csv results/${{matrix.arch}}-error-asserts.csv
+
 
 # TODO no_intrinsics?
 
@@ -434,7 +444,8 @@ jobs:
           gcc --version
           python3 --version
       - name: test-1pls
-        run: make test TESTFLAGS+="-P1"
+        run: |
+          make test TESTFLAGS+="-P1"
 
 #  test-pl2:
 #    runs-on: ubuntu-22.04
@@ -466,7 +477,8 @@ jobs:
       # Valgrind takes a while with diminishing value, so only test
       # on one geometry
       - name: test-valgrind
-        run: make test TESTFLAGS+="--valgrind -Gdefault"
+        run: |
+          make test TESTFLAGS+="-Gdefault --valgrind"
 
   # run benchmarks
   #
@@ -484,10 +496,15 @@ jobs:
           python3 --version
           valgrind --version
       - name: bench
-        run: make bench
+        run: |
+            make bench
       # find perfbd results
       - name: perfbd
-        run: make perfbd
+        run: |
+          make lfs.perfbd.csv
+          ./scripts/perfbd.py -u lfs.perfbd.csv
+          mkdir -p results
+          cp lfs.perfbd.csv results/perfbd.csv
 
   # self-host with littlefs-fuse for a fuzz-like test
   fuse:
