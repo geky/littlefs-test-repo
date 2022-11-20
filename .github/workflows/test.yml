@@ -169,7 +169,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack
           mkdir -p sizes
-          cp lfs.csv sizes/${{matrix.arch}}.csv
+          cp lfs.code.csv sizes/${{matrix.arch}}.code.csv
+          cp lfs.data.csv sizes/${{matrix.arch}}.data.csv
+          cp lfs.stack.csv sizes/${{matrix.arch}}.stack.csv
+          cp lfs.struct.csv sizes/${{matrix.arch}}.struct.csv
       - name: sizes-readonly
         run: |
           make clean
@@ -190,7 +193,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack
           mkdir -p sizes
-          cp lfs.csv sizes/${{matrix.arch}}-readonly.csv
+          cp lfs.code.csv sizes/${{matrix.arch}}-readonly.code.csv
+          cp lfs.data.csv sizes/${{matrix.arch}}-readonly.data.csv
+          cp lfs.stack.csv sizes/${{matrix.arch}}-readonly.stack.csv
+          cp lfs.struct.csv sizes/${{matrix.arch}}-readonly.struct.csv
       - name: sizes-threadsafe
         run: |
           make clean
@@ -211,7 +217,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack
           mkdir -p sizes
-          cp lfs.csv sizes/${{matrix.arch}}-threadsafe.csv
+          cp lfs.code.csv sizes/${{matrix.arch}}-threadsafe.code.csv
+          cp lfs.data.csv sizes/${{matrix.arch}}-threadsafe.data.csv
+          cp lfs.stack.csv sizes/${{matrix.arch}}-threadsafe.stack.csv
+          cp lfs.struct.csv sizes/${{matrix.arch}}-threadsafe.struct.csv
       - name: sizes-migrate
         run: |
           make clean
@@ -232,7 +241,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack
           mkdir -p sizes
-          cp lfs.csv sizes/${{matrix.arch}}-migrate.csv
+          cp lfs.code.csv sizes/${{matrix.arch}}-migrate.code.csv
+          cp lfs.data.csv sizes/${{matrix.arch}}-migrate.data.csv
+          cp lfs.stack.csv sizes/${{matrix.arch}}-migrate.stack.csv
+          cp lfs.struct.csv sizes/${{matrix.arch}}-migrate.struct.csv
       - name: sizes-error-asserts
         run: |
           make clean
@@ -252,7 +264,10 @@ jobs:
             -fstack=stack_limit \
             --max=stack
           mkdir -p sizes
-          cp lfs.csv sizes/${{matrix.arch}}-error-asserts.csv
+          cp lfs.code.csv sizes/${{matrix.arch}}-error-asserts.code.csv
+          cp lfs.data.csv sizes/${{matrix.arch}}-error-asserts.data.csv
+          cp lfs.stack.csv sizes/${{matrix.arch}}-error-asserts.stack.csv
+          cp lfs.struct.csv sizes/${{matrix.arch}}-error-asserts.struct.csv
       - name: upload-sizes
         uses: actions/upload-artifact@v2
         with:
