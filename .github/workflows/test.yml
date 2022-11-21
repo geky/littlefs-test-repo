@@ -275,8 +275,6 @@ jobs:
           mkdir -p status
           for f in $(shopt -s nullglob ; echo sizes/*.csv)
           do
-            # skip .data.csv as it should always be zero
-            [[ $f == *.data.csv ]] && continue
             export STEP="sizes$(echo $f \
               | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/-\1/p')"
             export CONTEXT="sizes (${{matrix.arch}}$(echo $f \
@@ -332,7 +330,7 @@ jobs:
                 | select(.context == env.CONTEXT).description
                 | capture("(?<prev>[0-9\\.]+)").prev' \
               || echo 0)"
-            export DESCRIPTION="$(./scripts/cov.py -u $f -f $s -Y \
+            export DESCRIPTION="$(./scripts/cov.py -u $f -f$s -Y \
               | awk -F '[ /%]+' -v s=$s '
                 NR==2 {printf "%.1f%% of %d %s",$4,$3,s}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
@@ -591,29 +589,37 @@ jobs:
           valgrind --version
       - name: bench
         run: |
-            make bench
-      # find perfbd results
-      - name: perfbd
-        run: |
+          make bench BENCHFLAGS+=-olfs.bench.csv
+
+          # find bench results
+          ./scripts/summary.py lfs.bench.csv \
+            -bsuite \
+            -freaded=bench_readed \
+            -fproged=bench_proged \
+            -ferased=bench_erased
+          mkdir -p bench
+          cp lfs.bench.csv bench/bench.csv
+
+          # find perfbd results
           make lfs.perfbd.csv
           ./scripts/perfbd.py -u lfs.perfbd.csv
-          mkdir -p perfbd 
-          cp lfs.perfbd.csv perfbd/perfbd.csv
+          mkdir -p bench
+          cp lfs.perfbd.csv bench/perfbd.csv
 
-      # create perfbd statuses
-      - name: upload-perfbd
+      # create bench statuses
+      - name: upload-bench
         uses: actions/upload-artifact@v2
         with:
-          name: perfbd
-          path: perfbd
-      - name: status-perfbd
+          name: bench
+          path: bench
+      - name: status-bench
         run: |
           mkdir -p status
-          f=perfbd/perfbd.csv
+          f=bench/bench.csv
           for s in readed proged erased
           do
-            export STEP="perfbd"
-            export CONTEXT="perfbd / $s"
+            export STEP="bench"
+            export CONTEXT="bench / $s"
             export PREV="$(curl -sS \
               "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/`
                 `master?per_page=100" \
@@ -621,7 +627,7 @@ jobs:
                 | select(.context == env.CONTEXT).description
                 | capture("(?<prev>[0-9]+)").prev' \
               || echo 0)"
-            export DESCRIPTION="$(./scripts/perfbd.py -u $f -f $s -Y \
+            export DESCRIPTION="$(./scripts/summary.py $f -f$s=bench_$s -Y \
               | awk '
                 NR==2 {printf "%s B",$NF}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
@@ -635,7 +641,7 @@ jobs:
               target_step: env.STEP,
             }' | tee status/$(basename $f .csv)-$s.json
           done
-      - name: upload-status-perfbd
+      - name: upload-status-bench
         uses: actions/upload-artifact@v2
         with:
           name: status
