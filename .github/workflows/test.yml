@@ -288,11 +288,12 @@ jobs:
                 | select(.context == env.CONTEXT).description
                 | capture("(?<prev>[0-9∞]+)").prev' \
               || echo 0)"
-            export DESCRIPTION="$(./scripts/summary.py $f -Y | awk '
-              NR==2 {printf "%s B",$NF}
-              NR==2 && ENVIRON["PREV"]+0 != 0 {
-                printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
-              }')"
+            export DESCRIPTION="$(./scripts/summary.py $f -Y \
+              | awk '
+                NR==2 {printf "%s B",$NF}
+                NR==2 && ENVIRON["PREV"]+0 != 0 {
+                  printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
+                }')"
             jq -n '{
               state: "success",
               context: env.CONTEXT,
@@ -331,7 +332,7 @@ jobs:
                 | select(.context == env.CONTEXT).description
                 | capture("(?<prev>[0-9\\.]+)").prev' \
               || echo 0)"
-            export DESCRIPTION="$(./scripts/cov.py -u $f -f $s -Y
+            export DESCRIPTION="$(./scripts/cov.py -u $f -f $s -Y \
               | awk -F '[ /%]+' -v s=$s '
                 NR==2 {printf "%.1f%% of %d %s",$4,$3,s}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
@@ -620,11 +621,12 @@ jobs:
                 | select(.context == env.CONTEXT).description
                 | capture("(?<prev>[0-9]+)").prev' \
               || echo 0)"
-            export DESCRIPTION="$(./scripts/perfbd.py -u $f -f $s -Y | awk '
-              NR==2 {printf "%s B",$NF}
-              NR==2 && ENVIRON["PREV"]+0 != 0 {
-                printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
-              }')"
+            export DESCRIPTION="$(./scripts/perfbd.py -u $f -f $s -Y \
+              | awk '
+                NR==2 {printf "%s B",$NF}
+                NR==2 && ENVIRON["PREV"]+0 != 0 {
+                  printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
+                }')"
             jq -n '{
               state: "success",
               context: env.CONTEXT,
