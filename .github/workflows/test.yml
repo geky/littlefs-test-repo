@@ -299,7 +299,7 @@ jobs:
               description: env.DESCRIPTION,
               target_job: "${{github.job}} (${{matrix.arch}})",
               target_step: env.STEP,
-            }' | tee status/${f%.csv}.json
+            }' | tee status/$(basename $f .csv).json
           done
       - name: upload-status-sizes
         uses: actions/upload-artifact@v2
@@ -343,7 +343,7 @@ jobs:
               description: env.DESCRIPTION,
               target_job: "${{github.job}} (${{matrix.arch}})",
               target_step: env.STEP,
-            }' | tee status/${f%.csv}.json
+            }' | tee status/$(basename $f .csv).json
           done
       - name: upload-status-sizes
         if: ${{matrix.arch == 'x86_64'}}
@@ -631,7 +631,7 @@ jobs:
               description: env.DESCRIPTION,
               target_job: "${{github.job}}",
               target_step: env.STEP,
-            }' | tee status/${f%.csv}.json
+            }' | tee status/$(basename $f .csv).json
           done
       - name: upload-status-perfbd
         uses: actions/upload-artifact@v2
