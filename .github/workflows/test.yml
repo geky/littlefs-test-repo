@@ -280,7 +280,7 @@ jobs:
             export STEP="sizes$(echo $f \
               | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/-\1/p')"
             export CONTEXT="sizes (${{matrix.arch}}$(echo $f \
-              | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/, \1 \/ \2/p'))"
+              | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/, \1) \/ \2/p')"
             export PREV="$(curl -sS \
               "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/`
                 `master?per_page=100" \
@@ -344,7 +344,7 @@ jobs:
               description: env.DESCRIPTION,
               target_job: "${{github.job}} (${{matrix.arch}})",
               target_step: env.STEP,
-            }' | tee status/$(basename $f .csv).json
+            }' | tee status/$(basename $f .csv)-$s.json
           done
       - name: upload-status-sizes
         if: ${{matrix.arch == 'x86_64'}}
@@ -633,7 +633,7 @@ jobs:
               description: env.DESCRIPTION,
               target_job: "${{github.job}}",
               target_step: env.STEP,
-            }' | tee status/$(basename $f .csv).json
+            }' | tee status/$(basename $f .csv)-$s.json
           done
       - name: upload-status-perfbd
         uses: actions/upload-artifact@v2
