@@ -119,7 +119,7 @@ jobs:
           rm test.c
 
       # run the tests!
-      - name: test-tests
+      - name: test
         run: |
           make clean
           # TODO include this by default?
@@ -136,12 +136,7 @@ jobs:
           make lfs.cov.csv
           ./scripts/cov.py -u lfs.cov.csv
           mkdir -p cov
-          cp lfs.cov.csv cov/${{matrix.arch}}.csv
-      - name: upload-cov
-        uses: actions/upload-artifact@v2
-        with:
-          name: cov
-          path: cov
+          cp lfs.cov.csv cov/${{matrix.arch}}.cov.csv
 
       # run with no intrinsics
       - name: test-no-intrinsics
@@ -268,11 +263,95 @@ jobs:
           cp lfs.data.csv sizes/${{matrix.arch}}-error-asserts.data.csv
           cp lfs.stack.csv sizes/${{matrix.arch}}-error-asserts.stack.csv
           cp lfs.struct.csv sizes/${{matrix.arch}}-error-asserts.struct.csv
+
+      # create size statuses
       - name: upload-sizes
         uses: actions/upload-artifact@v2
         with:
           name: sizes
           path: sizes
+      - name: status-sizes
+        run: |
+          mkdir -p status
+          for f in $(shopt -s nullglob ; echo sizes/*.csv)
+          do
+            # skip .data.csv as it should always be zero
+            [[ $f == *.data.csv ]] && continue
+            export STEP="sizes$(echo $f
+              | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/-\1/p')"
+            export CONTEXT="sizes (${{matrix.arch}}$(echo $f
+              | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/, \1 \/ \2/p'))"
+            export PREV="$(curl -sS \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/`
+                `master?per_page=100" \
+              | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
+                | select(.context == env.CONTEXT).description
+                | capture("(?<prev>[0-9∞]+)").prev' \
+              || echo 0)"
+            export DESCRIPTION="$(./scripts/summary.py $f -Y | awk '
+              NR==2 {printf "%s B",$NF}
+              NR==2 && ENVIRON["PREV"]+0 != 0 {
+                printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
+              }')"
+            jq -n '{
+              state: "success",
+              context: env.CONTEXT,
+              description: env.DESCRIPTION,
+              target_job: "${{github.job}} (${{matrix.arch}})",
+              target_step: env.STEP,
+            }' | tee status/${f%.csv}.json
+          done
+      - name: upload-status-sizes
+        uses: actions/upload-artifact@v2
+        with:
+          name: status
+          path: status
+          retention-days: 1
+
+      # create cov statuses
+      - name: upload-cov
+        if: ${{matrix.arch == 'x86_64'}}
+        uses: actions/upload-artifact@v2
+        with:
+          name: cov
+          path: cov
+      - name: status-cov
+        if: ${{matrix.arch == 'x86_64'}}
+        run: |
+          mkdir -p status
+          f=cov/${{matrix.arch}}.cov.csv
+          for s in lines branches
+          do
+            export STEP="cov"
+            export CONTEXT="cov / $s"
+            export PREV="$(curl -sS \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/`
+                `master?per_page=100" \
+              | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
+                | select(.context == env.CONTEXT).description
+                | capture("(?<prev>[0-9\\.]+)").prev' \
+              || echo 0)"
+            export DESCRIPTION="$(./scripts/cov.py -u $f -f $s -Y
+              | awk -F '[ /%]+' -v s=$s '
+                NR==2 {printf "%.1f%% of %d %s",$4,$3,s}
+                NR==2 && ENVIRON["PREV"]+0 != 0 {
+                  printf " (%+.1f%%)",$4-ENVIRON["PREV"]
+                }')"
+            jq -n '{
+              state: "success",
+              context: env.CONTEXT,
+              description: env.DESCRIPTION,
+              target_job: "${{github.job}}",
+              target_step: env.STEP,
+            }' | tee status/${f%.csv}.json
+          done
+      - name: upload-status-sizes
+        if: ${{matrix.arch == 'x86_64'}}
+        uses: actions/upload-artifact@v2
+        with:
+          name: status
+          path: status
+          retention-days: 1
 
 
 # TODO no_intrinsics?

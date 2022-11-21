@@ -50,6 +50,6 @@ jobs:
                 state: env.STATE,
                 context: env.CONTEXT,
                 description: env.DESCRIPTION,
-                target_url: env.TARGET_URL}' \
-                | tee /dev/stderr)"
+                target_url: env.TARGET_URL,
+              }' | tee /dev/stderr)"
           done
