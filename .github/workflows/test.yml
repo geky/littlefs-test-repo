@@ -136,7 +136,7 @@ jobs:
           make lfs.cov.csv
           ./scripts/cov.py -u lfs.cov.csv
           mkdir -p cov
-          cp lfs.cov.csv cov/${{matrix.arch}}.cov.csv
+          cp lfs.cov.csv cov/cov.csv
 
       # run with no intrinsics
       - name: test-no-intrinsics
@@ -319,7 +319,7 @@ jobs:
         if: ${{matrix.arch == 'x86_64'}}
         run: |
           mkdir -p status
-          f=cov/${{matrix.arch}}.cov.csv
+          f=cov/cov.csv
           for s in lines branches
           do
             export STEP="cov"
@@ -341,7 +341,7 @@ jobs:
               state: "success",
               context: env.CONTEXT,
               description: env.DESCRIPTION,
-              target_job: "${{github.job}}",
+              target_job: "${{github.job}} (${{matrix.arch}})",
               target_step: env.STEP,
             }' | tee status/${f%.csv}.json
           done
@@ -599,11 +599,46 @@ jobs:
           mkdir -p perfbd 
           cp lfs.perfbd.csv perfbd/perfbd.csv
 
+      # create perfbd statuses
       - name: upload-perfbd
         uses: actions/upload-artifact@v2
         with:
           name: perfbd
           path: perfbd
+      - name: status-perfbd
+        run: |
+          mkdir -p status
+          f=perfbd/perfbd.csv
+          for s in readed proged erased
+          do
+            export STEP="perfbd"
+            export CONTEXT="perfbd / $s"
+            export PREV="$(curl -sS \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/`
+                `master?per_page=100" \
+              | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]
+                | select(.context == env.CONTEXT).description
+                | capture("(?<prev>[0-9]+)").prev' \
+              || echo 0)"
+            export DESCRIPTION="$(./scripts/perfbd.py -u $f -f $s -Y | awk '
+              NR==2 {printf "%s B",$NF}
+              NR==2 && ENVIRON["PREV"]+0 != 0 {
+                printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
+              }')"
+            jq -n '{
+              state: "success",
+              context: env.CONTEXT,
+              description: env.DESCRIPTION,
+              target_job: "${{github.job}}",
+              target_step: env.STEP,
+            }' | tee status/${f%.csv}.json
+          done
+      - name: upload-status-perfbd
+        uses: actions/upload-artifact@v2
+        with:
+          name: status
+          path: status
+          retention-days: 1
 
   # self-host with littlefs-fuse for a fuzz-like test
   fuse:
