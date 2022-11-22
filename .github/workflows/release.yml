@@ -204,7 +204,7 @@ jobs:
           git config user.email ${{secrets.BOT_EMAIL}}
           git fetch "https://github.com/$GITHUB_REPOSITORY.git" \
             "v$LFS_VERSION_MAJOR-prefix" || true
-          ./scripts/prefix.py "lfs$LFS_VERSION_MAJOR"
+          ./scripts/changeprefix.py --git "lfs" "lfs$LFS_VERSION_MAJOR"
           git branch "v$LFS_VERSION_MAJOR-prefix" $( \
             git commit-tree $(git write-tree) \
               $(git rev-parse --verify -q FETCH_HEAD | sed -e 's/^/-p /') \
