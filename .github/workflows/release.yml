@@ -106,7 +106,7 @@ jobs:
             table[$i,$j]=$c_camel
             ((j+=1))
 
-            for s in code data stack struct
+            for s in code stack struct
             do
               f=sizes/thumb${c:+-$c}.$s.csv
               [ -e $f ] && table[$i,$j]=$( \
@@ -128,7 +128,7 @@ jobs:
 
           # coverage table
           i=0
-          j=5
+          j=4
           for s in lines branches
           do
             table[$i,$j]=${s^}
@@ -147,12 +147,12 @@ jobs:
                     printf " (%+.1f%%)",$4-ENVIRON["PREV"]
                   }' \
                 | sed -e 's/ /\&nbsp;/g')
-            ((j=5, i+=1))
+            ((j=4, i+=1))
           done
 
           # benchmark table
           i=3
-          j=5
+          j=4
           for s in readed proged erased
           do
             table[$i,$j]=${s^}
@@ -171,7 +171,7 @@ jobs:
                     printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
                   }' \
                 | sed -e 's/ /\&nbsp;/g')
-            ((j=5, i+=1))
+            ((j=4, i+=1))
           done
 
           # build the actual table
@@ -180,10 +180,10 @@ jobs:
           for ((i=0; i<6; i++))
           do
             echo -n "|" >> table.txt
-            for ((j=0; j<7; j++))
+            for ((j=0; j<6; j++))
             do
               echo -n " " >> table.txt
-              [[ i -eq 2 && j -eq 6 ]] && echo -n "**Benchmarks**" >> table.txt
+              [[ i -eq 2 && j -eq 5 ]] && echo -n "**Benchmarks**" >> table.txt
               echo -n "${table[$i,$j]}" >> table.txt
               echo -n " |" >> table.txt
             done

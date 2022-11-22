@@ -276,6 +276,8 @@ jobs:
           mkdir -p status
           for f in $(shopt -s nullglob ; echo sizes/*.csv)
           do
+            # skip .data.csv as it should always be zero
+            [[ $f == *.data.csv ]] && continue
             export STEP="sizes$(echo $f \
               | sed -n 's/[^-.]*-\([^.]*\)\..*csv/-\1/p')"
             export CONTEXT="sizes (${{matrix.arch}}$(echo $f \
