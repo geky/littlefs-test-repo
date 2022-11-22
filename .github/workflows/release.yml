@@ -147,7 +147,7 @@ jobs:
                     printf " (%+.1f%%)",$4-ENVIRON["PREV"]
                   }' \
                 | sed -e 's/ /\&nbsp;/g')
-            ((j=0, i+=1))
+            ((j=5, i+=1))
           done
 
           # benchmark table
@@ -171,7 +171,7 @@ jobs:
                     printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
                   }' \
                 | sed -e 's/ /\&nbsp;/g')
-            ((j=0, i+=1))
+            ((j=5, i+=1))
           done
 
           # build the actual table
