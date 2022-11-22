@@ -101,7 +101,7 @@ jobs:
           do
             # per-config results
             c_or_default=${c:-default}
-            c_camel=${c^}
+            c_camel=${c_or_default^}
             echo -n "| $c_camel |" >> tables.txt
             for s in code data stack struct
             do
@@ -140,7 +140,7 @@ jobs:
                   | capture("(?<prev>[0-9\\.]+)").prev' \
                 prev-statuses.json || echo 0)"
               ./scripts/cov.py -u $f -f$s -Y \
-                | awk -F '[ /%]+' -v s=%s '
+                | awk -F '[ /%]+' -v s=$s '
                   NR==2 {$1=0; printf "%.1f%% of %d %s",$4,$3,s}
                   NR==2 && ENVIRON["PREV"]+0 != 0 {
                     printf " (%+.1f%%)",$4-ENVIRON["PREV"]
@@ -155,7 +155,7 @@ jobs:
           # benchmark table
           echo "|  | Readed | Proged | Erased |" >> tables.txt
           echo "|:-|-------:|-------:|-------:|" >> tables.txt
-          echo -n "| Bench |" >> tables.txt
+          echo -n "| Benchmarks |" >> tables.txt
           for s in readed proged erased
           do
             f=bench/bench.csv
