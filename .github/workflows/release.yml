@@ -175,8 +175,8 @@ jobs:
           done
 
           # build the actual table
-          echo "|   | Code | Data | Stack | Structs |   | Coverage |" >> table.txt
-          echo "|:--|-----:|-----:|------:|--------:|:--|---------:|" >> table.txt
+          echo "|   | Code | Stack | Structs |   | Coverage |" >> table.txt
+          echo "|:--|-----:|------:|--------:|:--|---------:|" >> table.txt
           for ((i=0; i<6; i++))
           do
             echo -n "|" >> table.txt
