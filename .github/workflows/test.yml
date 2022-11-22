@@ -140,6 +140,7 @@ jobs:
 
       # run with no intrinsics
       - name: test-no-intrinsics
+        if: ${{matrix.arch == 'x86_64'}}
         run: |
           make clean
           make test CFLAGS+="-DLFS_NO_INTRINSICS"
