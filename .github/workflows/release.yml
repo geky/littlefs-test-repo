@@ -112,7 +112,7 @@ jobs:
                     select(.context == "'"sizes (thumb${c:+, $c}) / $s"'").description
                     | capture("(?<prev>[0-9∞]+)").prev' \
                   prev-statuses.json || echo 0)"
-                ./scripts/summary.py $f -Y \
+                ./scripts/summary.py $f --max=stack_limit -Y \
                   | awk '
                     NR==2 {$1=0; printf "%s B",$NF}
                     NR==2 && ENVIRON["PREV"]+0 != 0 {

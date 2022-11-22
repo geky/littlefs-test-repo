@@ -162,7 +162,7 @@ jobs:
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack
+            --max=stack_limit
           mkdir -p sizes
           cp lfs.code.csv sizes/${{matrix.arch}}.code.csv
           cp lfs.data.csv sizes/${{matrix.arch}}.data.csv
@@ -186,7 +186,7 @@ jobs:
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack
+            --max=stack_limit
           mkdir -p sizes
           cp lfs.code.csv sizes/${{matrix.arch}}-readonly.code.csv
           cp lfs.data.csv sizes/${{matrix.arch}}-readonly.data.csv
@@ -210,7 +210,7 @@ jobs:
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack
+            --max=stack_limit
           mkdir -p sizes
           cp lfs.code.csv sizes/${{matrix.arch}}-threadsafe.code.csv
           cp lfs.data.csv sizes/${{matrix.arch}}-threadsafe.data.csv
@@ -234,7 +234,7 @@ jobs:
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack
+            --max=stack_limit
           mkdir -p sizes
           cp lfs.code.csv sizes/${{matrix.arch}}-migrate.code.csv
           cp lfs.data.csv sizes/${{matrix.arch}}-migrate.data.csv
@@ -257,7 +257,7 @@ jobs:
             -fcode=code_size \
             -fdata=data_size \
             -fstack=stack_limit \
-            --max=stack
+            --max=stack_limit
           mkdir -p sizes
           cp lfs.code.csv sizes/${{matrix.arch}}-error-asserts.code.csv
           cp lfs.data.csv sizes/${{matrix.arch}}-error-asserts.data.csv
@@ -287,7 +287,7 @@ jobs:
                 | select(.context == env.CONTEXT).description
                 | capture("(?<prev>[0-9∞]+)").prev' \
               || echo 0)"
-            export DESCRIPTION="$(./scripts/summary.py $f -Y \
+            export DESCRIPTION="$(./scripts/summary.py $f --max=stack_limit -Y \
               | awk '
                 NR==2 {$1=0; printf "%s B",$NF}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
