@@ -112,9 +112,9 @@ jobs:
                     select(.context == "'"sizes (thumb${c:+, $c}) / $s"'").description
                     | capture("(?<prev>[0-9∞]+)").prev' \
                   prev-statuses.json || echo 0)"
-                ./scripts/summary.py $f -Y
+                ./scripts/summary.py $f -Y \
                   | awk '
-                    NR==2 {printf "%s B",$NF}
+                    NR==2 {$1=0; printf "%s B",$NF}
                     NR==2 && ENVIRON["PREV"]+0 != 0 {
                       printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
                     }' \
@@ -141,7 +141,7 @@ jobs:
                 prev-statuses.json || echo 0)"
               ./scripts/cov.py -u $f -f$s -Y \
                 | awk -F '[ /%]+' -v s=%s '
-                  NR==2 {printf "%.1f%% of %d %s",$4,$3,s}
+                  NR==2 {$1=0; printf "%.1f%% of %d %s",$4,$3,s}
                   NR==2 && ENVIRON["PREV"]+0 != 0 {
                     printf " (%+.1f%%)",$4-ENVIRON["PREV"]
                   }' \
@@ -167,7 +167,7 @@ jobs:
                 prev-statuses.json || echo 0)"
               ./scripts/summary.py $f -f$s=bench_$s -Y \
                 | awk '
-                  NR==2 {printf "%s B",$NF}
+                  NR==2 {$1=0; printf "%s B",$NF}
                   NR==2 && ENVIRON["PREV"]+0 != 0 {
                     printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
                   }' \

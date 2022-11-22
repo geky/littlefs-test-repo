@@ -276,9 +276,10 @@ jobs:
           for f in $(shopt -s nullglob ; echo sizes/*.csv)
           do
             export STEP="sizes$(echo $f \
-              | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/-\1/p')"
+              | sed -n 's/[^-.]*-\([^.]*\)\..*csv/-\1/p')"
             export CONTEXT="sizes (${{matrix.arch}}$(echo $f \
-              | sed -n 's/[^-.]*-\([^.]*\)\.\(.*\)\.csv/, \1) \/ \2/p')"
+              | sed -n 's/[^-.]*-\([^.]*\)\..*csv/, \1/p')) / $(echo $f \
+              | sed -n 's/[^.]*\.\(.*\)\.csv/\1/p')"
             export PREV="$(curl -sS \
               "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/`
                 `master?per_page=100" \
@@ -288,7 +289,7 @@ jobs:
               || echo 0)"
             export DESCRIPTION="$(./scripts/summary.py $f -Y \
               | awk '
-                NR==2 {printf "%s B",$NF}
+                NR==2 {$1=0; printf "%s B",$NF}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
                   printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
                 }')"
@@ -332,7 +333,7 @@ jobs:
               || echo 0)"
             export DESCRIPTION="$(./scripts/cov.py -u $f -f$s -Y \
               | awk -F '[ /%]+' -v s=$s '
-                NR==2 {printf "%.1f%% of %d %s",$4,$3,s}
+                NR==2 {$1=0; printf "%.1f%% of %d %s",$4,$3,s}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
                   printf " (%+.1f%%)",$4-ENVIRON["PREV"]
                 }')"
@@ -629,7 +630,7 @@ jobs:
               || echo 0)"
             export DESCRIPTION="$(./scripts/summary.py $f -f$s=bench_$s -Y \
               | awk '
-                NR==2 {printf "%s B",$NF}
+                NR==2 {$1=0; printf "%s B",$NF}
                 NR==2 && ENVIRON["PREV"]+0 != 0 {
                   printf " (%+.1f%%)",100*($NF-ENVIRON["PREV"])/ENVIRON["PREV"]
                 }')"
