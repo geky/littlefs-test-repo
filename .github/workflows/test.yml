@@ -773,6 +773,7 @@ jobs:
           make -B test
 
   # create a bot comment for successful runs
+  # TODO should this somehow depend on successful run of all other jobs?
   comment:
     runs-on: ubuntu-22.04
     needs: [test, bench]
