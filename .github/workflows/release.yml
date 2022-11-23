@@ -86,10 +86,10 @@ jobs:
         run: |
           # previous results to compare against?
           [ -n "$LFS_PREV_VERSION" ] && curl -sS \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/`
-              `status/$LFS_PREV_VERSION?per_page=100" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/$LFS_PREV_VERSION`
+              `?per_page=100" \
             | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]' \
-            >> prev-statuses.json \
+            >> prev-status.json \
             || true
 
           # build table for GitHub
@@ -113,7 +113,7 @@ jobs:
                 export PREV="$(jq -re '
                     select(.context == "'"sizes (thumb${c:+, $c}) / $s"'").description
                     | capture("(?<prev>[0-9∞]+)").prev' \
-                  prev-statuses.json || echo 0)"
+                  prev-status.json || echo 0)"
                 ./scripts/summary.py $f --max=stack_limit -Y \
                   | awk '
                     NR==2 {$1=0; printf "%s B",$NF}
@@ -139,7 +139,7 @@ jobs:
               export PREV="$(jq -re '
                   select(.context == "'"cov / $s"'").description
                   | capture("(?<prev>[0-9\\.]+)").prev' \
-                prev-statuses.json || echo 0)"
+                prev-status.json || echo 0)"
               ./scripts/cov.py -u $f -f$s -Y \
                 | awk -F '[ /%]+' -v s=$s '
                   NR==2 {$1=0; printf "%.1f%% of %d %s",$4,$3,s}
@@ -163,7 +163,7 @@ jobs:
               export PREV="$(jq -re '
                   select(.context == "'"bench / $s"'").description
                   | capture("(?<prev>[0-9]+)").prev' \
-                prev-statuses.json || echo 0)"
+                prev-status.json || echo 0)"
               ./scripts/summary.py $f -f$s=bench_$s -Y \
                 | awk '
                   NR==2 {$1=0; printf "%s B",$NF}
@@ -235,7 +235,7 @@ jobs:
         run: |
           # create release and patch version tag (vN.N.N)
           # only draft if not a patch release
-          [ -e table.txt ] && export TABLES="$(cat table.txt)"
+          [ -e table.txt ] && export TABLE="$(cat table.txt)"
           [ -e changes.txt ] && export CHANGES="$(cat changes.txt)"
           curl -sS -X POST -H "authorization: token ${{secrets.BOT_TOKEN}}" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases" \
@@ -244,6 +244,6 @@ jobs:
               name: env.LFS_VERSION | rtrimstr(".0"),
               target_commitish: "${{github.event.workflow_run.head_sha}}",
               draft: env.LFS_VERSION | endswith(".0"),
-              body: [env.TABLES, env.CHANGES | select(.)] | join("\n\n")
+              body: [env.TABLE, env.CHANGES | select(.)] | join("\n\n")
             }' | tee /dev/stderr)"
 
