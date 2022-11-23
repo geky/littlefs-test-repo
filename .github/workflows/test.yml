@@ -526,7 +526,7 @@ jobs:
 
   # run as many exhaustive tests as fits in GitHub's time limits
   #
-  # turns out this is only 1 powerloss deep at the moment, though
+  # turns out this is only 2ish powerlosses deep at the moment, though
   # may be optimizable in the future
   test-1pls:
     runs-on: ubuntu-22.04
@@ -543,19 +543,22 @@ jobs:
         run: |
           make test TESTFLAGS+="-P1"
 
-#  test-pl2:
-#    runs-on: ubuntu-22.04
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: install
-#        run: |
-#          # need a few things
-#          sudo apt-get install -qq gcc python3 python3-pip
-#          pip3 install toml
-#          gcc --version
-#          python3 --version
-#      - name: test-pl2
-#        run: make test TESTFLAGS+="-P2"
+  test-2pls:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: |
+          # need a few things
+          sudo apt-get install -qq gcc python3 python3-pip
+          pip3 install toml
+          gcc --version
+          python3 --version
+      # 2-deep powerlosses takes several _days_, so limit this
+      # to a powerloss-friendly geometry
+      - name: test-2pls
+        run: |
+          make test TESTFLAGS+="-Gdefault -P2"
 
   # run under Valgrind to check for memory errors
   valgrind:
