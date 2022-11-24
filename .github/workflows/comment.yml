@@ -36,7 +36,7 @@ jobs:
             # check that the comment was from the most recent commit on the
             # pull request
             [ "$(curl -sS -H "authorization: token ${{secrets.BOT_TOKEN}}" \
-                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pulls/$NUMBER")"
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pulls/$NUMBER")" \
               == ${{github.event.workflow_run.head_sha}} ] || continue
 
             # update comment
