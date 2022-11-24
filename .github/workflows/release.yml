@@ -5,6 +5,10 @@ on:
     branches: [master]
     types: [completed]
 
+defaults:
+  run:
+    shell: bash -euv -o pipefail {0}
+
 jobs:
   release:
     runs-on: ubuntu-22.04
@@ -184,7 +188,7 @@ jobs:
             do
               echo -n " " >> table.txt
               [[ i -eq 2 && j -eq 5 ]] && echo -n "**Benchmarks**" >> table.txt
-              echo -n "${table[$i,$j]}" >> table.txt
+              echo -n "${table[$i,$j]:-}" >> table.txt
               echo -n " |" >> table.txt
             done
             echo >> table.txt

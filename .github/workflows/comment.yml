@@ -4,9 +4,17 @@ on:
     workflows: [test]
     types: [completed]
 
+defaults:
+  run:
+    shell: bash -euv -o pipefail {0}
+
 jobs:
   comment:
     runs-on: ubuntu-22.04
+
+    # only run on success (we don't want garbage comments!)
+    if: ${{github.event.workflow_run.conclusion == 'success'}}
+
     steps:
       # generated comment?
       - uses: dawidd6/action-download-artifact@v2
@@ -25,10 +33,17 @@ jobs:
             export NUMBER="$(jq -er '.number' $s)"
             export BODY="$(jq -er '.body' $s)"
 
-            # TODO check that commit is in pr number
-            echo $NUMBER
-            echo ${{github.event.workflow_run.head_sha}}
-            echo $BODY
+            # check that the comment was from the most recent commit on the
+            # pull request
+            [ "$(curl -sS -H "authorization: token ${{secrets.BOT_TOKEN}}" \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pulls/$NUMBER")"
+              == ${{github.event.workflow_run.head_sha}} ] || continue
 
-            # TODO upload comments
+            # update comment
+            curl -sS -X POST -H "authorization: token ${{secrets.BOT_TOKEN}}" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/`
+                `$NUMBER/comments" \
+              -d "$(jq -n '{
+                body: env.BODY,
+              }' | tee /dev/stderr)"
           done

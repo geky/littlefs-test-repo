@@ -905,7 +905,7 @@ jobs:
             do
               echo -n " " >> table.txt
               [[ i -eq 2 && j -eq 5 ]] && echo -n "**Benchmarks**" >> table.txt
-              echo -n "${table[$i,$j]}" >> table.txt
+              echo -n "${table[$i,$j]:-}" >> table.txt
               echo -n " |" >> table.txt
             done
             echo >> table.txt

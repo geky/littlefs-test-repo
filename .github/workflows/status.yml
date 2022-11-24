@@ -4,6 +4,10 @@ on:
     workflows: [test]
     types: [completed]
 
+defaults:
+  run:
+    shell: bash -euv -o pipefail {0}
+
 jobs:
   status:
     runs-on: ubuntu-22.04
