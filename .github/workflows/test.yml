@@ -772,11 +772,11 @@ jobs:
           make -B test-runner
           make -B test
 
-  # create a bot comment for successful runs
-  # TODO should this somehow depend on successful run of all other jobs?
+  # create a bot comment for successful runs on pull requests
   comment:
     runs-on: ubuntu-22.04
     needs: [test, bench]
+    if: ${{github.event_name == 'pull_request'}}
     steps:
       - uses: actions/checkout@v2
       - name: install
@@ -805,9 +805,10 @@ jobs:
       # try to find results from tests
       - name: collect-table
         run: |
-          # previous results to compare against?
+          # compare against pull-request target
           curl -sS \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/master`
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/status/`
+              `${{github.event.pull_request.base.ref}}`
               `?per_page=100" \
             | jq -re 'select(.sha != env.GITHUB_SHA) | .statuses[]' \
             >> prev-status.json \
