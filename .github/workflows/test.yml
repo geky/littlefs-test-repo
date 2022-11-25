@@ -927,9 +927,10 @@ jobs:
           echo "<details>" >> comment.txt
           echo "<summary>" >> comment.txt
           echo "Tests passed ✓, `
-            `Code: ${table[0,1]:-}, `
-            `Stack: ${table[0,2]:-}, `
-            `Structs: ${table[0,3]:-}" >> comment.txt
+            `Code: $(awk 'NR==3 {print $4}' table.txt || true), `
+            `Stack: $(awk 'NR==3 {print $6}' table.txt || true), `
+            `Structs: $(awk 'NR==3 {print $8}' table.txt || true)" \
+            >> comment.txt
           echo "</summary>" >> comment.txt
           echo >> comment.txt
           [ -e table.txt ] && cat table.txt >> comment.txt
