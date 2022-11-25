@@ -86,7 +86,7 @@ jobs:
           echo "LFS_PREV_VERSION=$LFS_PREV_VERSION" >> $GITHUB_ENV
 
       # try to find results from tests
-      - name: collect-table
+      - name: create-table
         run: |
           # previous results to compare against?
           [ -n "$LFS_PREV_VERSION" ] && curl -sS \
@@ -197,7 +197,7 @@ jobs:
           cat table.txt
 
       # find changes from history
-      - name: collect-changes
+      - name: create-changes
         run: |
           [ -n "$LFS_PREV_VERSION" ] || exit 0
           # use explicit link to github commit so that release notes can
@@ -239,15 +239,18 @@ jobs:
         run: |
           # create release and patch version tag (vN.N.N)
           # only draft if not a patch release
-          [ -e table.txt ] && export TABLE="$(cat table.txt)"
-          [ -e changes.txt ] && export CHANGES="$(cat changes.txt)"
+          [ -e table.txt ] && cat table.txt >> release.txt
+          echo >> release.txt
+          [ -e changes.txt ] && cat changes.txt >> release.txt
+          cat release.txt
+
           curl -sS -X POST -H "authorization: token ${{secrets.BOT_TOKEN}}" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases" \
-            -d "$(jq -n '{
+            -d "$(jq -n --rawfile release release.txt '{
               tag_name: env.LFS_VERSION,
               name: env.LFS_VERSION | rtrimstr(".0"),
               target_commitish: "${{github.event.workflow_run.head_sha}}",
               draft: env.LFS_VERSION | endswith(".0"),
-              body: [env.TABLE, env.CHANGES | select(.)] | join("\n\n")
+              body: $release,
             }' | tee /dev/stderr)"
 
