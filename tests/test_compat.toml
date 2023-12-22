@@ -2,11 +2,11 @@
 #
 # Note, these tests are a bit special. They expect to be linked against two
 # different versions of littlefs:
-# - lfs  => the new/current version of littlefs
-# - lfsp => the previous version of littlefs
+# - lfs2  => the new/current version of littlefs
+# - lfs2p => the previous version of littlefs
 #
-# If lfsp is not linked, and LFSP is not defined, these tests will alias
-# the relevant lfs types/functions as necessary so at least the tests can
+# If lfs2p is not linked, and LFS2P is not defined, these tests will alias
+# the relevant lfs2 types/functions as necessary so at least the tests can
 # themselves be tested locally.
 #
 # But to get value from these tests, it's expected that the previous version
@@ -17,40 +17,40 @@
 #
 # there may be a better way to do this, but oh well, explicit aliases works
 code = '''
-#ifdef LFSP
+#ifdef LFS2P
 #define STRINGIZE(x) STRINGIZE_(x)
 #define STRINGIZE_(x) #x
-#include STRINGIZE(LFSP)
+#include STRINGIZE(LFS2P)
 #else
-#define LFSP_DISK_VERSION LFS_DISK_VERSION
-#define LFSP_DISK_VERSION_MAJOR LFS_DISK_VERSION_MAJOR
-#define LFSP_DISK_VERSION_MINOR LFS_DISK_VERSION_MINOR
-#define lfsp_t lfs_t
-#define lfsp_config lfs_config
-#define lfsp_format lfs_format
-#define lfsp_mount lfs_mount
-#define lfsp_unmount lfs_unmount
-#define lfsp_fsinfo lfs_fsinfo
-#define lfsp_fs_stat lfs_fs_stat
-#define lfsp_dir_t lfs_dir_t
-#define lfsp_info lfs_info
-#define LFSP_TYPE_REG LFS_TYPE_REG
-#define LFSP_TYPE_DIR LFS_TYPE_DIR
-#define lfsp_mkdir lfs_mkdir
-#define lfsp_dir_open lfs_dir_open
-#define lfsp_dir_read lfs_dir_read
-#define lfsp_dir_close lfs_dir_close
-#define lfsp_file_t lfs_file_t
-#define LFSP_O_RDONLY LFS_O_RDONLY
-#define LFSP_O_WRONLY LFS_O_WRONLY
-#define LFSP_O_CREAT LFS_O_CREAT
-#define LFSP_O_EXCL LFS_O_EXCL
-#define LFSP_SEEK_SET LFS_SEEK_SET
-#define lfsp_file_open lfs_file_open
-#define lfsp_file_write lfs_file_write
-#define lfsp_file_read lfs_file_read
-#define lfsp_file_seek lfs_file_seek
-#define lfsp_file_close lfs_file_close
+#define LFS2P_DISK_VERSION LFS2_DISK_VERSION
+#define LFS2P_DISK_VERSION_MAJOR LFS2_DISK_VERSION_MAJOR
+#define LFS2P_DISK_VERSION_MINOR LFS2_DISK_VERSION_MINOR
+#define lfs2p_t lfs2_t
+#define lfs2p_config lfs2_config
+#define lfs2p_format lfs2_format
+#define lfs2p_mount lfs2_mount
+#define lfs2p_unmount lfs2_unmount
+#define lfs2p_fsinfo lfs2_fsinfo
+#define lfs2p_fs_stat lfs2_fs_stat
+#define lfs2p_dir_t lfs2_dir_t
+#define lfs2p_info lfs2_info
+#define LFS2P_TYPE_REG LFS2_TYPE_REG
+#define LFS2P_TYPE_DIR LFS2_TYPE_DIR
+#define lfs2p_mkdir lfs2_mkdir
+#define lfs2p_dir_open lfs2_dir_open
+#define lfs2p_dir_read lfs2_dir_read
+#define lfs2p_dir_close lfs2_dir_close
+#define lfs2p_file_t lfs2_file_t
+#define LFS2P_O_RDONLY LFS2_O_RDONLY
+#define LFS2P_O_WRONLY LFS2_O_WRONLY
+#define LFS2P_O_CREAT LFS2_O_CREAT
+#define LFS2P_O_EXCL LFS2_O_EXCL
+#define LFS2P_SEEK_SET LFS2_SEEK_SET
+#define lfs2p_file_open lfs2_file_open
+#define lfs2p_file_write lfs2_file_write
+#define lfs2p_file_read lfs2_file_read
+#define lfs2p_file_seek lfs2_file_seek
+#define lfs2p_file_close lfs2_file_close
 #endif
 '''
 
@@ -61,89 +61,89 @@ code = '''
 # test we can mount in a new version
 [cases.test_compat_forward_mount]
 if = '''
-    LFS_DISK_VERSION_MAJOR == LFSP_DISK_VERSION_MAJOR
+    LFS2_DISK_VERSION_MAJOR == LFS2P_DISK_VERSION_MAJOR
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_format(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_format(&lfs2p, &cfgp) => 0;
 
     // confirm the previous mount works
-    lfsp_mount(&lfsp, &cfgp) => 0;
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 
 
     // now test the new mount
-    lfs_t lfs;
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    // we should be able to read the version using lfs_fs_stat
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFSP_DISK_VERSION);
+    // we should be able to read the version using lfs2_fs_stat
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2P_DISK_VERSION);
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
 
 # test we can read dirs in a new version
 [cases.test_compat_forward_read_dirs]
 defines.COUNT = 5
 if = '''
-    LFS_DISK_VERSION_MAJOR == LFSP_DISK_VERSION_MAJOR
+    LFS2_DISK_VERSION_MAJOR == LFS2P_DISK_VERSION_MAJOR
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_format(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_format(&lfs2p, &cfgp) => 0;
 
     // write COUNT dirs
-    lfsp_mount(&lfsp, &cfgp) => 0;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfsp_mkdir(&lfsp, name) => 0;
+        lfs2p_mkdir(&lfs2p, name) => 0;
     }
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 
 
     // mount the new version
-    lfs_t lfs;
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    // we should be able to read the version using lfs_fs_stat
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFSP_DISK_VERSION);
+    // we should be able to read the version using lfs2_fs_stat
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2P_DISK_VERSION);
 
     // can we list the directories?
-    lfs_dir_t dir;
-    lfs_dir_open(&lfs, &dir, "/") => 0;
-    struct lfs_info info;
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_t dir;
+    lfs2_dir_open(&lfs2, &dir, "/") => 0;
+    struct lfs2_info info;
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfs_dir_read(&lfs, &dir, &info) => 0;
-    lfs_dir_close(&lfs, &dir) => 0;
+    lfs2_dir_read(&lfs2, &dir, &info) => 0;
+    lfs2_dir_close(&lfs2, &dir) => 0;
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
 
 # test we can read files in a new version
@@ -152,88 +152,88 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 4
 if = '''
-    LFS_DISK_VERSION_MAJOR == LFSP_DISK_VERSION_MAJOR
+    LFS2_DISK_VERSION_MAJOR == LFS2P_DISK_VERSION_MAJOR
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_format(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_format(&lfs2p, &cfgp) => 0;
 
     // write COUNT files
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfsp_file_open(&lfsp, &file, name,
-                LFSP_O_WRONLY | LFSP_O_CREAT | LFSP_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name,
+                LFS2P_O_WRONLY | LFS2P_O_CREAT | LFS2P_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfsp_file_write(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_write(&lfs2p, &file, chunk, CHUNK) => CHUNK;
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 
 
     // mount the new version
-    lfs_t lfs;
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    // we should be able to read the version using lfs_fs_stat
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFSP_DISK_VERSION);
+    // we should be able to read the version using lfs2_fs_stat
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2P_DISK_VERSION);
 
     // can we list the files?
-    lfs_dir_t dir;
-    lfs_dir_open(&lfs, &dir, "/") => 0;
-    struct lfs_info info;
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_t dir;
+    lfs2_dir_open(&lfs2, &dir, "/") => 0;
+    struct lfs2_info info;
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_REG);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_REG);
         char name[8];
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
     }
 
-    lfs_dir_read(&lfs, &dir, &info) => 0;
+    lfs2_dir_read(&lfs2, &dir, &info) => 0;
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfs_file_open(&lfs, &file, name, LFS_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name, LFS2_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfs_file_read(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_read(&lfs2, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
 
 # test we can read files in dirs in a new version
@@ -242,180 +242,180 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 4
 if = '''
-    LFS_DISK_VERSION_MAJOR == LFSP_DISK_VERSION_MAJOR
+    LFS2_DISK_VERSION_MAJOR == LFS2P_DISK_VERSION_MAJOR
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_format(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_format(&lfs2p, &cfgp) => 0;
 
     // write COUNT files+dirs
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[16];
         sprintf(name, "dir%03d", i);
-        lfsp_mkdir(&lfsp, name) => 0;
+        lfs2p_mkdir(&lfs2p, name) => 0;
 
-        lfsp_file_t file;
+        lfs2p_file_t file;
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfsp_file_open(&lfsp, &file, name,
-                LFSP_O_WRONLY | LFSP_O_CREAT | LFSP_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name,
+                LFS2P_O_WRONLY | LFS2P_O_CREAT | LFS2P_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfsp_file_write(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_write(&lfs2p, &file, chunk, CHUNK) => CHUNK;
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 
 
     // mount the new version
-    lfs_t lfs;
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    // we should be able to read the version using lfs_fs_stat
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFSP_DISK_VERSION);
+    // we should be able to read the version using lfs2_fs_stat
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2P_DISK_VERSION);
 
     // can we list the directories?
-    lfs_dir_t dir;
-    lfs_dir_open(&lfs, &dir, "/") => 0;
-    struct lfs_info info;
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_t dir;
+    lfs2_dir_open(&lfs2, &dir, "/") => 0;
+    struct lfs2_info info;
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfs_dir_read(&lfs, &dir, &info) => 0;
-    lfs_dir_close(&lfs, &dir) => 0;
+    lfs2_dir_read(&lfs2, &dir, &info) => 0;
+    lfs2_dir_close(&lfs2, &dir) => 0;
 
     // can we list the files?
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfs_dir_t dir;
-        lfs_dir_open(&lfs, &dir, name) => 0;
-        struct lfs_info info;
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+        lfs2_dir_t dir;
+        lfs2_dir_open(&lfs2, &dir, name) => 0;
+        struct lfs2_info info;
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         assert(strcmp(info.name, ".") == 0);
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         assert(strcmp(info.name, "..") == 0);
 
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_REG);
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_REG);
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
 
-        lfs_dir_read(&lfs, &dir, &info) => 0;
-        lfs_dir_close(&lfs, &dir) => 0;
+        lfs2_dir_read(&lfs2, &dir, &info) => 0;
+        lfs2_dir_close(&lfs2, &dir) => 0;
     }
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_file_t file;
         char name[16];
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfs_file_open(&lfs, &file, name, LFS_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name, LFS2_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfs_file_read(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_read(&lfs2, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
 
 # test we can write dirs in a new version
 [cases.test_compat_forward_write_dirs]
 defines.COUNT = 10
 if = '''
-    LFS_DISK_VERSION_MAJOR == LFSP_DISK_VERSION_MAJOR
+    LFS2_DISK_VERSION_MAJOR == LFS2P_DISK_VERSION_MAJOR
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_format(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_format(&lfs2p, &cfgp) => 0;
 
     // write COUNT/2 dirs
-    lfsp_mount(&lfsp, &cfgp) => 0;
-    for (lfs_size_t i = 0; i < COUNT/2; i++) {
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
+    for (lfs2_size_t i = 0; i < COUNT/2; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfsp_mkdir(&lfsp, name) => 0;
+        lfs2p_mkdir(&lfs2p, name) => 0;
     }
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 
 
     // mount the new version
-    lfs_t lfs;
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    // we should be able to read the version using lfs_fs_stat
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFSP_DISK_VERSION);
+    // we should be able to read the version using lfs2_fs_stat
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2P_DISK_VERSION);
 
     // write another COUNT/2 dirs
-    for (lfs_size_t i = COUNT/2; i < COUNT; i++) {
+    for (lfs2_size_t i = COUNT/2; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfs_mkdir(&lfs, name) => 0;
+        lfs2_mkdir(&lfs2, name) => 0;
     }
 
     // can we list the directories?
-    lfs_dir_t dir;
-    lfs_dir_open(&lfs, &dir, "/") => 0;
-    struct lfs_info info;
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_t dir;
+    lfs2_dir_open(&lfs2, &dir, "/") => 0;
+    struct lfs2_info info;
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfs_dir_read(&lfs, &dir, &info) => 0;
-    lfs_dir_close(&lfs, &dir) => 0;
+    lfs2_dir_read(&lfs2, &dir, &info) => 0;
+    lfs2_dir_close(&lfs2, &dir) => 0;
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
 
 # test we can write files in a new version
@@ -424,120 +424,120 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 2
 if = '''
-    LFS_DISK_VERSION_MAJOR == LFSP_DISK_VERSION_MAJOR
+    LFS2_DISK_VERSION_MAJOR == LFS2P_DISK_VERSION_MAJOR
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_format(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_format(&lfs2p, &cfgp) => 0;
 
     // write half COUNT files
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         // write half
-        lfsp_file_t file;
+        lfs2p_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfsp_file_open(&lfsp, &file, name,
-                LFSP_O_WRONLY | LFSP_O_CREAT | LFSP_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE/2; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name,
+                LFS2P_O_WRONLY | LFS2P_O_CREAT | LFS2P_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE/2; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfsp_file_write(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_write(&lfs2p, &file, chunk, CHUNK) => CHUNK;
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
 
         // skip the other half but keep our prng reproducible
-        for (lfs_size_t j = SIZE/2; j < SIZE; j++) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j++) {
             TEST_PRNG(&prng);
         }
     }
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 
 
     // mount the new version
-    lfs_t lfs;
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    // we should be able to read the version using lfs_fs_stat
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFSP_DISK_VERSION);
+    // we should be able to read the version using lfs2_fs_stat
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2P_DISK_VERSION);
 
     // write half COUNT files
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         // skip half but keep our prng reproducible
-        for (lfs_size_t j = 0; j < SIZE/2; j++) {
+        for (lfs2_size_t j = 0; j < SIZE/2; j++) {
             TEST_PRNG(&prng);
         }
 
         // write the other half
-        lfs_file_t file;
+        lfs2_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfs_file_open(&lfs, &file, name, LFS_O_WRONLY) => 0;
-        lfs_file_seek(&lfs, &file, SIZE/2, LFS_SEEK_SET) => SIZE/2;
+        lfs2_file_open(&lfs2, &file, name, LFS2_O_WRONLY) => 0;
+        lfs2_file_seek(&lfs2, &file, SIZE/2, LFS2_SEEK_SET) => SIZE/2;
 
-        for (lfs_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfs_file_write(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_write(&lfs2, &file, chunk, CHUNK) => CHUNK;
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
 
     // can we list the files?
-    lfs_dir_t dir;
-    lfs_dir_open(&lfs, &dir, "/") => 0;
-    struct lfs_info info;
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_t dir;
+    lfs2_dir_open(&lfs2, &dir, "/") => 0;
+    struct lfs2_info info;
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_REG);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_REG);
         char name[8];
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
     }
 
-    lfs_dir_read(&lfs, &dir, &info) => 0;
+    lfs2_dir_read(&lfs2, &dir, &info) => 0;
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfs_file_open(&lfs, &file, name, LFS_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name, LFS2_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfs_file_read(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_read(&lfs2, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
 
 # test we can write files in dirs in a new version
@@ -546,147 +546,147 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 2
 if = '''
-    LFS_DISK_VERSION_MAJOR == LFSP_DISK_VERSION_MAJOR
+    LFS2_DISK_VERSION_MAJOR == LFS2P_DISK_VERSION_MAJOR
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_format(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_format(&lfs2p, &cfgp) => 0;
 
     // write half COUNT files
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[16];
         sprintf(name, "dir%03d", i);
-        lfsp_mkdir(&lfsp, name) => 0;
+        lfs2p_mkdir(&lfs2p, name) => 0;
 
         // write half
-        lfsp_file_t file;
+        lfs2p_file_t file;
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfsp_file_open(&lfsp, &file, name,
-                LFSP_O_WRONLY | LFSP_O_CREAT | LFSP_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE/2; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name,
+                LFS2P_O_WRONLY | LFS2P_O_CREAT | LFS2P_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE/2; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfsp_file_write(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_write(&lfs2p, &file, chunk, CHUNK) => CHUNK;
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
 
         // skip the other half but keep our prng reproducible
-        for (lfs_size_t j = SIZE/2; j < SIZE; j++) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j++) {
             TEST_PRNG(&prng);
         }
     }
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 
 
     // mount the new version
-    lfs_t lfs;
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    // we should be able to read the version using lfs_fs_stat
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFSP_DISK_VERSION);
+    // we should be able to read the version using lfs2_fs_stat
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2P_DISK_VERSION);
 
     // write half COUNT files
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         // skip half but keep our prng reproducible
-        for (lfs_size_t j = 0; j < SIZE/2; j++) {
+        for (lfs2_size_t j = 0; j < SIZE/2; j++) {
             TEST_PRNG(&prng);
         }
 
         // write the other half
-        lfs_file_t file;
+        lfs2_file_t file;
         char name[16];
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfs_file_open(&lfs, &file, name, LFS_O_WRONLY) => 0;
-        lfs_file_seek(&lfs, &file, SIZE/2, LFS_SEEK_SET) => SIZE/2;
+        lfs2_file_open(&lfs2, &file, name, LFS2_O_WRONLY) => 0;
+        lfs2_file_seek(&lfs2, &file, SIZE/2, LFS2_SEEK_SET) => SIZE/2;
 
-        for (lfs_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfs_file_write(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_write(&lfs2, &file, chunk, CHUNK) => CHUNK;
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
 
     // can we list the directories?
-    lfs_dir_t dir;
-    lfs_dir_open(&lfs, &dir, "/") => 0;
-    struct lfs_info info;
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_t dir;
+    lfs2_dir_open(&lfs2, &dir, "/") => 0;
+    struct lfs2_info info;
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfs_dir_read(&lfs, &dir, &info) => 1;
-    assert(info.type == LFS_TYPE_DIR);
+    lfs2_dir_read(&lfs2, &dir, &info) => 1;
+    assert(info.type == LFS2_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfs_dir_read(&lfs, &dir, &info) => 0;
-    lfs_dir_close(&lfs, &dir) => 0;
+    lfs2_dir_read(&lfs2, &dir, &info) => 0;
+    lfs2_dir_close(&lfs2, &dir) => 0;
 
     // can we list the files?
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfs_dir_t dir;
-        lfs_dir_open(&lfs, &dir, name) => 0;
-        struct lfs_info info;
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+        lfs2_dir_t dir;
+        lfs2_dir_open(&lfs2, &dir, name) => 0;
+        struct lfs2_info info;
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         assert(strcmp(info.name, ".") == 0);
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_DIR);
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_DIR);
         assert(strcmp(info.name, "..") == 0);
 
-        lfs_dir_read(&lfs, &dir, &info) => 1;
-        assert(info.type == LFS_TYPE_REG);
+        lfs2_dir_read(&lfs2, &dir, &info) => 1;
+        assert(info.type == LFS2_TYPE_REG);
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
 
-        lfs_dir_read(&lfs, &dir, &info) => 0;
-        lfs_dir_close(&lfs, &dir) => 0;
+        lfs2_dir_read(&lfs2, &dir, &info) => 0;
+        lfs2_dir_close(&lfs2, &dir) => 0;
     }
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_file_t file;
         char name[16];
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfs_file_open(&lfs, &file, name, LFS_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name, LFS2_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfs_file_read(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_read(&lfs2, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
 
 
@@ -696,78 +696,78 @@ code = '''
 # test we can mount in an old version
 [cases.test_compat_backward_mount]
 if = '''
-    LFS_DISK_VERSION == LFSP_DISK_VERSION
+    LFS2_DISK_VERSION == LFS2P_DISK_VERSION
         && DISK_VERSION == 0
 '''
 code = '''
     // create the new version
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // confirm the new mount works
-    lfs_mount(&lfs, cfg) => 0;
-    lfs_unmount(&lfs) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
     // now test the previous mount
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
 
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 '''
 
 # test we can read dirs in an old version
 [cases.test_compat_backward_read_dirs]
 defines.COUNT = 5
 if = '''
-    LFS_DISK_VERSION == LFSP_DISK_VERSION
+    LFS2_DISK_VERSION == LFS2P_DISK_VERSION
         && DISK_VERSION == 0
 '''
 code = '''
     // create the new version
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // write COUNT dirs
-    lfs_mount(&lfs, cfg) => 0;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    lfs2_mount(&lfs2, cfg) => 0;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfs_mkdir(&lfs, name) => 0;
+        lfs2_mkdir(&lfs2, name) => 0;
     }
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
 
     // mount the new version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
 
     // can we list the directories?
-    lfsp_dir_t dir;
-    lfsp_dir_open(&lfsp, &dir, "/") => 0;
-    struct lfsp_info info;
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_t dir;
+    lfs2p_dir_open(&lfs2p, &dir, "/") => 0;
+    struct lfs2p_info info;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfsp_dir_read(&lfsp, &dir, &info) => 0;
-    lfsp_dir_close(&lfsp, &dir) => 0;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
+    lfs2p_dir_close(&lfs2p, &dir) => 0;
 
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 '''
 
 # test we can read files in an old version
@@ -776,83 +776,83 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 4
 if = '''
-    LFS_DISK_VERSION == LFSP_DISK_VERSION
+    LFS2_DISK_VERSION == LFS2P_DISK_VERSION
         && DISK_VERSION == 0
 '''
 code = '''
     // create the new version
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // write COUNT files
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfs_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfs_file_open(&lfs, &file, name,
-                LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name,
+                LFS2_O_WRONLY | LFS2_O_CREAT | LFS2_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfs_file_write(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_write(&lfs2, &file, chunk, CHUNK) => CHUNK;
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
 
     // mount the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
 
     // can we list the files?
-    lfsp_dir_t dir;
-    lfsp_dir_open(&lfsp, &dir, "/") => 0;
-    struct lfsp_info info;
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_t dir;
+    lfs2p_dir_open(&lfs2p, &dir, "/") => 0;
+    struct lfs2p_info info;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_REG);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_REG);
         char name[8];
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
     }
 
-    lfsp_dir_read(&lfsp, &dir, &info) => 0;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfsp_file_open(&lfsp, &file, name, LFSP_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name, LFS2P_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfsp_file_read(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_read(&lfs2p, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
 
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 '''
 
 # test we can read files in dirs in an old version
@@ -861,170 +861,170 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 4
 if = '''
-    LFS_DISK_VERSION == LFSP_DISK_VERSION
+    LFS2_DISK_VERSION == LFS2P_DISK_VERSION
         && DISK_VERSION == 0
 '''
 code = '''
     // create the new version
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // write COUNT files+dirs
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[16];
         sprintf(name, "dir%03d", i);
-        lfs_mkdir(&lfs, name) => 0;
+        lfs2_mkdir(&lfs2, name) => 0;
 
-        lfs_file_t file;
+        lfs2_file_t file;
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfs_file_open(&lfs, &file, name,
-                LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name,
+                LFS2_O_WRONLY | LFS2_O_CREAT | LFS2_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfs_file_write(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_write(&lfs2, &file, chunk, CHUNK) => CHUNK;
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
     }
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
 
     // mount the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
 
     // can we list the directories?
-    lfsp_dir_t dir;
-    lfsp_dir_open(&lfsp, &dir, "/") => 0;
-    struct lfsp_info info;
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_t dir;
+    lfs2p_dir_open(&lfs2p, &dir, "/") => 0;
+    struct lfs2p_info info;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfsp_dir_read(&lfsp, &dir, &info) => 0;
-    lfsp_dir_close(&lfsp, &dir) => 0;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
+    lfs2p_dir_close(&lfs2p, &dir) => 0;
 
     // can we list the files?
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfsp_dir_t dir;
-        lfsp_dir_open(&lfsp, &dir, name) => 0;
-        struct lfsp_info info;
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+        lfs2p_dir_t dir;
+        lfs2p_dir_open(&lfs2p, &dir, name) => 0;
+        struct lfs2p_info info;
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         assert(strcmp(info.name, ".") == 0);
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         assert(strcmp(info.name, "..") == 0);
 
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_REG);
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_REG);
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
 
-        lfsp_dir_read(&lfsp, &dir, &info) => 0;
-        lfsp_dir_close(&lfsp, &dir) => 0;
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
+        lfs2p_dir_close(&lfs2p, &dir) => 0;
     }
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_file_t file;
         char name[16];
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfsp_file_open(&lfsp, &file, name, LFSP_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name, LFS2P_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfsp_file_read(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_read(&lfs2p, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
 
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 '''
 
 # test we can write dirs in an old version
 [cases.test_compat_backward_write_dirs]
 defines.COUNT = 10
 if = '''
-    LFS_DISK_VERSION == LFSP_DISK_VERSION
+    LFS2_DISK_VERSION == LFS2P_DISK_VERSION
         && DISK_VERSION == 0
 '''
 code = '''
     // create the new version
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // write COUNT/2 dirs
-    lfs_mount(&lfs, cfg) => 0;
-    for (lfs_size_t i = 0; i < COUNT/2; i++) {
+    lfs2_mount(&lfs2, cfg) => 0;
+    for (lfs2_size_t i = 0; i < COUNT/2; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfs_mkdir(&lfs, name) => 0;
+        lfs2_mkdir(&lfs2, name) => 0;
     }
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
 
     // mount the previous version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
 
     // write another COUNT/2 dirs
-    for (lfs_size_t i = COUNT/2; i < COUNT; i++) {
+    for (lfs2_size_t i = COUNT/2; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfsp_mkdir(&lfsp, name) => 0;
+        lfs2p_mkdir(&lfs2p, name) => 0;
     }
 
     // can we list the directories?
-    lfsp_dir_t dir;
-    lfsp_dir_open(&lfsp, &dir, "/") => 0;
-    struct lfsp_info info;
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_t dir;
+    lfs2p_dir_open(&lfs2p, &dir, "/") => 0;
+    struct lfs2p_info info;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfsp_dir_read(&lfsp, &dir, &info) => 0;
-    lfsp_dir_close(&lfsp, &dir) => 0;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
+    lfs2p_dir_close(&lfs2p, &dir) => 0;
 
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 '''
 
 # test we can write files in an old version
@@ -1033,115 +1033,115 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 2
 if = '''
-    LFS_DISK_VERSION == LFSP_DISK_VERSION
+    LFS2_DISK_VERSION == LFS2P_DISK_VERSION
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // write half COUNT files
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         // write half
-        lfs_file_t file;
+        lfs2_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfs_file_open(&lfs, &file, name,
-                LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE/2; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name,
+                LFS2_O_WRONLY | LFS2_O_CREAT | LFS2_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE/2; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfs_file_write(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_write(&lfs2, &file, chunk, CHUNK) => CHUNK;
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
 
         // skip the other half but keep our prng reproducible
-        for (lfs_size_t j = SIZE/2; j < SIZE; j++) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j++) {
             TEST_PRNG(&prng);
         }
     }
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
 
     // mount the new version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
 
     // write half COUNT files
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         // skip half but keep our prng reproducible
-        for (lfs_size_t j = 0; j < SIZE/2; j++) {
+        for (lfs2_size_t j = 0; j < SIZE/2; j++) {
             TEST_PRNG(&prng);
         }
 
         // write the other half
-        lfsp_file_t file;
+        lfs2p_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfsp_file_open(&lfsp, &file, name, LFSP_O_WRONLY) => 0;
-        lfsp_file_seek(&lfsp, &file, SIZE/2, LFSP_SEEK_SET) => SIZE/2;
+        lfs2p_file_open(&lfs2p, &file, name, LFS2P_O_WRONLY) => 0;
+        lfs2p_file_seek(&lfs2p, &file, SIZE/2, LFS2P_SEEK_SET) => SIZE/2;
 
-        for (lfs_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfsp_file_write(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_write(&lfs2p, &file, chunk, CHUNK) => CHUNK;
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
 
     // can we list the files?
-    lfsp_dir_t dir;
-    lfsp_dir_open(&lfsp, &dir, "/") => 0;
-    struct lfsp_info info;
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_t dir;
+    lfs2p_dir_open(&lfs2p, &dir, "/") => 0;
+    struct lfs2p_info info;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_REG);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_REG);
         char name[8];
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
     }
 
-    lfsp_dir_read(&lfsp, &dir, &info) => 0;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_file_t file;
         char name[8];
         sprintf(name, "file%03d", i);
-        lfsp_file_open(&lfsp, &file, name, LFSP_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name, LFS2P_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfsp_file_read(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_read(&lfs2p, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
 
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 '''
 
 # test we can write files in dirs in an old version
@@ -1150,142 +1150,142 @@ defines.COUNT = 5
 defines.SIZE = [4, 32, 512, 8192]
 defines.CHUNK = 2
 if = '''
-    LFS_DISK_VERSION == LFSP_DISK_VERSION
+    LFS2_DISK_VERSION == LFS2P_DISK_VERSION
         && DISK_VERSION == 0
 '''
 code = '''
     // create the previous version
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // write half COUNT files
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
     uint32_t prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[16];
         sprintf(name, "dir%03d", i);
-        lfs_mkdir(&lfs, name) => 0;
+        lfs2_mkdir(&lfs2, name) => 0;
 
         // write half
-        lfs_file_t file;
+        lfs2_file_t file;
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfs_file_open(&lfs, &file, name,
-                LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL) => 0;
-        for (lfs_size_t j = 0; j < SIZE/2; j += CHUNK) {
+        lfs2_file_open(&lfs2, &file, name,
+                LFS2_O_WRONLY | LFS2_O_CREAT | LFS2_O_EXCL) => 0;
+        for (lfs2_size_t j = 0; j < SIZE/2; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfs_file_write(&lfs, &file, chunk, CHUNK) => CHUNK;
+            lfs2_file_write(&lfs2, &file, chunk, CHUNK) => CHUNK;
         }
-        lfs_file_close(&lfs, &file) => 0;
+        lfs2_file_close(&lfs2, &file) => 0;
 
         // skip the other half but keep our prng reproducible
-        for (lfs_size_t j = SIZE/2; j < SIZE; j++) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j++) {
             TEST_PRNG(&prng);
         }
     }
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
 
     // mount the new version
-    struct lfsp_config cfgp;
+    struct lfs2p_config cfgp;
     memcpy(&cfgp, cfg, sizeof(cfgp));
-    lfsp_t lfsp;
-    lfsp_mount(&lfsp, &cfgp) => 0;
+    lfs2p_t lfs2p;
+    lfs2p_mount(&lfs2p, &cfgp) => 0;
 
     // write half COUNT files
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         // skip half but keep our prng reproducible
-        for (lfs_size_t j = 0; j < SIZE/2; j++) {
+        for (lfs2_size_t j = 0; j < SIZE/2; j++) {
             TEST_PRNG(&prng);
         }
 
         // write the other half
-        lfsp_file_t file;
+        lfs2p_file_t file;
         char name[16];
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfsp_file_open(&lfsp, &file, name, LFSP_O_WRONLY) => 0;
-        lfsp_file_seek(&lfsp, &file, SIZE/2, LFSP_SEEK_SET) => SIZE/2;
+        lfs2p_file_open(&lfs2p, &file, name, LFS2P_O_WRONLY) => 0;
+        lfs2p_file_seek(&lfs2p, &file, SIZE/2, LFS2P_SEEK_SET) => SIZE/2;
 
-        for (lfs_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
+        for (lfs2_size_t j = SIZE/2; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 chunk[k] = TEST_PRNG(&prng) & 0xff;
             }
 
-            lfsp_file_write(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_write(&lfs2p, &file, chunk, CHUNK) => CHUNK;
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
 
     // can we list the directories?
-    lfsp_dir_t dir;
-    lfsp_dir_open(&lfsp, &dir, "/") => 0;
-    struct lfsp_info info;
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_t dir;
+    lfs2p_dir_open(&lfs2p, &dir, "/") => 0;
+    struct lfs2p_info info;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, ".") == 0);
-    lfsp_dir_read(&lfsp, &dir, &info) => 1;
-    assert(info.type == LFSP_TYPE_DIR);
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+    assert(info.type == LFS2P_TYPE_DIR);
     assert(strcmp(info.name, "..") == 0);
 
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         char name[8];
         sprintf(name, "dir%03d", i);
         assert(strcmp(info.name, name) == 0);
     }
 
-    lfsp_dir_read(&lfsp, &dir, &info) => 0;
-    lfsp_dir_close(&lfsp, &dir) => 0;
+    lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
+    lfs2p_dir_close(&lfs2p, &dir) => 0;
 
     // can we list the files?
-    for (lfs_size_t i = 0; i < COUNT; i++) {
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
         char name[8];
         sprintf(name, "dir%03d", i);
-        lfsp_dir_t dir;
-        lfsp_dir_open(&lfsp, &dir, name) => 0;
-        struct lfsp_info info;
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+        lfs2p_dir_t dir;
+        lfs2p_dir_open(&lfs2p, &dir, name) => 0;
+        struct lfs2p_info info;
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         assert(strcmp(info.name, ".") == 0);
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_DIR);
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_DIR);
         assert(strcmp(info.name, "..") == 0);
 
-        lfsp_dir_read(&lfsp, &dir, &info) => 1;
-        assert(info.type == LFSP_TYPE_REG);
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 1;
+        assert(info.type == LFS2P_TYPE_REG);
         sprintf(name, "file%03d", i);
         assert(strcmp(info.name, name) == 0);
         assert(info.size == SIZE);
 
-        lfsp_dir_read(&lfsp, &dir, &info) => 0;
-        lfsp_dir_close(&lfsp, &dir) => 0;
+        lfs2p_dir_read(&lfs2p, &dir, &info) => 0;
+        lfs2p_dir_close(&lfs2p, &dir) => 0;
     }
 
     // now can we read the files?
     prng = 42;
-    for (lfs_size_t i = 0; i < COUNT; i++) {
-        lfsp_file_t file;
+    for (lfs2_size_t i = 0; i < COUNT; i++) {
+        lfs2p_file_t file;
         char name[16];
         sprintf(name, "dir%03d/file%03d", i, i);
-        lfsp_file_open(&lfsp, &file, name, LFSP_O_RDONLY) => 0;
-        for (lfs_size_t j = 0; j < SIZE; j += CHUNK) {
+        lfs2p_file_open(&lfs2p, &file, name, LFS2P_O_RDONLY) => 0;
+        for (lfs2_size_t j = 0; j < SIZE; j += CHUNK) {
             uint8_t chunk[CHUNK];
-            lfsp_file_read(&lfsp, &file, chunk, CHUNK) => CHUNK;
+            lfs2p_file_read(&lfs2p, &file, chunk, CHUNK) => CHUNK;
 
-            for (lfs_size_t k = 0; k < CHUNK; k++) {
+            for (lfs2_size_t k = 0; k < CHUNK; k++) {
                 assert(chunk[k] == TEST_PRNG(&prng) & 0xff);
             }
         }
-        lfsp_file_close(&lfsp, &file) => 0;
+        lfs2p_file_close(&lfs2p, &file) => 0;
     }
 
-    lfsp_unmount(&lfsp) => 0;
+    lfs2p_unmount(&lfs2p) => 0;
 '''
 
 
@@ -1294,160 +1294,160 @@ code = '''
 
 # test that we fail to mount after a major version bump
 [cases.test_compat_major_incompat]
-in = 'lfs.c'
+in = 'lfs2.c'
 code = '''
     // create a superblock
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // bump the major version
     //
     // note we're messing around with internals to do this! this
     // is not a user API
-    lfs_mount(&lfs, cfg) => 0;
-    lfs_mdir_t mdir;
-    lfs_dir_fetch(&lfs, &mdir, (lfs_block_t[2]){0, 1}) => 0;
-    lfs_superblock_t superblock = {
-        .version     = LFS_DISK_VERSION + 0x00010000,
-        .block_size  = lfs.cfg->block_size,
-        .block_count = lfs.cfg->block_count,
-        .name_max    = lfs.name_max,
-        .file_max    = lfs.file_max,
-        .attr_max    = lfs.attr_max,
+    lfs2_mount(&lfs2, cfg) => 0;
+    lfs2_mdir_t mdir;
+    lfs2_dir_fetch(&lfs2, &mdir, (lfs2_block_t[2]){0, 1}) => 0;
+    lfs2_superblock_t superblock = {
+        .version     = LFS2_DISK_VERSION + 0x00010000,
+        .block_size  = lfs2.cfg->block_size,
+        .block_count = lfs2.cfg->block_count,
+        .name_max    = lfs2.name_max,
+        .file_max    = lfs2.file_max,
+        .attr_max    = lfs2.attr_max,
     };
-    lfs_superblock_tole32(&superblock);
-    lfs_dir_commit(&lfs, &mdir, LFS_MKATTRS(
-            {LFS_MKTAG(LFS_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
+    lfs2_superblock_tole32(&superblock);
+    lfs2_dir_commit(&lfs2, &mdir, LFS2_MKATTRS(
+            {LFS2_MKTAG(LFS2_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
                 &superblock})) => 0;
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
     // mount should now fail
-    lfs_mount(&lfs, cfg) => LFS_ERR_INVAL;
+    lfs2_mount(&lfs2, cfg) => LFS2_ERR_INVAL;
 '''
 
 # test that we fail to mount after a minor version bump
 [cases.test_compat_minor_incompat]
-in = 'lfs.c'
+in = 'lfs2.c'
 code = '''
     // create a superblock
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
 
     // bump the minor version
     //
     // note we're messing around with internals to do this! this
     // is not a user API
-    lfs_mount(&lfs, cfg) => 0;
-    lfs_mdir_t mdir;
-    lfs_dir_fetch(&lfs, &mdir, (lfs_block_t[2]){0, 1}) => 0;
-    lfs_superblock_t superblock = {
-        .version     = LFS_DISK_VERSION + 0x00000001,
-        .block_size  = lfs.cfg->block_size,
-        .block_count = lfs.cfg->block_count,
-        .name_max    = lfs.name_max,
-        .file_max    = lfs.file_max,
-        .attr_max    = lfs.attr_max,
+    lfs2_mount(&lfs2, cfg) => 0;
+    lfs2_mdir_t mdir;
+    lfs2_dir_fetch(&lfs2, &mdir, (lfs2_block_t[2]){0, 1}) => 0;
+    lfs2_superblock_t superblock = {
+        .version     = LFS2_DISK_VERSION + 0x00000001,
+        .block_size  = lfs2.cfg->block_size,
+        .block_count = lfs2.cfg->block_count,
+        .name_max    = lfs2.name_max,
+        .file_max    = lfs2.file_max,
+        .attr_max    = lfs2.attr_max,
     };
-    lfs_superblock_tole32(&superblock);
-    lfs_dir_commit(&lfs, &mdir, LFS_MKATTRS(
-            {LFS_MKTAG(LFS_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
+    lfs2_superblock_tole32(&superblock);
+    lfs2_dir_commit(&lfs2, &mdir, LFS2_MKATTRS(
+            {LFS2_MKTAG(LFS2_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
                 &superblock})) => 0;
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
     // mount should now fail
-    lfs_mount(&lfs, cfg) => LFS_ERR_INVAL;
+    lfs2_mount(&lfs2, cfg) => LFS2_ERR_INVAL;
 '''
 
 # test that we correctly bump the minor version
 [cases.test_compat_minor_bump]
-in = 'lfs.c'
+in = 'lfs2.c'
 if = '''
-    LFS_DISK_VERSION_MINOR > 0
+    LFS2_DISK_VERSION_MINOR > 0
         && DISK_VERSION == 0
 '''
 code = '''
     // create a superblock
-    lfs_t lfs;
-    lfs_format(&lfs, cfg) => 0;
-    lfs_mount(&lfs, cfg) => 0;
-    lfs_file_t file;
-    lfs_file_open(&lfs, &file, "test",
-            LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL) => 0;
-    lfs_file_write(&lfs, &file, "testtest", 8) => 8;
-    lfs_file_close(&lfs, &file) => 0;
-    lfs_unmount(&lfs) => 0;
+    lfs2_t lfs2;
+    lfs2_format(&lfs2, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
+    lfs2_file_t file;
+    lfs2_file_open(&lfs2, &file, "test",
+            LFS2_O_WRONLY | LFS2_O_CREAT | LFS2_O_EXCL) => 0;
+    lfs2_file_write(&lfs2, &file, "testtest", 8) => 8;
+    lfs2_file_close(&lfs2, &file) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
     // write an old minor version
     //
     // note we're messing around with internals to do this! this
     // is not a user API
-    lfs_mount(&lfs, cfg) => 0;
-    lfs_mdir_t mdir;
-    lfs_dir_fetch(&lfs, &mdir, (lfs_block_t[2]){0, 1}) => 0;
-    lfs_superblock_t superblock = {
-        .version     = LFS_DISK_VERSION - 0x00000001,
-        .block_size  = lfs.cfg->block_size,
-        .block_count = lfs.cfg->block_count,
-        .name_max    = lfs.name_max,
-        .file_max    = lfs.file_max,
-        .attr_max    = lfs.attr_max,
+    lfs2_mount(&lfs2, cfg) => 0;
+    lfs2_mdir_t mdir;
+    lfs2_dir_fetch(&lfs2, &mdir, (lfs2_block_t[2]){0, 1}) => 0;
+    lfs2_superblock_t superblock = {
+        .version     = LFS2_DISK_VERSION - 0x00000001,
+        .block_size  = lfs2.cfg->block_size,
+        .block_count = lfs2.cfg->block_count,
+        .name_max    = lfs2.name_max,
+        .file_max    = lfs2.file_max,
+        .attr_max    = lfs2.attr_max,
     };
-    lfs_superblock_tole32(&superblock);
-    lfs_dir_commit(&lfs, &mdir, LFS_MKATTRS(
-            {LFS_MKTAG(LFS_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
+    lfs2_superblock_tole32(&superblock);
+    lfs2_dir_commit(&lfs2, &mdir, LFS2_MKATTRS(
+            {LFS2_MKTAG(LFS2_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
                 &superblock})) => 0;
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
     // mount should still work
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    struct lfs_fsinfo fsinfo;
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFS_DISK_VERSION-1);
+    struct lfs2_fsinfo fsinfo;
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2_DISK_VERSION-1);
 
-    lfs_file_open(&lfs, &file, "test", LFS_O_RDONLY) => 0;
+    lfs2_file_open(&lfs2, &file, "test", LFS2_O_RDONLY) => 0;
     uint8_t buffer[8];
-    lfs_file_read(&lfs, &file, buffer, 8) => 8;
+    lfs2_file_read(&lfs2, &file, buffer, 8) => 8;
     assert(memcmp(buffer, "testtest", 8) == 0);
-    lfs_file_close(&lfs, &file) => 0;
+    lfs2_file_close(&lfs2, &file) => 0;
 
     // minor version should be unchanged
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFS_DISK_VERSION-1);
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2_DISK_VERSION-1);
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
     // if we write, we need to bump the minor version
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
 
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFS_DISK_VERSION-1);
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2_DISK_VERSION-1);
 
-    lfs_file_open(&lfs, &file, "test", LFS_O_WRONLY | LFS_O_TRUNC) => 0;
-    lfs_file_write(&lfs, &file, "teeeeest", 8) => 8;
-    lfs_file_close(&lfs, &file) => 0;
+    lfs2_file_open(&lfs2, &file, "test", LFS2_O_WRONLY | LFS2_O_TRUNC) => 0;
+    lfs2_file_write(&lfs2, &file, "teeeeest", 8) => 8;
+    lfs2_file_close(&lfs2, &file) => 0;
 
     // minor version should be changed
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFS_DISK_VERSION);
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2_DISK_VERSION);
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 
     // and of course mount should still work
-    lfs_mount(&lfs, cfg) => 0;
+    lfs2_mount(&lfs2, cfg) => 0;
 
     // minor version should have changed
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFS_DISK_VERSION);
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2_DISK_VERSION);
 
-    lfs_file_open(&lfs, &file, "test", LFS_O_RDONLY) => 0;
-    lfs_file_read(&lfs, &file, buffer, 8) => 8;
+    lfs2_file_open(&lfs2, &file, "test", LFS2_O_RDONLY) => 0;
+    lfs2_file_read(&lfs2, &file, buffer, 8) => 8;
     assert(memcmp(buffer, "teeeeest", 8) == 0);
-    lfs_file_close(&lfs, &file) => 0;
+    lfs2_file_close(&lfs2, &file) => 0;
 
     // yep, still changed
-    lfs_fs_stat(&lfs, &fsinfo) => 0;
-    assert(fsinfo.disk_version == LFS_DISK_VERSION);
+    lfs2_fs_stat(&lfs2, &fsinfo) => 0;
+    assert(fsinfo.disk_version == LFS2_DISK_VERSION);
 
-    lfs_unmount(&lfs) => 0;
+    lfs2_unmount(&lfs2) => 0;
 '''
