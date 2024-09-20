@@ -3,7 +3,7 @@
 # Preprocessor that makes asserts easier to debug.
 #
 # Example:
-# ./scripts/prettyasserts.py -p LFS_ASSERT lfs.c -o lfs.a.c
+# ./scripts/prettyasserts.py -p LFS2_ASSERT lfs2.c -o lfs2.a.c
 #
 # Copyright (c) 2022, The littlefs authors.
 # Copyright (c) 2020, Arm Limited. All rights reserved.

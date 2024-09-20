@@ -4,7 +4,7 @@
 # of a codebase that don't conflict at compile time.
 #
 # Example:
-# $ ./scripts/changeprefix.py lfs lfs3
+# $ ./scripts/changeprefix.py lfs2 lfs23
 #
 # Copyright (c) 2022, The littlefs authors.
 # Copyright (c) 2019, Arm Limited. All rights reserved.

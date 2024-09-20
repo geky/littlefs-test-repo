@@ -1,7 +1,7 @@
 ## littlefs technical specification
 
 This is the technical specification of the little filesystem with on-disk
-version lfs2.1. This document covers the technical details of how the littlefs
+version lfs22.1. This document covers the technical details of how the littlefs
 is stored on disk for introspection and tooling. This document assumes you are
 familiar with the design of the littlefs, for more info on how littlefs works
 check out [DESIGN.md](DESIGN.md).
@@ -294,7 +294,7 @@ Metadata tag fields:
 What follows is an exhaustive list of metadata in littlefs.
 
 ---
-#### `0x401` LFS_TYPE_CREATE
+#### `0x401` LFS2_TYPE_CREATE
 
 Creates a new file with this id. Note that files in a metadata block
 don't necessarily need a create tag. All a create does is move over any
@@ -305,14 +305,14 @@ The create and delete tags allow littlefs to keep files in a directory
 ordered alphabetically by filename.
 
 ---
-#### `0x4ff` LFS_TYPE_DELETE
+#### `0x4ff` LFS2_TYPE_DELETE
 
 Deletes the file with this id. An inverse to create, this tag moves over
 any files neighboring this id similar to a deletion from an imaginary
 array of files.
 
 ---
-#### `0x0xx` LFS_TYPE_NAME
+#### `0x0xx` LFS2_TYPE_NAME
 
 Associates the id with a file name and file type.
 
@@ -345,14 +345,14 @@ Name fields:
 2. **file name** - File name stored as an ASCII string.
 
 ---
-#### `0x001` LFS_TYPE_REG
+#### `0x001` LFS2_TYPE_REG
 
 Initializes the id + name as a regular file.
 
 How each file is stored depends on its struct tag, which is described below.
 
 ---
-#### `0x002` LFS_TYPE_DIR
+#### `0x002` LFS2_TYPE_DIR
 
 Initializes the id + name as a directory.
 
@@ -361,7 +361,7 @@ each pair containing any number of files in alphabetical order. A pointer to
 the directory is stored in the struct tag, which is described below.
 
 ---
-#### `0x0ff` LFS_TYPE_SUPERBLOCK
+#### `0x0ff` LFS2_TYPE_SUPERBLOCK
 
 Initializes the id as a superblock entry.
 
@@ -447,7 +447,7 @@ so that the magic string "littlefs" will always reside at offset=8 in a valid
 littlefs superblock.
 
 ---
-#### `0x2xx` LFS_TYPE_STRUCT
+#### `0x2xx` LFS2_TYPE_STRUCT
 
 Associates the id with an on-disk data structure.
 
@@ -458,7 +458,7 @@ Any type of struct supersedes all other structs associated with the id. For
 example, appending a ctz-struct replaces an inline-struct on the same file.
 
 ---
-#### `0x200` LFS_TYPE_DIRSTRUCT
+#### `0x200` LFS2_TYPE_DIRSTRUCT
 
 Gives the id a directory data structure.
 
@@ -500,7 +500,7 @@ Dir-struct fields:
    in the directory.
 
 ---
-#### `0x201` LFS_TYPE_INLINESTRUCT
+#### `0x201` LFS2_TYPE_INLINESTRUCT
 
 Gives the id an inline data structure.
 
@@ -524,7 +524,7 @@ Inline-struct fields:
 1. **Inline data** - File data stored directly in the metadata-pair.
 
 ---
-#### `0x202` LFS_TYPE_CTZSTRUCT
+#### `0x202` LFS2_TYPE_CTZSTRUCT
 
 Gives the id a CTZ skip-list data structure.
 
@@ -579,7 +579,7 @@ CTZ-struct fields:
 2. **File size (32-bits)** - Size of the file in bytes.
 
 ---
-#### `0x3xx` LFS_TYPE_USERATTR
+#### `0x3xx` LFS2_TYPE_USERATTR
 
 Attaches a user attribute to an id.
 
@@ -613,7 +613,7 @@ User-attr fields:
 2. **Attr data** - The data associated with the user attribute.
 
 ---
-#### `0x6xx` LFS_TYPE_TAIL
+#### `0x6xx` LFS2_TYPE_TAIL
 
 Provides the tail pointer for the metadata pair itself.
 
@@ -679,7 +679,7 @@ Tail fields:
 2. **Metadata pair (8-bytes)** - Pointer to the next metadata-pair.
 
 ---
-#### `0x600` LFS_TYPE_SOFTTAIL
+#### `0x600` LFS2_TYPE_SOFTTAIL
 
 Provides a tail pointer that points to the next metadata pair in the
 filesystem.
@@ -688,7 +688,7 @@ In this case, the next metadata pair is not a part of our current directory
 and should only be followed when traversing the entire filesystem.
 
 ---
-#### `0x601` LFS_TYPE_HARDTAIL
+#### `0x601` LFS2_TYPE_HARDTAIL
 
 Provides a tail pointer that points to the next metadata pair in the
 directory.
@@ -699,7 +699,7 @@ metadata pair should only contain filenames greater than any filename in the
 current pair.
 
 ---
-#### `0x7xx` LFS_TYPE_GSTATE
+#### `0x7xx` LFS2_TYPE_GSTATE
 
 Provides delta bits for global state entries.
 
@@ -729,7 +729,7 @@ is stored in the chunk field. Currently, the only global state is move state,
 which is outlined below.
 
 ---
-#### `0x7ff` LFS_TYPE_MOVESTATE
+#### `0x7ff` LFS2_TYPE_MOVESTATE
 
 Provides delta bits for the global move state.
 
@@ -782,7 +782,7 @@ Move state fields:
    the move.
 
 ---
-#### `0x5xx` LFS_TYPE_CRC
+#### `0x5xx` LFS2_TYPE_CRC
 
 Last but not least, the CRC tag marks the end of a commit and provides a
 checksum for any commits to the metadata block.
@@ -827,9 +827,9 @@ CRC fields:
    are made about the contents.
 
 ---
-#### `0x5ff` LFS_TYPE_FCRC
+#### `0x5ff` LFS2_TYPE_FCRC
 
-Added in lfs2.1, the optional FCRC tag contains a checksum of some amount of
+Added in lfs22.1, the optional FCRC tag contains a checksum of some amount of
 bytes in the next commit at the time it was erased. This allows us to ensure
 that we only ever program erased bytes, even if a previous commit failed due
 to power-loss.

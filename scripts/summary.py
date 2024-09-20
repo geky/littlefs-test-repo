@@ -3,10 +3,10 @@
 # Script to summarize the outputs of other scripts. Operates on CSV files.
 #
 # Example:
-# ./scripts/code.py lfs.o lfs_util.o -q -o lfs.code.csv
-# ./scripts/data.py lfs.o lfs_util.o -q -o lfs.data.csv
-# ./scripts/summary.py lfs.code.csv lfs.data.csv -q -o lfs.csv
-# ./scripts/summary.py -Y lfs.csv -f code=code_size,data=data_size
+# ./scripts/code.py lfs2.o lfs2_util.o -q -o lfs2.code.csv
+# ./scripts/data.py lfs2.o lfs2_util.o -q -o lfs2.data.csv
+# ./scripts/summary.py lfs2.code.csv lfs2.data.csv -q -o lfs2.csv
+# ./scripts/summary.py -Y lfs2.csv -f code=code_size,data=data_size
 #
 # Copyright (c) 2022, The littlefs authors.
 # SPDX-License-Identifier: BSD-3-Clause
