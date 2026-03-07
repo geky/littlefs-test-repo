@@ -15,10 +15,10 @@ PREFIX_SEEK    = ['+seek']              # Filter by LFS3_SEEK_* flags
 PREFIX_A       = ['+a', '+attr']        # Filter by LFS3_A_* flags
 PREFIX_F       = ['+f', '+format']      # Filter by LFS3_F_* flags
 PREFIX_M       = ['+m', '+mount']       # Filter by LFS3_M_* flags
-PREFIX_CK      = ['+ck']                # Filter by LFS3_CK_* flags
-PREFIX_GC      = ['+gc']                # Filter by LFS3_GC_* flags
 PREFIX_I       = ['+i', '+info']        # Filter by LFS3_I_* flags
 PREFIX_T       = ['+t', '+trv']         # Filter by LFS3_T_* flags
+PREFIX_CK      = ['+ck']                # Filter by LFS3_CK_* flags
+PREFIX_GC      = ['+gc']                # Filter by LFS3_GC_* flags
 PREFIX_ALLOC   = ['+alloc']             # Filter by LFS3_ALLOC_* flags
 PREFIX_RCOMPAT = ['+rc', '+rcompat']    # Filter by LFS3_RCOMPAT_* flags
 PREFIX_WCOMPAT = ['+wc', '+wcompat']    # Filter by LFS3_WCOMPAT_* flags
@@ -30,33 +30,34 @@ O_MODE          =          3  # -m  The file's access mode
 O_RDONLY        =          0  # -^  Open a file as read only
 O_WRONLY        =          1  # -^  Open a file as write only
 O_RDWR          =          2  # -^  Open a file as read and write
+o_WRSET         =          3  # i^  Open a file as an atomic write
 O_CREAT         = 0x00000004  # --  Create a file if it does not exist
 O_EXCL          = 0x00000008  # --  Fail if a file already exists
 O_TRUNC         = 0x00000010  # --  Truncate the existing file to zero size
 O_APPEND        = 0x00000020  # --  Move to end of file on every write
 O_FLUSH         = 0x00000040  # y-  Flush data on every write
 O_SYNC          = 0x00000080  # y-  Sync metadata on every write
-O_DESYNC        = 0x00100000  # --  Do not sync or recieve file updates
+O_DESYNC        = 0x02000000  # --  Do not sync or recieve file updates
 
-O_CKMETA        = 0x00001000  # --  Check metadata checksums
-O_CKDATA        = 0x00002000  # --  Check metadata + data checksums
-O_CK            = 0x00003000  # a-  Alias for all check work
+O_CKMETA        = 0x00100000  # --  Check metadata checksums
+O_CKDATA        = 0x00200000  # --  Check metadata + data checksums
+O_CK            = 0x00300000  # a-  Alias for all check work
 
-o_WRSET         =          3  # i-  Open a file as an atomic write
 o_TYPE          = 0xf0000000  # im  The file's type
 o_REG           = 0x10000000  # i^  Type = regular-file
 o_DIR           = 0x20000000  # i^  Type = directory
 o_STICKYNOTE    = 0x30000000  # i^  Type = stickynote
 o_BOOKMARK      = 0x40000000  # i^  Type = bookmark
 o_ORPHAN        = 0x50000000  # i^  Type = orphan
-o_TRAVERSAL     = 0x60000000  # i^  Type = traversal
-o_UNKNOWN       = 0x70000000  # i^  Type = unknown
+o_TRV           = 0x60000000  # i^  Type = traversal
+o_GC            = 0x70000000  # i^  Type = gc
+o_UNKNOWN       = 0x80000000  # i^  Type = unknown
 o_ZOMBIE        = 0x08000000  # i-  File has been removed
 o_UNCREAT       = 0x04000000  # i-  File does not exist yet
-o_UNSYNC        = 0x02000000  # i-  File's metadata does not match disk
-o_UNCRYST       = 0x01000000  # i-  File's leaf not fully crystallized
-o_UNGRAFT       = 0x00800000  # i-  File's leaf does not match disk
-o_UNFLUSH       = 0x00400000  # i-  File's cache does not match disk
+o_UNSYNC        = 0x01000000  # i-  File's metadata does not match disk
+o_UNCRYST       = 0x00040000  # i-  File's leaf not fully crystallized
+o_UNGRAFT       = 0x00020000  # i-  File's leaf does not match disk
+o_UNFLUSH       = 0x00010000  # i-  File's cache does not match disk
 
 # File seek flags
 SEEK_MODE       = 0xffffffff  # -m  Seek mode
@@ -74,23 +75,23 @@ A_LAZY          =       0x04  # --  Only write attr if file changed
 # Filesystem format flags
 F_MODE          =          1  # -m  Format's access mode
 F_RDWR          =          0  # -^  Format the filesystem as read and write
-F_GBMAP         = 0x02000000  # y-  Use the global on-disk block-map
+F_GBMAP         = 0x01000000  # y-  Use the global on-disk block-map
 
 F_REVPERTURB    = 0x00000010  # y-  Perturb first bit in revision count
 F_REVNOISE      = 0x00000020  # y-  Add noise to revision counts
-F_CKPROGS       = 0x00100000  # y-  Check progs by reading back progged data
-F_CKFETCHES     = 0x00200000  # y-  Check block checksums before first use
-F_CKMETAPARITY  = 0x00400000  # y-  Check metadata tag parity bits
-F_CKDATACKSUMS  = 0x01000000  # y-  Check data checksums on reads
+F_CKPROGS       = 0x00001000  # y-  Check progs by reading back progged data
+F_CKFETCHES     = 0x00002000  # y-  Check block checksums before first use
+F_CKMETAPARITY  = 0x00004000  # y-  Check metadata tag parity bits
+F_CKDATACKSUMS  = 0x00008000  # y-  Check data checksums on reads
 
-F_MKCONSISTENT  = 0x00000100  # y-  Make the filesystem consistent
-F_LOOKAHEAD     = 0x00000200  # y-  Repopulate lookahead buffer
-F_PREERASE      = 0x00000400  # y-  Try to pre-erase free blocks
-F_COMPACT       = 0x00000800  # y-  Compact metadata logs
-F_CKMETA        = 0x00001000  # y-  Check metadata checksums
-F_CKDATA        = 0x00002000  # y-  Check metadata + data checksums
-F_CK            = 0x00003000  # a-  Alias for all check work
-F_GC            = 0x00003f00  # a-  Alias for all gc work
+F_MKCONSISTENT  = 0x00010000  # y-  Make the filesystem consistent
+F_LOOKAHEAD     = 0x00020000  # y-  Repopulate lookahead buffer
+F_PREERASE      = 0x00040000  # y-  Try to pre-erase free blocks
+F_COMPACT       = 0x00080000  # y-  Compact metadata logs
+F_CKMETA        = 0x00100000  # y-  Check metadata checksums
+F_CKDATA        = 0x00200000  # y-  Check metadata + data checksums
+F_CK            = 0x00300000  # a-  Alias for all check work
+F_GC            = 0x003f0000  # a-  Alias for all gc work
 
 # Filesystem mount flags
 M_MODE          =          1  # -m  Mount's access mode
@@ -100,84 +101,65 @@ M_FLUSH         = 0x00000040  # y-  Open all files with LFS3_O_FLUSH
 M_SYNC          = 0x00000080  # y-  Open all files with LFS3_O_SYNC
 M_REVPERTURB    = 0x00000010  # y-  Perturb first bit in revision count
 M_REVNOISE      = 0x00000020  # y-  Add noise to revision counts
-M_CKPROGS       = 0x00100000  # y-  Check progs by reading back progged data
-M_CKFETCHES     = 0x00200000  # y-  Check block checksums before first use
-M_CKMETAPARITY  = 0x00400000  # y-  Check metadata tag parity bits
-M_CKDATACKSUMS  = 0x01000000  # y-  Check data checksums on reads
+M_CKPROGS       = 0x00001000  # y-  Check progs by reading back progged data
+M_CKFETCHES     = 0x00002000  # y-  Check block checksums before first use
+M_CKMETAPARITY  = 0x00004000  # y-  Check metadata tag parity bits
+M_CKDATACKSUMS  = 0x00008000  # y-  Check data checksums on reads
 
-M_MKCONSISTENT  = 0x00000100  # y-  Make the filesystem consistent
-M_LOOKAHEAD     = 0x00000200  # y-  Repopulate lookahead buffer
-M_PREERASE      = 0x00000400  # y-  Try to pre-erase free blocks
-M_COMPACT       = 0x00000800  # y-  Compact metadata logs
-M_CKMETA        = 0x00001000  # y-  Check metadata checksums
-M_CKDATA        = 0x00002000  # y-  Check metadata + data checksums
-M_CK            = 0x00003000  # a-  Alias for all check work
-M_GC            = 0x00003f00  # a-  Alias for all gc work
-
-# File/filesystem check flags
-CK_MKCONSISTENT = 0x00000100  # --  Make the filesystem consistent
-CK_LOOKAHEAD    = 0x00000200  # --  Repopulate lookahead buffer
-CK_PREERASE     = 0x00000400  # --  Try to pre-erase free blocks
-CK_COMPACT      = 0x00000800  # --  Compact metadata logs
-CK_CKMETA       = 0x00001000  # --  Check metadata checksums
-CK_CKDATA       = 0x00002000  # --  Check metadata + data checksums
-CK_CK           = 0x00003000  # a-  Alias for all check work
-CK_GC           = 0x00003f00  # a-  Alias for all gc work
-
-# GC flags
-GC_MKCONSISTENT = 0x00000100  # --  Make the filesystem consistent
-GC_LOOKAHEAD    = 0x00000200  # --  Repopulate lookahead buffer
-GC_PREERASE     = 0x00000400  # --  Try to pre-erase free blocks
-GC_COMPACT      = 0x00000800  # --  Compact metadata logs
-GC_CKMETA       = 0x00001000  # --  Check metadata checksums
-GC_CKDATA       = 0x00002000  # --  Check metadata + data checksums
-GC_CK           = 0x00003000  # a-  Alias for all check work
-GC_GC           = 0x00003f00  # a-  Alias for all gc work
+M_MKCONSISTENT  = 0x00010000  # y-  Make the filesystem consistent
+M_LOOKAHEAD     = 0x00020000  # y-  Repopulate lookahead buffer
+M_PREERASE      = 0x00040000  # y-  Try to pre-erase free blocks
+M_COMPACT       = 0x00080000  # y-  Compact metadata logs
+M_CKMETA        = 0x00100000  # y-  Check metadata checksums
+M_CKDATA        = 0x00200000  # y-  Check metadata + data checksums
+M_CK            = 0x00300000  # a-  Alias for all check work
+M_GC            = 0x003f0000  # a-  Alias for all gc work
 
 # Filesystem info flags
 I_RDONLY        = 0x00000001  # --  Mounted read only
-I_GBMAP         = 0x02000000  # --  Global on-disk block-map in use
+I_GBMAP         = 0x01000000  # --  Global on-disk block-map in use
 
 I_FLUSH         = 0x00000040  # --  Mounted with LFS3_M_FLUSH
 I_SYNC          = 0x00000080  # --  Mounted with LFS3_M_SYNC
 I_REVPERTURB    = 0x00000010  # --  Mounted with LFS3_M_REVPERTURB
 I_REVNOISE      = 0x00000020  # --  Mounted with LFS3_M_REVNOISE
-I_CKPROGS       = 0x00100000  # --  Mounted with LFS3_M_CKPROGS
-I_CKFETCHES     = 0x00200000  # --  Mounted with LFS3_M_CKFETCHES
-I_CKMETAPARITY  = 0x00400000  # --  Mounted with LFS3_M_CKMETAPARITY
-I_CKDATACKSUMS  = 0x01000000  # --  Mounted with LFS3_M_CKDATACKSUMS
+I_CKPROGS       = 0x00001000  # --  Mounted with LFS3_M_CKPROGS
+I_CKFETCHES     = 0x00002000  # --  Mounted with LFS3_M_CKFETCHES
+I_CKMETAPARITY  = 0x00004000  # --  Mounted with LFS3_M_CKMETAPARITY
+I_CKDATACKSUMS  = 0x00008000  # --  Mounted with LFS3_M_CKDATACKSUMS
 
-I_MKCONSISTENT  = 0x00000100  # --  Filesystem needs mkconsistent to write
-I_LOOKAHEAD     = 0x00000200  # --  Lookahead buffer is not full
-I_PREERASE      = 0x00000400  # --  Blocks can be pre-erased
-I_COMPACT       = 0x00000800  # --  Filesystem may have uncompacted metadata
-I_CKMETA        = 0x00001000  # --  Metadata checksums not checked recently
-I_CKDATA        = 0x00002000  # --  Data checksums not checked recently
+I_MKCONSISTENT  = 0x00010000  # --  Filesystem needs mkconsistent to write
+I_LOOKAHEAD     = 0x00020000  # --  Lookahead buffer is not full
+I_PREERASE      = 0x00040000  # --  Blocks can be pre-erased
+I_COMPACT       = 0x00080000  # --  Filesystem may have uncompacted metadata
+I_CKMETA        = 0x00100000  # --  Metadata checksums not checked recently
+I_CKDATA        = 0x00200000  # --  Data checksums not checked recently
 
 # Traversal flags
-T_MODE          =          1  # -m  The traversal's access mode
-T_RDWR          =          0  # -^  Open traversal as read and write
-T_RDONLY        =          1  # -^  Open traversal as read only
-T_MTREEONLY     = 0x00000002  # --  Only traverse the mtree
+T_MODE          =          3  # -m  The traversal's access mode
+T_RDONLY        =          0  # -^  Open traversal as read only
+T_MTREEONLY     = 0x00000004  # --  Only traverse the mtree
 T_EXCL          = 0x00000008  # --  Error if filesystem modified
-T_MKCONSISTENT  = 0x00000100  # --  Make the filesystem consistent
-T_LOOKAHEAD     = 0x00000200  # --  Repopulate lookahead buffer
-T_PREERASE      = 0x00000400  # --  Try to pre-erase free blocks
-T_COMPACT       = 0x00000800  # --  Compact metadata logs
-T_CKMETA        = 0x00001000  # --  Check metadata checksums
-T_CKDATA        = 0x00002000  # --  Check metadata + data checksums
-T_CK            = 0x00003000  # a-  Alias for all check work
-T_GC            = 0x00003f00  # a-  Alias for all gc work
+T_CKMETA        = 0x00100000  # --  Check metadata checksums
+T_CKDATA        = 0x00200000  # --  Check metadata + data checksums
+T_CK            = 0x00300000  # a-  Alias for all check work
 
+t_MKCONSISTENT  = 0x00000100  # i-  Make the filesystem consistent
+t_LOOKAHEAD     = 0x00000200  # i-  Repopulate lookahead buffer
+t_PREERASE      = 0x00000400  # i-  Try to pre-erase free blocks
+t_COMPACT       = 0x00000800  # i-  Compact metadata logs
+t_CKMETA        = 0x00001000  # i-  Check metadata checksums
+t_CKDATA        = 0x00002000  # i-  Check metadata + data checksums
 t_TYPE          = 0xf0000000  # im  The traversal's type
 t_REG           = 0x10000000  # i^  Type = regular-file
 t_DIR           = 0x20000000  # i^  Type = directory
 t_STICKYNOTE    = 0x30000000  # i^  Type = stickynote
 t_BOOKMARK      = 0x40000000  # i^  Type = bookmark
 t_ORPHAN        = 0x50000000  # i^  Type = orphan
-t_TRAVERSAL     = 0x60000000  # i^  Type = traversal
-t_UNKNOWN       = 0x70000000  # i^  Type = unknown
-t_BTYPE         = 0x00ff0000  # im  The current block type
+t_TRV           = 0x60000000  # i^  Type = traversal
+t_GC            = 0x70000000  # i^  Type = gc
+t_UNKNOWN       = 0x80000000  # i^  Type = unknown
+t_BTYPE         = 0x000f0000  # im  The current block type
 t_MDIR          = 0x00010000  # i^  Btype = mdir
 t_BTREE         = 0x00020000  # i^  Btype = btree
 t_DATA          = 0x00030000  # i^  Btype = data
@@ -185,6 +167,30 @@ t_ZOMBIE        = 0x08000000  # i-  File has been removed
 t_CKPOINTED     = 0x04000000  # i-  Filesystem ckpointed during traversal
 t_DIRTY         = 0x02000000  # i-  Filesystem ckpointed outside traversal
 t_STALE         = 0x01000000  # i-  Block queue probably out-of-date
+
+# File/filesystem check flags
+CK_MKCONSISTENT = 0x00010000  # --  Make the filesystem consistent
+CK_LOOKAHEAD    = 0x00020000  # --  Repopulate lookahead buffer
+CK_PREERASE     = 0x00040000  # --  Try to pre-erase free blocks
+CK_COMPACT      = 0x00080000  # --  Compact metadata logs
+CK_CKMETA       = 0x00100000  # --  Check metadata checksums
+CK_CKDATA       = 0x00200000  # --  Check metadata + data checksums
+CK_CK           = 0x00300000  # a-  Alias for all check work
+CK_GC           = 0x003f0000  # a-  Alias for all gc work
+
+# GC flags
+GC_MODE         =          3  # -m  The gc's access mode
+GC_WRONLY       =          1  # -^  Open gc as write only
+GC_EXCL         = 0x00000008  # --  Error if filesystem modified
+
+GC_MKCONSISTENT = 0x00010000  # --  Make the filesystem consistent
+GC_LOOKAHEAD    = 0x00020000  # --  Repopulate lookahead buffer
+GC_PREERASE     = 0x00040000  # --  Try to pre-erase free blocks
+GC_COMPACT      = 0x00080000  # --  Compact metadata logs
+GC_CKMETA       = 0x00100000  # --  Check metadata checksums
+GC_CKDATA       = 0x00200000  # --  Check metadata + data checksums
+GC_CK           = 0x00300000  # a-  Alias for all check work
+GC_GC           = 0x003f0000  # a-  Alias for all gc work
 
 # Block allocator flags
 alloc_ERASE     = 0x00000001  # i-  Please erase the block

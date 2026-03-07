@@ -108,12 +108,13 @@ enum lfs3_type {
     LFS3_TYPE_REG        = 1,  // A regular file
     LFS3_TYPE_DIR        = 2,  // A directory file
     LFS3_TYPE_STICKYNOTE = 3,  // An uncommitted file
-    LFS3_TYPE_UNKNOWN    = 7,  // Unknown file type
+    LFS3_TYPE_UNKNOWN    = 8,  // Unknown file type
 
     // internally used types, don't use these
     LFS3_type_BOOKMARK   = 4,  // Directory bookmark
     LFS3_type_ORPHAN     = 5,  // An orphaned stickynote
     LFS3_type_TRV        = 6,  // An open traversal object
+    LFS3_type_GC         = 7,  // An open gc object
 };
 
 // File open flags
@@ -139,19 +140,19 @@ enum lfs3_type {
 #endif
 #define LFS3_O_FLUSH    0x00000040  // Flush data on every write
 #define LFS3_O_SYNC     0x00000080  // Sync metadata on every write
-#define LFS3_O_DESYNC   0x00100000  // Do not sync or recieve file updates
-#define LFS3_O_CKMETA   0x00001000  // Check metadata checksums
-#define LFS3_O_CKDATA   0x00002000  // Check metadata + data checksums
+#define LFS3_O_DESYNC   0x02000000  // Do not sync or recieve file updates
+#define LFS3_O_CKMETA   0x00100000  // Check metadata checksums
+#define LFS3_O_CKDATA   0x00200000  // Check metadata + data checksums
 
 // internally used flags, don't use these
 #define LFS3_o_WRSET             3  // Open a file as an atomic write
 #define LFS3_o_TYPE     0xf0000000  // The file's type
 #define LFS3_o_ZOMBIE   0x08000000  // File has been removed
 #define LFS3_o_UNCREAT  0x04000000  // File does not exist yet
-#define LFS3_o_UNSYNC   0x02000000  // File's metadata does not match disk
-#define LFS3_o_UNCRYST  0x01000000  // File's leaf not fully crystallized
-#define LFS3_o_UNGRAFT  0x00800000  // File's leaf does not match disk
-#define LFS3_o_UNFLUSH  0x00400000  // File's cache does not match disk
+#define LFS3_o_UNSYNC   0x01000000  // File's metadata does not match disk
+#define LFS3_o_UNCRYST  0x00040000  // File's leaf not fully crystallized
+#define LFS3_o_UNGRAFT  0x00020000  // File's leaf does not match disk
+#define LFS3_o_UNFLUSH  0x00010000  // File's cache does not match disk
 
 // an alias for all check work
 #define LFS3_O_CK (LFS3_O_CKMETA | LFS3_O_CKDATA)
@@ -180,7 +181,7 @@ enum lfs3_type {
 #define LFS3_F_RDWR              0  // Format the filesystem as read and write
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_GBMAP)
-#define LFS3_F_GBMAP    0x02000000  // Use the global on-disk block-map
+#define LFS3_F_GBMAP    0x01000000  // Use the global on-disk block-map
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_REVPERTURB)
 #define LFS3_F_REVPERTURB \
@@ -190,39 +191,39 @@ enum lfs3_type {
 #define LFS3_F_REVNOISE 0x00000020  // Add noise to revision counts
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_CKPROGS)
-#define LFS3_F_CKPROGS  0x00100000  // Check progs by reading back progged data
+#define LFS3_F_CKPROGS  0x00001000  // Check progs by reading back progged data
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_CKFETCHES)
 #define LFS3_F_CKFETCHES \
-                        0x00200000  // Check block checksums before first use
+                        0x00002000  // Check block checksums before first use
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_CKMETAPARITY)
 #define LFS3_F_CKMETAPARITY \
-                        0x00400000  // Check metadata tag parity bits
+                        0x00004000  // Check metadata tag parity bits
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_CKDATACKSUMS)
 #define LFS3_F_CKDATACKSUMS \
-                        0x01000000  // Check data checksums on reads
+                        0x00008000  // Check data checksums on reads
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_F_MKCONSISTENT \
-                        0x00000100  // Make the filesystem consistent
+                        0x00010000  // Make the filesystem consistent
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_F_LOOKAHEAD \
-                        0x00000200  // Repopulate lookahead/gbmap
+                        0x00020000  // Repopulate lookahead/gbmap
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-#define LFS3_F_PREERASE 0x00000400  // Try to pre-erase free blocks
+#define LFS3_F_PREERASE 0x00040000  // Try to pre-erase free blocks
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_F_COMPACT  0x00000800  // Compact metadata logs
+#define LFS3_F_COMPACT  0x00080000  // Compact metadata logs
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_F_CKMETA   0x00001000  // Check metadata checksums
+#define LFS3_F_CKMETA   0x00100000  // Check metadata checksums
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_F_CKDATA   0x00002000  // Check metadata + data checksums
+#define LFS3_F_CKDATA   0x00200000  // Check metadata + data checksums
 #endif
 
 // an alias for all check work
@@ -253,36 +254,36 @@ enum lfs3_type {
 #define LFS3_M_REVNOISE 0x00000020  // Add noise to revision counts
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_CKPROGS)
-#define LFS3_M_CKPROGS  0x00100000  // Check progs by reading back progged data
+#define LFS3_M_CKPROGS  0x00001000  // Check progs by reading back progged data
 #endif
 #ifdef LFS3_CKFETCHES
 #define LFS3_M_CKFETCHES \
-                        0x00200000  // Check block checksums before first use
+                        0x00002000  // Check block checksums before first use
 #endif
 #ifdef LFS3_CKMETAPARITY
 #define LFS3_M_CKMETAPARITY \
-                        0x00400000  // Check metadata tag parity bits
+                        0x00004000  // Check metadata tag parity bits
 #endif
 #ifdef LFS3_CKDATACKSUMS
 #define LFS3_M_CKDATACKSUMS \
-                        0x01000000  // Check data checksums on reads
+                        0x00008000  // Check data checksums on reads
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_M_MKCONSISTENT \
-                        0x00000100  // Make the filesystem consistent
+                        0x00010000  // Make the filesystem consistent
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_M_LOOKAHEAD \
-                        0x00000200  // Repopulate lookahead/gbmap
+                        0x00020000  // Repopulate lookahead/gbmap
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-#define LFS3_M_PREERASE 0x00000400  // Try to pre-erase free blocks
+#define LFS3_M_PREERASE 0x00040000  // Try to pre-erase free blocks
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_M_COMPACT  0x00000800  // Compact metadata logs
+#define LFS3_M_COMPACT  0x00080000  // Compact metadata logs
 #endif
-#define LFS3_M_CKMETA   0x00001000  // Check metadata checksums
-#define LFS3_M_CKDATA   0x00002000  // Check metadata + data checksums
+#define LFS3_M_CKMETA   0x00100000  // Check metadata checksums
+#define LFS3_M_CKDATA   0x00200000  // Check metadata + data checksums
 
 // an alias for all check work
 #define LFS3_M_CK (LFS3_M_CKMETA | LFS3_M_CKDATA)
@@ -299,7 +300,7 @@ enum lfs3_type {
 // Filesystem info flags
 #define LFS3_I_RDONLY   0x00000001  // Mounted read only
 #ifdef LFS3_GBMAP
-#define LFS3_I_GBMAP    0x02000000  // Global on-disk block-map in use
+#define LFS3_I_GBMAP    0x01000000  // Global on-disk block-map in use
 #endif
 #define LFS3_I_FLUSH    0x00000040  // Mounted with LFS3_M_FLUSH
 #define LFS3_I_SYNC     0x00000080  // Mounted with LFS3_M_SYNC
@@ -311,36 +312,36 @@ enum lfs3_type {
 #define LFS3_I_REVNOISE 0x00000020  // Mounted with LFS3_M_REVNOISE
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_CKPROGS)
-#define LFS3_I_CKPROGS  0x00100000  // Mounted with LFS3_M_CKPROGS
+#define LFS3_I_CKPROGS  0x00001000  // Mounted with LFS3_M_CKPROGS
 #endif
 #ifdef LFS3_CKFETCHES
 #define LFS3_I_CKFETCHES \
-                        0x00200000  // Mounted with LFS3_M_CKFETCHES
+                        0x00002000  // Mounted with LFS3_M_CKFETCHES
 #endif
 #ifdef LFS3_CKMETAPARITY
 #define LFS3_I_CKMETAPARITY \
-                        0x00400000  // Mounted with LFS3_M_CKMETAPARITY
+                        0x00004000  // Mounted with LFS3_M_CKMETAPARITY
 #endif
 #ifdef LFS3_CKDATACKSUMS
 #define LFS3_I_CKDATACKSUMS \
-                        0x01000000  // Mounted with LFS3_M_CKDATACKSUMS
+                        0x00008000  // Mounted with LFS3_M_CKDATACKSUMS
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_I_MKCONSISTENT \
-                        0x00000100  // Filesystem needs mkconsistent to write
+                        0x00010000  // Filesystem needs mkconsistent to write
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_I_LOOKAHEAD \
-                        0x00000200  // Lookahead/gbmap is not full
+                        0x00020000  // Lookahead/gbmap is not full
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-#define LFS3_I_PREERASE 0x00000400  // Blocks can be pre-erased
+#define LFS3_I_PREERASE 0x00040000  // Blocks can be pre-erased
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_I_COMPACT  0x00000800  // Filesystem may have uncompacted metadata
+#define LFS3_I_COMPACT  0x00080000  // Filesystem may have uncompacted metadata
 #endif
-#define LFS3_I_CKMETA   0x00001000  // Metadata checksums not checked recently
-#define LFS3_I_CKDATA   0x00002000  // Data checksums not checked recently
+#define LFS3_I_CKMETA   0x00100000  // Metadata checksums not checked recently
+#define LFS3_I_CKDATA   0x00200000  // Data checksums not checked recently
 
 // Block types
 enum lfs3_btype {
@@ -350,34 +351,34 @@ enum lfs3_btype {
 };
 
 // Traversal flags
-#define LFS3_T_MODE              1  // The traversal's access mode
-#ifndef LFS3_RDONLY
-#define LFS3_T_RDWR              0  // Open traversal as read and write
-#endif
-#define LFS3_T_RDONLY            1  // Open traversal as read only
+#define LFS3_T_MODE              3  // The traversal's access mode
+#define LFS3_T_RDONLY            0  // Open traversal as read only
 #define LFS3_T_MTREEONLY \
-                        0x00000002  // Only traverse the mtree
+                        0x00000004  // Only traverse the mtree
 #define LFS3_T_EXCL     0x00000008  // Error if filesystem modified
+#define LFS3_T_CKMETA   0x00100000  // Check metadata checksums
+#define LFS3_T_CKDATA   0x00200000  // Check metadata + data checksums
+
+// internally used flags, don't use these
 #ifndef LFS3_RDONLY
-#define LFS3_T_MKCONSISTENT \
+#define LFS3_t_MKCONSISTENT \
                         0x00000100  // Make the filesystem consistent
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_T_LOOKAHEAD \
+#define LFS3_t_LOOKAHEAD \
                         0x00000200  // Repopulate lookahead/gbmap
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-#define LFS3_T_PREERASE 0x00000400  // Try to pre-erase free blocks
+#define LFS3_t_PREERASE \
+                        0x00000400  // Try to pre-erase free blocks
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_T_COMPACT  0x00000800  // Compact metadata logs
+#define LFS3_t_COMPACT  0x00000800  // Compact metadata logs
 #endif
-#define LFS3_T_CKMETA   0x00001000  // Check metadata checksums
-#define LFS3_T_CKDATA   0x00002000  // Check metadata + data checksums
-
-// internally used flags, don't use these
+#define LFS3_t_CKMETA   0x00001000  // Check metadata checksums
+#define LFS3_t_CKDATA   0x00002000  // Check metadata + data checksums
 #define LFS3_t_TYPE     0xf0000000  // The traversal's type
-#define LFS3_t_BTYPE    0x00ff0000  // The current block type
+#define LFS3_t_BTYPE    0x000f0000  // The current block type
 #define LFS3_t_ZOMBIE   0x08000000  // File has been removed
 #define LFS3_t_CKPOINTED \
                         0x04000000  // Filesystem ckpointed during traversal
@@ -387,33 +388,24 @@ enum lfs3_btype {
 // an alias for all check work
 #define LFS3_T_CK (LFS3_T_CKMETA | LFS3_T_CKDATA)
 
-// an alias for all gc work
-#define LFS3_T_GC ( \
-        LFS3_IFDEF_RDONLY(0, LFS3_T_MKCONSISTENT) \
-            | LFS3_IFDEF_RDONLY(0, LFS3_T_LOOKAHEAD) \
-            | LFS3_IFDEF_RDONLY(0, LFS3_IFDEF_PREERASE(LFS3_T_PREERASE, 0)) \
-            | LFS3_IFDEF_RDONLY(0, LFS3_T_COMPACT) \
-            | LFS3_T_CKMETA \
-            | LFS3_T_CKDATA)
-
 // File/filesystem check flags
 #ifndef LFS3_RDONLY
 #define LFS3_CK_MKCONSISTENT \
-                        0x00000100  // Make the filesystem consistent
+                        0x00010000  // Make the filesystem consistent
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_CK_LOOKAHEAD \
-                        0x00000200  // Repopulate lookahead/gbmap
+                        0x00020000  // Repopulate lookahead/gbmap
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
 #define LFS3_CK_PREERASE \
-                        0x00000400  // Try to pre-erase free blocks
+                        0x00040000  // Try to pre-erase free blocks
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_CK_COMPACT 0x00000800  // Compact metadata logs
+#define LFS3_CK_COMPACT 0x00080000  // Compact metadata logs
 #endif
-#define LFS3_CK_CKMETA  0x00001000  // Check metadata checksums
-#define LFS3_CK_CKDATA  0x00002000  // Check metadata + data checksums
+#define LFS3_CK_CKMETA  0x00100000  // Check metadata checksums
+#define LFS3_CK_CKDATA  0x00200000  // Check metadata + data checksums
 
 // an alias for all check work
 #define LFS3_CK_CK (LFS3_CK_CKMETA | LFS3_CK_CKDATA)
@@ -427,24 +419,29 @@ enum lfs3_btype {
             | LFS3_CK_CKMETA \
             | LFS3_CK_CKDATA)
 
+// GC traversal flags - only used in lfs3_gc_open
+#define LFS3_GC_MODE             3  // The gc's access mode
+#define LFS3_GC_WRONLY           1  // Open gc as write only
+#define LFS3_GC_EXCL    0x00000008  // Error if filesystem modified
+
 // GC flags
 #ifndef LFS3_RDONLY
 #define LFS3_GC_MKCONSISTENT \
-                        0x00000100  // Make the filesystem consistent
+                        0x00010000  // Make the filesystem consistent
 #endif
 #ifndef LFS3_RDONLY
 #define LFS3_GC_LOOKAHEAD \
-                        0x00000200  // Repopulate lookahead/gbmap
+                        0x00020000  // Repopulate lookahead/gbmap
 #endif
 #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
 #define LFS3_GC_PREERASE \
-                        0x00000400  // Try to pre-erase free blocks
+                        0x00040000  // Try to pre-erase free blocks
 #endif
 #ifndef LFS3_RDONLY
-#define LFS3_GC_COMPACT 0x00000800  // Compact metadata logs
+#define LFS3_GC_COMPACT 0x00080000  // Compact metadata logs
 #endif
-#define LFS3_GC_CKMETA  0x00001000  // Check metadata checksums
-#define LFS3_GC_CKDATA  0x00002000  // Check metadata + data checksums
+#define LFS3_GC_CKMETA  0x00100000  // Check metadata checksums
+#define LFS3_GC_CKDATA  0x00200000  // Check metadata + data checksums
 
 // an alias for all check work
 #define LFS3_GC_CK (LFS3_GC_CKMETA | LFS3_GC_CKDATA)
@@ -567,9 +564,9 @@ struct lfs3_cfg {
     //
     // More steps per call will make more progress if interleaved with
     // other filesystem operations, but may also introduce more latency.
-    // steps=1 will do the minimum amount of work to make progress, and
-    // steps=-1 will not return until all pending janitorial work has
-    // been completed.
+    // steps=1 or 0 will do the minimum amount of work to make progress,
+    // and steps=-1 will not return until all pending janitorial work
+    // has been completed.
     //
     // Defaults to steps=1 when zero.
     #ifdef LFS3_GC
@@ -843,7 +840,8 @@ enum lfs3_tag {
     // in-device only name tags, these should never get written to disk
     LFS3_tag_ORPHAN         = 0x0305,
     LFS3_tag_TRV            = 0x0306,
-    LFS3_tag_UNKNOWN        = 0x0307,
+    LFS3_tag_GC             = 0x0307,
+    LFS3_tag_UNKNOWN        = 0x0308,
     // non-file name tags
     LFS3_TAG_MNAME          = 0x0330,
 
@@ -1232,7 +1230,7 @@ typedef struct lfs3_dir {
     lfs3_off_t pos;
 } lfs3_dir_t;
 
-// littlefs traversal type
+// littlefs low-level traversal types
 typedef struct lfs3_btrv {
     lfs3_sbid_t bid;
     lfs3_rbyd_t rbyd;
@@ -1274,13 +1272,20 @@ typedef struct lfs3_mgc {
     #endif
 } lfs3_mgc_t;
 
+// littlefs traversal type
 typedef struct lfs3_trv {
-    // core traversal/gc state
-    lfs3_mgc_t gc;
+    // core traversal state
+    lfs3_mtrv_t t;
 
     // pending blocks, only used in lfs3_trv_read
     lfs3_sblock_t blocks[2];
 } lfs3_trv_t;
+
+// littlefs gc type
+typedef struct lfs3_gc {
+    // core gc state
+    lfs3_mgc_t gc;
+} lfs3_gc_t;
 
 // littlefs global state
 typedef struct lfs3_grm lfs3_grm_t;
@@ -1731,6 +1736,42 @@ int lfs3_trv_read(lfs3_t *lfs3, lfs3_trv_t *trv,
 //
 // Returns a negative error code on failure.
 int lfs3_trv_rewind(lfs3_t *lfs3, lfs3_trv_t *trv);
+
+
+/// GC operations ///
+
+// Open a gc
+//
+// Once open, a gc and be written to progress any pending janitorial
+// work.
+//
+// See also lfs3_fs_gc when LFS3_GC is defined for an easier API. This
+// provides low-level access to progressing janitorial work, but is
+// discouraged for library use.
+//
+// Returns a negative error code on failure.
+int lfs3_gc_open(lfs3_t *lfs3, lfs3_gc_t *gc, uint32_t flags);
+
+// Close a gc
+//
+// Releases any allocated resources.
+// Returns a negative error code on failure.
+int lfs3_gc_close(lfs3_t *lfs3, lfs3_gc_t *gc);
+
+// Progress the gc and perform any janitorial work that may be pending
+//
+// The exact janitorial work depends on the configured flags.
+//
+// The steps field controls how much work is done during each call, with
+// each step being ~1 block of work. More steps per call will make more
+// progress if interleaved with other filesystem operations, but may
+// also introduce more latency. steps=1 or 0 will do the minimum amount
+// of work to make progress, and steps=-1 will not return until all
+// pending janitorial work has been completed.
+//
+// Returns 0 on success, LFS3_ERR_NOENT if no work is available, or a
+// negative error code on failure.
+int lfs3_gc_write(lfs3_t *lfs3, lfs3_gc_t *gc, lfs3_soff_t steps);
 
 
 /// Filesystem-level filesystem operations

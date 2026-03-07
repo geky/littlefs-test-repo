@@ -7078,10 +7078,14 @@ static int lfs3_data_readmptr(lfs3_t *lfs3, lfs3_data_t *data,
 /// Various flag things ///
 
 // open flags
+static inline uint32_t lfs3_o_mode(uint32_t flags) {
+    return flags & LFS3_O_MODE;
+}
+
 static inline bool lfs3_o_isrdonly(uint32_t flags) {
     (void)flags;
     #ifndef LFS3_RDONLY
-    return (flags & LFS3_O_MODE) == LFS3_O_RDONLY;
+    return lfs3_o_mode(flags) == LFS3_O_RDONLY;
     #else
     return true;
     #endif
@@ -7090,16 +7094,7 @@ static inline bool lfs3_o_isrdonly(uint32_t flags) {
 static inline bool lfs3_o_iswronly(uint32_t flags) {
     (void)flags;
     #ifndef LFS3_RDONLY
-    return (flags & LFS3_O_MODE) == LFS3_O_WRONLY;
-    #else
-    return false;
-    #endif
-}
-
-static inline bool lfs3_o_iswrset(uint32_t flags) {
-    (void)flags;
-    #ifndef LFS3_RDONLY
-    return (flags & LFS3_O_MODE) == LFS3_o_WRSET;
+    return lfs3_o_mode(flags) == LFS3_O_WRONLY;
     #else
     return false;
     #endif
@@ -7216,30 +7211,6 @@ static inline bool lfs3_t_isexcl(uint32_t flags) {
     return flags & LFS3_T_EXCL;
 }
 
-#ifndef LFS3_RDONLY
-static inline bool lfs3_t_ismkconsistent(uint32_t flags) {
-    return flags & LFS3_T_MKCONSISTENT;
-}
-#endif
-
-#ifndef LFS3_RDONLY
-static inline bool lfs3_t_islookahead(uint32_t flags) {
-    return flags & LFS3_T_LOOKAHEAD;
-}
-#endif
-
-#if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-static inline bool lfs3_t_ispreerase(uint32_t flags) {
-    return flags & LFS3_T_PREERASE;
-}
-#endif
-
-#ifndef LFS3_RDONLY
-static inline bool lfs3_t_compact(uint32_t flags) {
-    return flags & LFS3_T_COMPACT;
-}
-#endif
-
 static inline bool lfs3_t_isckmeta(uint32_t flags) {
     return flags & LFS3_T_CKMETA;
 }
@@ -7249,8 +7220,26 @@ static inline bool lfs3_t_isckdata(uint32_t flags) {
 }
 
 // internal traversal flags
+#ifndef LFS3_RDONLY
+static inline bool lfs3_t_ismkconsistent(uint32_t flags) {
+    return flags & LFS3_t_MKCONSISTENT;
+}
+#endif
+
+#ifndef LFS3_RDONLY
+static inline bool lfs3_t_islookahead(uint32_t flags) {
+    return flags & LFS3_t_LOOKAHEAD;
+}
+#endif
+
+#ifndef LFS3_RDONLY
+static inline bool lfs3_t_compact(uint32_t flags) {
+    return flags & LFS3_t_COMPACT;
+}
+#endif
+
 static inline uint8_t lfs3_t_btype(uint32_t flags) {
-    return (flags >> 16) & 0xff;
+    return (flags >> 16) & 0xf;
 }
 
 static inline uint32_t lfs3_t_btypeflags(uint8_t btype) {
@@ -7272,6 +7261,33 @@ static inline bool lfs3_t_isdirty(uint32_t flags) {
 static inline bool lfs3_t_isstale(uint32_t flags) {
     return flags & LFS3_t_STALE;
 }
+
+// gc flags
+//
+// note traversal flags duplicate these, but shifted
+#ifndef LFS3_RDONLY
+static inline bool lfs3_gc_ismkconsistent(uint32_t flags) {
+    return flags & LFS3_GC_MKCONSISTENT;
+}
+#endif
+
+#ifndef LFS3_RDONLY
+static inline bool lfs3_gc_islookahead(uint32_t flags) {
+    return flags & LFS3_GC_LOOKAHEAD;
+}
+#endif
+
+#if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
+static inline bool lfs3_gc_ispreerase(uint32_t flags) {
+    return flags & LFS3_GC_PREERASE;
+}
+#endif
+
+#ifndef LFS3_RDONLY
+static inline bool lfs3_gc_iscompact(uint32_t flags) {
+    return flags & LFS3_GC_COMPACT;
+}
+#endif
 
 // mount flags
 static inline bool lfs3_m_isrdonly(uint32_t flags) {
@@ -9801,6 +9817,10 @@ static void lfs3_mtrv_init(lfs3_mtrv_t *mtrv, uint32_t flags) {
     mtrv->gcksum = 0;
 }
 
+static void lfs3_mgc_init(lfs3_mgc_t *mgc, uint32_t flags) {
+    lfs3_mtrv_init(&mgc->t, lfs3_o_typeflags(LFS3_type_GC) | flags);
+}
+
 static void lfs3_mtrv_ckpoint(lfs3_mtrv_t *mtrv) {
     // mark as ckpointed and dirty
     mtrv->h.flags |= LFS3_t_CKPOINTED | LFS3_t_DIRTY | LFS3_t_STALE;
@@ -9811,14 +9831,6 @@ static void lfs3_mtrv_ckpoint(lfs3_mtrv_t *mtrv) {
     // this may revisit seen blocks, but that's ok because this was
     // always possible due to CoW references
     mtrv->u.btrv.bid = LFS3_BID_MDIR;
-}
-
-static void lfs3_mgc_init(lfs3_mgc_t *mgc, uint32_t flags) {
-    lfs3_mtrv_init(&mgc->t, flags);
-}
-
-static void lfs3_mgc_ckpoint(lfs3_mgc_t *mgc) {
-    lfs3_mtrv_ckpoint(&mgc->t);
 }
 
 // low-level traversal _only_ finds blocks
@@ -10315,7 +10327,7 @@ again:;
 
     // mkconsistencing mdirs?
     if (lfs3_t_ismkconsistent(mgc->t.h.flags)
-            && lfs3_t_ismkconsistent(lfs3->flags)
+            && lfs3_gc_ismkconsistent(lfs3->flags)
             && tag == LFS3_TAG_MDIR) {
         lfs3_mdir_t *mdir = (lfs3_mdir_t*)bptr_->d.u.buffer;
         uint32_t dirty = mgc->t.h.flags;
@@ -10408,6 +10420,168 @@ eot:;
     #endif
 
     return LFS3_ERR_NOENT;
+}
+
+// needed in lfs3_mgc_gc
+#if !defined(LFS3_RDONLY) && defined(LFS3_GBMAP)
+static inline bool lfs3_alloc_cansyncgbmap(const lfs3_t *lfs3);
+static int lfs3_alloc_syncgbmap(lfs3_t *lfs3);
+#endif
+
+// low-level gc
+//
+// runs the traversal until all work is completed, which may take
+// multiple passes
+//
+// this code looks much worse than it actually is! most of these massive
+// macro messes compile into small constants
+static int lfs3_mgc_gc(lfs3_t *lfs3, lfs3_mgc_t *mgc, lfs3_soff_t steps) {
+    lfs3_off_t steps_ = lfs3_max((lfs3_off_t)steps, 1);
+    while (steps_ > 0) {
+        // do we have any pending traversal work?
+        uint32_t t = (mgc->t.h.flags
+                    & ((lfs3->flags & (
+                            LFS3_IFDEF_RDONLY(0, LFS3_GC_MKCONSISTENT)
+                                | LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
+                                | LFS3_IFDEF_RDONLY(0, LFS3_GC_COMPACT)
+                                | LFS3_GC_CKMETA
+                                | LFS3_GC_CKDATA))
+                        // including any pending grms
+                        | LFS3_IFDEF_RDONLY(0,
+                            (lfs3_grm_count(lfs3) > 0)
+                                ? LFS3_GC_MKCONSISTENT
+                                : 0)))
+                // this weird shift is to let us mask out any
+                // flags that change
+                >> 8;
+        if (t) {
+            // prioritize lookahead/gbmap before any work that may need
+            // to allocate
+            #ifndef LFS3_RDONLY
+            if (lfs3_t_islookahead(t)) {
+                t &= ~LFS3_t_MKCONSISTENT
+                        & ~LFS3_t_COMPACT;
+            }
+            #endif
+
+            // mask out any flags that changed
+            //
+            // note that even though our current API prevents flags from
+            // changing mid-traversal, lfs3->flags can be updated by
+            // other operations
+            mgc->t.h.flags &= t | ~(
+                    LFS3_IFDEF_RDONLY(0, LFS3_t_MKCONSISTENT)
+                        | LFS3_IFDEF_RDONLY(0, LFS3_t_LOOKAHEAD)
+                        | LFS3_IFDEF_RDONLY(0, LFS3_t_COMPACT)
+                        | LFS3_t_CKMETA
+                        | LFS3_t_CKDATA);
+
+            // will this traversal still make progress? no? start a new
+            // traversal
+            if (!(mgc->t.h.flags
+                    & (LFS3_IFDEF_RDONLY(0, LFS3_t_MKCONSISTENT)
+                        | LFS3_IFDEF_RDONLY(0, LFS3_t_LOOKAHEAD)
+                        | LFS3_IFDEF_RDONLY(0, LFS3_t_COMPACT)
+                        | LFS3_t_CKMETA
+                        | LFS3_t_CKDATA)
+                    // don't bother with lookahead/gbmap if we've
+                    // ckpointed
+                    & ~LFS3_IFDEF_RDONLY(
+                        0,
+                        (lfs3_t_isckpointed(mgc->t.h.flags))
+                            ? LFS3_t_LOOKAHEAD
+                            : 0))) {
+                lfs3_mgc_init(mgc,
+                        (mgc->t.h.flags & ~(
+                                LFS3_T_MTREEONLY
+                                    | LFS3_t_DIRTY
+                                    | LFS3_t_CKPOINTED
+                                    | LFS3_IFDEF_RDONLY(0, LFS3_t_MKCONSISTENT)
+                                    | LFS3_IFDEF_RDONLY(0, LFS3_t_LOOKAHEAD)
+                                    | LFS3_IFDEF_RDONLY(0, LFS3_t_COMPACT)
+                                    | LFS3_t_CKMETA
+                                    | LFS3_t_CKDATA))
+                            | t);
+            }
+
+            // do we really need a full traversal?
+            if (!(mgc->t.h.flags & (
+                    LFS3_IFDEF_RDONLY(0, LFS3_t_LOOKAHEAD)
+                        | LFS3_t_CKMETA
+                        | LFS3_t_CKDATA))) {
+                mgc->t.h.flags |= LFS3_T_MTREEONLY;
+            }
+
+            // progress gc
+            lfs3_bptr_t bptr;
+            lfs3_stag_t tag = lfs3_mtree_gc(lfs3, mgc,
+                    &bptr);
+            if (tag < 0 && tag != LFS3_ERR_NOENT) {
+                // reset traversal if we run into any errors
+                mgc->t.h.flags &= ~(
+                        LFS3_IFDEF_RDONLY(0, LFS3_t_MKCONSISTENT)
+                            | LFS3_IFDEF_RDONLY(0, LFS3_t_LOOKAHEAD)
+                            | LFS3_IFDEF_RDONLY(0, LFS3_t_COMPACT)
+                            | LFS3_t_CKMETA
+                            | LFS3_t_CKDATA);
+                return tag;
+            }
+
+            // end of traversal?
+            if (tag == LFS3_ERR_NOENT) {
+                mgc->t.h.flags &= ~(
+                        LFS3_IFDEF_RDONLY(0, LFS3_t_MKCONSISTENT)
+                            | LFS3_IFDEF_RDONLY(0, LFS3_t_LOOKAHEAD)
+                            | LFS3_IFDEF_RDONLY(0, LFS3_t_COMPACT)
+                            | LFS3_t_CKMETA
+                            | LFS3_t_CKDATA);
+            }
+
+        // if we have no pending gc work, can we preerase blocks?
+        } else if (LFS3_IFDEF_RDONLY(
+                false,
+                LFS3_IFDEF_PREERASE(
+                    lfs3_gc_ispreerase(mgc->t.h.flags)
+                        && lfs3_alloc_canpreerase(lfs3),
+                    false))) {
+            #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
+            int err = lfs3_alloc_preerase(lfs3);
+            if (err && err != LFS3_ERR_NOENT) {
+                return err;
+            }
+            #endif
+
+        // TODO wait, should this be conditional on some mutable flag?
+        // TODO islookahead || ispreerase? or at least check if
+        // TODO filesystem is mutable?
+        //
+        // if we have nothing else to do, try to commit the gbmap to
+        // disk so it's recoverable if we lose power
+        } else if (LFS3_IFDEF_RDONLY(
+                false,
+                LFS3_IFDEF_GBMAP(
+                    lfs3_alloc_cansyncgbmap(lfs3),
+                    false))) {
+            #if !defined(LFS3_RDONLY) && defined(LFS3_GBMAP)
+            int err = lfs3_alloc_syncgbmap(lfs3);
+            if (err) {
+                LFS3_ASSERT(err != LFS3_ERR_NOENT);
+                return err;
+            }
+            #endif
+
+        // nothing to do at all? guess we're done
+        } else {
+            return LFS3_ERR_NOENT;
+        }
+
+        // decrement steps
+        if ((lfs3_soff_t)steps_ > 0) {
+            steps_ -= 1;
+        }
+    }
+
+    return 0;
 }
 
 
@@ -10775,8 +10949,9 @@ static inline void lfs3_alloc_ckpoint_(lfs3_t *lfs3) {
     // ckpoint traversals, marking them as ckpointed + dirty and
     // resetting any btrv state
     for (lfs3_handle_t *h = lfs3->handles; h; h = h->next) {
-        if (lfs3_o_type(h->flags) == LFS3_type_TRV) {
-            lfs3_mgc_ckpoint((lfs3_mgc_t*)h);
+        if (lfs3_o_type(h->flags) == LFS3_type_TRV
+                || lfs3_o_type(h->flags) == LFS3_type_GC) {
+            lfs3_mtrv_ckpoint((lfs3_mtrv_t*)h);
         }
     }
 }
@@ -11174,7 +11349,7 @@ static lfs3_sblock_t lfs3_alloc__(lfs3_t *lfs3, uint32_t flags,
         // in-use in the next lookahead window
         //
         lfs3_mtrv_t mtrv;
-        lfs3_mtrv_init(&mtrv, LFS3_T_RDONLY | LFS3_T_LOOKAHEAD);
+        lfs3_mtrv_init(&mtrv, LFS3_T_RDONLY | LFS3_t_LOOKAHEAD);
         while (true) {
             lfs3_bptr_t bptr;
             lfs3_stag_t tag = lfs3_mtree_traverse(lfs3, &mtrv,
@@ -11810,7 +11985,8 @@ int lfs3_remove(lfs3_t *lfs3, const char *path) {
             }
 
         // clobber entangled traversals
-        } else if (lfs3_o_type(h->flags) == LFS3_type_TRV) {
+        } else if (lfs3_o_type(h->flags) == LFS3_type_TRV
+                || lfs3_o_type(h->flags) == LFS3_type_GC) {
             if (lfs3_o_iszombie(h->flags)) {
                 // TODO should we just not set ZOMBIE on trvs?
                 h->flags &= ~LFS3_o_ZOMBIE;
@@ -12613,7 +12789,7 @@ int lfs3_file_opencfg_(lfs3_t *lfs3, lfs3_file_t *file,
     //
     // wrset is a special lfs3_set specific mode that passes data via
     // the file cache, so make sure not to clobber it
-    if (lfs3_o_iswrset(file->b.h.flags)) {
+    if (lfs3_o_mode(file->b.h.flags) == LFS3_o_WRSET) {
         file->b.h.flags |= LFS3_o_UNFLUSH;
         file->cache.buffer = file->cfg->fcache_buffer;
         file->cache.pos = 0;
@@ -12709,7 +12885,7 @@ int lfs3_file_opencfg_(lfs3_t *lfs3, lfs3_file_t *file,
     if (tag == LFS3_ERR_NOENT) {
         // small file wrset? can we atomically commit everything in one
         // commit? currently this is only possible via lfs3_set
-        if (lfs3_o_iswrset(file->b.h.flags)
+        if (lfs3_o_mode(file->b.h.flags) == LFS3_o_WRSET
                 && file->cache.size <= lfs3->cfg->shrub_size
                 && file->cache.size <= lfs3->cfg->fragment_size
                 && file->cache.size < lfs3_max(lfs3->cfg->crystal_thresh, 1)) {
@@ -12788,7 +12964,7 @@ int lfs3_file_opencfg(lfs3_t *lfs3, lfs3_file_t *file,
     // already open?
     LFS3_ASSERT(!lfs3_handle_isopen(lfs3, &file->b.h));
     // don't allow the forbidden mode!
-    LFS3_ASSERT((flags & 3) != 3);
+    LFS3_ASSERT(lfs3_o_mode(flags) != 3);
     // unknown flags?
     LFS3_ASSERT((flags & ~(
             LFS3_O_RDONLY
@@ -15393,6 +15569,12 @@ static int lfs3_init(lfs3_t *lfs3, uint32_t flags,
     lfs3_memset(lfs3->gbmap_d, 0, LFS3_GBMAP_DSIZE);
     #endif
 
+    // setup gc state
+    #ifdef LFS3_GC
+    lfs3_mgc_init(&lfs3->gc, lfs3->cfg->gc_flags);
+    lfs3_handle_open(lfs3, &lfs3->gc.t.h);
+    #endif
+
     return 0;
 
 failed:;
@@ -16032,17 +16214,17 @@ int lfs3_mount(lfs3_t *lfs3, uint32_t flags,
                 | LFS3_M_CKDATA)) == 0);
     // these flags require a writable filesystem
     #ifndef LFS3_RDONLY
-    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_t_ismkconsistent(flags));
-    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_t_islookahead(flags));
+    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_gc_ismkconsistent(flags));
+    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_gc_islookahead(flags));
     #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_t_ispreerase(flags));
+    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_gc_ispreerase(flags));
     #endif
-    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_t_compact(flags));
+    LFS3_ASSERT(!lfs3_m_isrdonly(flags) || !lfs3_gc_iscompact(flags));
     #endif
     // we can't use preerased blocks without revperturb, so this is
     // likely a mistake
     #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-    LFS3_ASSERT(lfs3_m_isrevperturb(flags) || !lfs3_t_ispreerase(flags));
+    LFS3_ASSERT(lfs3_m_isrevperturb(flags) || !lfs3_gc_ispreerase(flags));
     #endif
 
     int err = lfs3_init(lfs3,
@@ -16115,7 +16297,7 @@ failed:;
 int lfs3_unmount(lfs3_t *lfs3) {
     // all files/dirs should be closed before lfs3_unmount
     LFS3_ASSERT(lfs3->handles == NULL
-            // special case for our gc traversal handle
+            // except maybe our gc traversal handle
             || LFS3_IFDEF_GC(
                 (lfs3->handles == &lfs3->gc.t.h
                     && lfs3->gc.t.h.next == NULL),
@@ -16332,7 +16514,7 @@ int lfs3_format(lfs3_t *lfs3, uint32_t flags,
     // we can't use preerased blocks without revperturb, so this is
     // likely a mistake
     #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-    LFS3_ASSERT(lfs3_m_isrevperturb(flags) || !lfs3_t_ispreerase(flags));
+    LFS3_ASSERT(lfs3_m_isrevperturb(flags) || !lfs3_gc_ispreerase(flags));
     #endif
 
     int err = lfs3_init(lfs3,
@@ -16596,10 +16778,14 @@ failed:;
 
 #ifndef LFS3_RDONLY
 static int lfs3_fs_fixorphans(lfs3_t *lfs3) {
-    // LFS3_T_MKCONSISTENT really just removes orphans
+    // LFS3_GC_MKCONSISTENT really just removes orphans
+    //
+    // note we don't need to track this handle because we're only
+    // mkconsistencing, most other operations need to be tracked to
+    // catch dirty/ckpointed bits
     lfs3_mgc_t mgc;
     lfs3_mgc_init(&mgc,
-            LFS3_T_RDWR | LFS3_T_MTREEONLY | LFS3_T_MKCONSISTENT);
+            LFS3_GC_WRONLY | LFS3_T_MTREEONLY | LFS3_t_MKCONSISTENT);
     while (true) {
         lfs3_bptr_t bptr;
         lfs3_stag_t tag = lfs3_mtree_gc(lfs3, &mgc,
@@ -16635,7 +16821,7 @@ int lfs3_fs_mkconsistent(lfs3_t *lfs3) {
     // this must happen after fixgrm, since removing orphaned
     // stickynotes risks outdating the grm
     //
-    if (lfs3_t_ismkconsistent(lfs3->flags)) {
+    if (lfs3_gc_ismkconsistent(lfs3->flags)) {
         int err = lfs3_fs_fixorphans(lfs3);
         if (err) {
             return err;
@@ -16656,139 +16842,9 @@ int lfs3_fs_mkconsistent(lfs3_t *lfs3) {
 }
 #endif
 
-// low-level filesystem gc
-//
-// runs the traversal until all work is completed, which may take
-// multiple passes
-static int lfs3_fs_gc_(lfs3_t *lfs3, lfs3_mgc_t *mgc,
-        uint32_t flags, lfs3_soff_t steps) {
-    while ((lfs3_off_t)steps > 0) {
-        // do we have any pending gc work?
-        uint32_t pending = flags & (
-                (lfs3->flags & (
-                        LFS3_IFDEF_RDONLY(0, LFS3_GC_MKCONSISTENT)
-                            | LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
-                            | LFS3_IFDEF_RDONLY(0, LFS3_GC_COMPACT)
-                            | LFS3_GC_CKMETA
-                            | LFS3_GC_CKDATA))
-                    // including any pending grms
-                    | LFS3_IFDEF_RDONLY(0,
-                        (lfs3_grm_count(lfs3) > 0)
-                            ? LFS3_GC_MKCONSISTENT
-                            : 0));
-        if (pending) {
-            // prioritize lookahead/gbmap before any work that may need
-            // to allocate
-            #ifndef LFS3_RDONLY
-            if (lfs3_t_islookahead(pending)) {
-                pending &= ~(
-                        LFS3_GC_MKCONSISTENT
-                            | LFS3_GC_COMPACT);
-            }
-            #endif
-
-            // start a new traversal?
-            if (!lfs3_handle_isopen(lfs3, &mgc->t.h)) {
-                lfs3_mgc_init(mgc, pending);
-                lfs3_handle_open(lfs3, &mgc->t.h);
-            }
-            // mask out any flags that changed
-            //
-            // note that even though our current API prevents flags from
-            // changing mid-traversal, lfs3->flags can be updated by
-            // other operations
-            mgc->t.h.flags &= ~(pending ^ (
-                    LFS3_IFDEF_RDONLY(0, LFS3_GC_MKCONSISTENT)
-                        | LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
-                        | LFS3_IFDEF_RDONLY(0, LFS3_GC_COMPACT)
-                        | LFS3_GC_CKMETA
-                        | LFS3_GC_CKDATA));
-
-            // will this traversal still make progress? no? start over
-            if (!(mgc->t.h.flags
-                    & (LFS3_IFDEF_RDONLY(0, LFS3_GC_MKCONSISTENT)
-                        | LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
-                        | LFS3_IFDEF_RDONLY(0, LFS3_GC_COMPACT)
-                        | LFS3_GC_CKMETA
-                        | LFS3_GC_CKDATA)
-                    // don't bother with lookahead/gbmap if we've
-                    // ckpointed
-                    & ~LFS3_IFDEF_RDONLY(
-                        0,
-                        (lfs3_t_isckpointed(mgc->t.h.flags))
-                            ? LFS3_GC_LOOKAHEAD
-                            : 0))) {
-                lfs3_handle_close(lfs3, &mgc->t.h);
-                continue;
-            }
-
-            // do we really need a full traversal?
-            if (!(mgc->t.h.flags & (
-                    LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
-                        | LFS3_GC_CKMETA
-                        | LFS3_GC_CKDATA))) {
-                mgc->t.h.flags |= LFS3_T_MTREEONLY;
-            }
-
-            // progress gc
-            lfs3_bptr_t bptr;
-            lfs3_stag_t tag = lfs3_mtree_gc(lfs3, mgc,
-                    &bptr);
-            if (tag < 0 && tag != LFS3_ERR_NOENT) {
-                lfs3_handle_close(lfs3, &mgc->t.h);
-                return tag;
-            }
-
-            // end of traversal?
-            if (tag == LFS3_ERR_NOENT) {
-                lfs3_handle_close(lfs3, &mgc->t.h);
-            }
-
-        // if we have no pending gc work, can we preerase blocks?
-        } else if (LFS3_IFDEF_RDONLY(
-                false,
-                LFS3_IFDEF_PREERASE(
-                    lfs3_t_ispreerase(flags)
-                        && lfs3_alloc_canpreerase(lfs3),
-                    false))) {
-            #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-            int err = lfs3_alloc_preerase(lfs3);
-            if (err && err != LFS3_ERR_NOENT) {
-                return err;
-            }
-            #endif
-
-        // if we have nothing else to do, try to commit the gbmap to
-        // disk so it's recoverable if we lose power
-        } else if (LFS3_IFDEF_RDONLY(
-                false,
-                LFS3_IFDEF_GBMAP(
-                    lfs3_alloc_cansyncgbmap(lfs3),
-                    false))) {
-            #if !defined(LFS3_RDONLY) && defined(LFS3_GBMAP)
-            int err = lfs3_alloc_syncgbmap(lfs3);
-            if (err) {
-                return err;
-            }
-            #endif
-
-        // nothing to do at all? guess we're done
-        } else {
-            break;
-        }
-
-        // decrement steps
-        if (steps > 0) {
-            steps -= 1;
-        }
-    }
-
-    return 0;
-}
-
 // filesystem check function
 //
-// this just calls lfs3_fs_gc_ with unbounded steps
+// this just calls lfs3_mgc_gc with unbounded steps
 int lfs3_fs_ck(lfs3_t *lfs3, uint32_t flags) {
     // unknown ck flags?
     LFS3_ASSERT((flags & ~(
@@ -16802,21 +16858,21 @@ int lfs3_fs_ck(lfs3_t *lfs3, uint32_t flags) {
     // these flags require a writable filesystem
     #ifndef LFS3_RDONLY
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_ismkconsistent(flags));
+            || !lfs3_gc_ismkconsistent(flags));
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_islookahead(flags));
+            || !lfs3_gc_islookahead(flags));
     #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_ispreerase(flags));
+            || !lfs3_gc_ispreerase(flags));
     #endif
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_compact(flags));
+            || !lfs3_gc_iscompact(flags));
     #endif
     // we can't use preerased blocks without revperturb, so this is
     // likely a mistake
     #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
     LFS3_ASSERT(lfs3_m_isrevperturb(lfs3->flags)
-            || !lfs3_t_ispreerase(flags));
+            || !lfs3_gc_ispreerase(flags));
     #endif
 
     // set needs-ck flags, this has the side-effect of signaling ck work
@@ -16825,7 +16881,17 @@ int lfs3_fs_ck(lfs3_t *lfs3, uint32_t flags) {
     lfs3->flags |= flags & (LFS3_I_CKMETA | LFS3_I_CKDATA);
 
     lfs3_mgc_t mgc;
-    return lfs3_fs_gc_(lfs3, &mgc, flags, -1);
+    lfs3_mgc_init(&mgc, flags);
+    lfs3_handle_open(lfs3, &mgc.t.h);
+    int err = lfs3_mgc_gc(lfs3, &mgc, -1);
+    if (err != LFS3_ERR_NOENT) {
+        LFS3_ASSERT(err != 0);
+        lfs3_handle_close(lfs3, &mgc.t.h);
+        return err;
+    }
+    lfs3_handle_close(lfs3, &mgc.t.h);
+
+    return 0;
 }
 
 // incremental filesystem gc
@@ -16845,28 +16911,29 @@ int lfs3_fs_gc(lfs3_t *lfs3) {
                 | LFS3_GC_CKDATA)) == 0);
     // these flags require a writable filesystem
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_ismkconsistent(lfs3->cfg->gc_flags));
+            || !lfs3_gc_ismkconsistent(lfs3->cfg->gc_flags));
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_islookahead(lfs3->cfg->gc_flags));
+            || !lfs3_gc_islookahead(lfs3->cfg->gc_flags));
     #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_ispreerase(lfs3->cfg->gc_flags));
+            || !lfs3_gc_ispreerase(lfs3->cfg->gc_flags));
     #endif
     LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
-            || !lfs3_t_compact(lfs3->cfg->gc_flags));
+            || !lfs3_gc_iscompact(lfs3->cfg->gc_flags));
     // we can't use preerased blocks without revperturb, so this is
     // likely a mistake
     #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
     LFS3_ASSERT(lfs3_m_isrevperturb(lfs3->flags)
-            || !lfs3_t_ispreerase(lfs3->cfg->gc_flags));
+            || !lfs3_gc_ispreerase(lfs3->cfg->gc_flags));
     #endif
 
     // run gc a configurable number of steps
-    return lfs3_fs_gc_(lfs3, &lfs3->gc,
-            lfs3->cfg->gc_flags,
-            (lfs3->cfg->gc_steps)
-                ? lfs3->cfg->gc_steps
-                : 1);
+    int err = lfs3_mgc_gc(lfs3, &lfs3->gc, lfs3->cfg->gc_steps);
+    if (err && err != LFS3_ERR_NOENT) {
+        return err;
+    }
+
+    return 0;
 }
 #endif
 
@@ -16885,13 +16952,17 @@ int lfs3_fs_unck(lfs3_t *lfs3, uint32_t flags) {
     // reset the requested flags
     lfs3->flags |= flags;
 
-    // and clear from any ongoing traversals
+    // mark any ongoing traversals as dirty to avoid clearing flags
+    // after only half a traversal
     //
     // lfs3_fs_gc will terminate early if it discovers it can no longer
     // make progress
-    #ifdef LFS3_GC
-    lfs3->gc.t.h.flags &= ~flags;
-    #endif
+    for (lfs3_handle_t *h = lfs3->handles; h; h = h->next) {
+        if (lfs3_o_type(h->flags) == LFS3_type_TRV
+                || lfs3_o_type(h->flags) == LFS3_type_GC) {
+            h->flags |= LFS3_t_CKPOINTED | LFS3_t_DIRTY;
+        }
+    }
 
     return 0;
 }
@@ -17102,92 +17173,59 @@ int lfs3_fs_rmgbmap(lfs3_t *lfs3) {
 
 /// High-level filesystem traversal ///
 
-// needed in lfs3_trv_open
-static int lfs3_trv_rewind_(lfs3_t *lfs3, lfs3_trv_t *trv);
-
 int lfs3_trv_open(lfs3_t *lfs3, lfs3_trv_t *trv, uint32_t flags) {
     // already open?
-    LFS3_ASSERT(!lfs3_handle_isopen(lfs3, &trv->gc.t.h));
+    LFS3_ASSERT(!lfs3_handle_isopen(lfs3, &trv->t.h));
+    // only rdonly is allowed here
+    LFS3_ASSERT(lfs3_o_mode(flags) == LFS3_T_RDONLY);
     // unknown flags?
     LFS3_ASSERT((flags & ~(
-            LFS3_IFDEF_RDONLY(0, LFS3_T_RDWR)
-                | LFS3_T_RDONLY
+            LFS3_T_RDONLY
                 | LFS3_T_MTREEONLY
                 | LFS3_T_EXCL
-                | LFS3_IFDEF_RDONLY(0, LFS3_T_MKCONSISTENT)
-                | LFS3_IFDEF_RDONLY(0, LFS3_T_LOOKAHEAD)
-                | LFS3_IFDEF_RDONLY(0,
-                    LFS3_IFDEF_PREERASE(LFS3_T_PREERASE, 0))
-                | LFS3_IFDEF_RDONLY(0, LFS3_T_COMPACT)
                 | LFS3_T_CKMETA
                 | LFS3_T_CKDATA)) == 0);
-    // writeable traversals require a writeable filesystem
-    LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags) || lfs3_t_isrdonly(flags));
-    // these flags require a writable traversal
-    #ifndef LFS3_RDONLY
-    LFS3_ASSERT(!lfs3_t_isrdonly(flags) || !lfs3_t_ismkconsistent(flags));
-    LFS3_ASSERT(!lfs3_t_isrdonly(flags) || !lfs3_t_islookahead(flags));
-    #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-    LFS3_ASSERT(!lfs3_t_isrdonly(flags) || !lfs3_t_ispreerase(flags));
-    #endif
-    LFS3_ASSERT(!lfs3_t_isrdonly(flags) || !lfs3_t_compact(flags));
-    #endif
     // some flags don't make sense when only traversing the mtree
-    #ifndef LFS3_RDONLY
-    LFS3_ASSERT(!lfs3_t_ismtreeonly(flags) || !lfs3_t_islookahead(flags));
-    #endif
     LFS3_ASSERT(!lfs3_t_ismtreeonly(flags) || !lfs3_t_isckdata(flags));
-    // we can't use preerased blocks without revperturb, so this is
-    // likely a mistake
-    #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
-    LFS3_ASSERT(lfs3_m_isrevperturb(lfs3->flags)
-            || !lfs3_t_ispreerase(flags));
-    #endif
 
     // setup traversal state
-    trv->gc.t.h.flags = flags | lfs3_o_typeflags(LFS3_type_TRV);
-
-    // let rewind initialize/reset things
-    int err = lfs3_trv_rewind_(lfs3, trv);
-    if (err) {
-        return err;
-    }
+    lfs3_mtrv_init(&trv->t, flags | LFS3_t_STALE);
 
     // add to tracked mdirs
-    lfs3_handle_open(lfs3, &trv->gc.t.h);
+    lfs3_handle_open(lfs3, &trv->t.h);
     return 0;
 }
 
 int lfs3_trv_close(lfs3_t *lfs3, lfs3_trv_t *trv) {
-    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &trv->gc.t.h));
+    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &trv->t.h));
 
     // remove from tracked mdirs
-    lfs3_handle_close(lfs3, &trv->gc.t.h);
+    lfs3_handle_close(lfs3, &trv->t.h);
     return 0;
 }
 
 int lfs3_trv_read(lfs3_t *lfs3, lfs3_trv_t *trv,
         struct lfs3_tinfo *tinfo) {
-    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &trv->gc.t.h));
+    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &trv->t.h));
 
     // filesystem modified? excl? terminate early
-    if (lfs3_t_isexcl(trv->gc.t.h.flags)
-            && lfs3_t_isdirty(trv->gc.t.h.flags)) {
+    if (lfs3_t_isexcl(trv->t.h.flags)
+            && lfs3_t_isdirty(trv->t.h.flags)) {
         return LFS3_ERR_BUSY;
     }
 
     // discard current block queue?
-    if (lfs3_t_isstale(trv->gc.t.h.flags)) {
+    if (lfs3_t_isstale(trv->t.h.flags)) {
         trv->blocks[0] = -1;
         trv->blocks[1] = -1;
-        trv->gc.t.h.flags &= ~LFS3_t_STALE;
+        trv->t.h.flags &= ~LFS3_t_STALE;
     }
 
     while (true) {
         // some redund blocks left over?
         if (trv->blocks[0] != -1) {
             // write our traversal info
-            tinfo->btype = lfs3_t_btype(trv->gc.t.h.flags);
+            tinfo->btype = lfs3_t_btype(trv->t.h.flags);
             tinfo->block = trv->blocks[0];
 
             trv->blocks[0] = trv->blocks[1];
@@ -17197,30 +17235,30 @@ int lfs3_trv_read(lfs3_t *lfs3, lfs3_trv_t *trv,
 
         // find next block
         lfs3_bptr_t bptr;
-        lfs3_stag_t tag = lfs3_mtree_gc(lfs3, &trv->gc,
+        lfs3_stag_t tag = lfs3_mtree_traverse(lfs3, &trv->t,
                 &bptr);
         if (tag < 0) {
             return tag;
         }
 
         // ignore new stale flags
-        trv->gc.t.h.flags &= ~LFS3_t_STALE;
+        trv->t.h.flags &= ~LFS3_t_STALE;
 
         // figure out type/blocks
         if (tag == LFS3_TAG_MDIR) {
             lfs3_mdir_t *mdir = (lfs3_mdir_t*)bptr.d.u.buffer;
-            lfs3_t_setbtype(&trv->gc.t.h.flags, LFS3_BTYPE_MDIR);
+            lfs3_t_setbtype(&trv->t.h.flags, LFS3_BTYPE_MDIR);
             trv->blocks[0] = mdir->r.blocks[0];
             trv->blocks[1] = mdir->r.blocks[1];
 
         } else if (tag == LFS3_TAG_BRANCH) {
-            lfs3_t_setbtype(&trv->gc.t.h.flags, LFS3_BTYPE_BTREE);
+            lfs3_t_setbtype(&trv->t.h.flags, LFS3_BTYPE_BTREE);
             lfs3_rbyd_t *rbyd = (lfs3_rbyd_t*)bptr.d.u.buffer;
             trv->blocks[0] = rbyd->blocks[0];
             trv->blocks[1] = -1;
 
         } else if (tag == LFS3_TAG_BLOCK) {
-            lfs3_t_setbtype(&trv->gc.t.h.flags, LFS3_BTYPE_DATA);
+            lfs3_t_setbtype(&trv->t.h.flags, LFS3_BTYPE_DATA);
             trv->blocks[0] = lfs3_bptr_block(&bptr);
             trv->blocks[1] = -1;
 
@@ -17230,20 +17268,84 @@ int lfs3_trv_read(lfs3_t *lfs3, lfs3_trv_t *trv,
     }
 }
 
-static int lfs3_trv_rewind_(lfs3_t *lfs3, lfs3_trv_t *trv) {
+int lfs3_trv_rewind(lfs3_t *lfs3, lfs3_trv_t *trv) {
     (void)lfs3;
+    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &trv->t.h));
     // reset traversal
-    lfs3_mgc_init(&trv->gc,
-            (trv->gc.t.h.flags
-                    & ~LFS3_t_DIRTY
-                    & ~LFS3_t_CKPOINTED)
+    lfs3_mtrv_init(&trv->t,
+            (trv->t.h.flags & ~(
+                    LFS3_t_DIRTY
+                        | LFS3_t_CKPOINTED))
                 | LFS3_t_STALE);
     return 0;
 }
 
-int lfs3_trv_rewind(lfs3_t *lfs3, lfs3_trv_t *trv) {
-    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &trv->gc.t.h));
-    return lfs3_trv_rewind_(lfs3, trv);
+
+/// High-level filesystem gc ///
+
+int lfs3_gc_open(lfs3_t *lfs3, lfs3_gc_t *gc, uint32_t flags) {
+    // already open?
+    LFS3_ASSERT(!lfs3_handle_isopen(lfs3, &gc->gc.t.h));
+    // only wronly is allowed here
+    LFS3_ASSERT(lfs3_o_mode(flags) == LFS3_GC_WRONLY);
+    // unknown flags?
+    LFS3_ASSERT((flags & ~(
+            LFS3_GC_WRONLY
+                | LFS3_GC_EXCL
+                | LFS3_IFDEF_RDONLY(0, LFS3_GC_MKCONSISTENT)
+                | LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
+                | LFS3_IFDEF_RDONLY(0,
+                    LFS3_IFDEF_PREERASE(LFS3_GC_PREERASE, 0))
+                | LFS3_IFDEF_RDONLY(0, LFS3_GC_COMPACT)
+                | LFS3_GC_CKMETA
+                | LFS3_GC_CKDATA)) == 0);
+    // these flags require a writable filesystem
+    #ifndef LFS3_RDONLY
+    LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
+            || !lfs3_gc_ismkconsistent(flags));
+    LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
+            || !lfs3_gc_islookahead(flags));
+    #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
+    LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
+            || !lfs3_gc_ispreerase(flags));
+    #endif
+    LFS3_ASSERT(!lfs3_m_isrdonly(lfs3->flags)
+            || !lfs3_gc_iscompact(flags));
+    #endif
+    // we can't use preerased blocks without revperturb, so this is
+    // likely a mistake
+    #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
+    LFS3_ASSERT(lfs3_m_isrevperturb(lfs3->flags)
+            || !lfs3_gc_ispreerase(flags));
+    #endif
+
+    // setup gc state
+    lfs3_mgc_init(&gc->gc, flags);
+
+    // add to tracked mdirs
+    lfs3_handle_open(lfs3, &gc->gc.t.h);
+    return 0;
+}
+
+int lfs3_gc_close(lfs3_t *lfs3, lfs3_gc_t *gc) {
+    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &gc->gc.t.h));
+
+    // remove from tracked mdirs
+    lfs3_handle_close(lfs3, &gc->gc.t.h);
+    return 0;
+}
+
+int lfs3_gc_write(lfs3_t *lfs3, lfs3_gc_t *gc, lfs3_soff_t steps) {
+    LFS3_ASSERT(lfs3_handle_isopen(lfs3, &gc->gc.t.h));
+
+    // filesystem modified? excl? terminate early
+    if (lfs3_t_isexcl(gc->gc.t.h.flags)
+            && lfs3_t_isdirty(gc->gc.t.h.flags)) {
+        return LFS3_ERR_BUSY;
+    }
+
+    // run gc
+    return lfs3_mgc_gc(lfs3, &gc->gc, steps);
 }
 
 

@@ -183,8 +183,9 @@ code = '''
 # METHOD=0 => lfs3_fs_ck
 # METHOD=1 => lfs3_fs_gc
 # METHOD=2 => lfs3_trv_read
-# METHOD=3 => lfs3_mount
-defines.METHOD = [0, 1, 2, 3]
+# METHOD=3 => lfs3_gc_write
+# METHOD=4 => lfs3_mount
+defines.METHOD = [0, 1, 2, 3, 4]
 defines.GC_FLAGS = 'LFS3_GC_CKMETA'
 defines.GC_STEPS = -1
 defines.N = [1, 2, 4, 8, 16, 32, 64]
@@ -297,8 +298,24 @@ code = '''
             }
             lfs3_trv_close(&lfs3, &trv) => 0;
 
-        // find clobbered blocks with lfs3_mount
+        // find clobbered blocks with lfs3_gc_write
         } else if (METHOD == 3) {
+            lfs3_gc_t gc;
+            lfs3_gc_open(&lfs3, &gc, LFS3_GC_WRONLY | LFS3_GC_CKMETA) => 0;
+            for (lfs3_block_t i = 0;; i++) {
+                // a bit hacky, but this catches infinite loops
+                LFS3_ASSERT(i < 2*BLOCK_COUNT);
+
+                int err = lfs3_gc_write(&lfs3, &gc, 1);
+                assert(!err || err == LFS3_ERR_CORRUPT);
+                if (err == LFS3_ERR_CORRUPT) {
+                    break;
+                }
+            }
+            lfs3_gc_close(&lfs3, &gc) => 0;
+
+        // find clobbered blocks with lfs3_mount
+        } else if (METHOD == 4) {
             lfs3_unmount(&lfs3) => 0;
             lfs3_mount(&lfs3,
                     LFS3_M_RDWR
@@ -309,7 +326,7 @@ code = '''
             assert(false);
         }
 
-        if (METHOD != 3) {
+        if (METHOD != 4) {
             lfs3_unmount(&lfs3) => 0;
         }
     }
@@ -320,8 +337,9 @@ done:;
 # METHOD=0 => lfs3_fs_ck
 # METHOD=1 => lfs3_fs_gc
 # METHOD=2 => lfs3_trv_read
-# METHOD=3 => lfs3_mount
-defines.METHOD = [0, 1, 2, 3]
+# METHOD=3 => lfs3_gc_write
+# METHOD=4 => lfs3_mount
+defines.METHOD = [0, 1, 2, 3, 4]
 defines.GC_FLAGS = 'LFS3_GC_CKDATA'
 defines.GC_STEPS = -1
 defines.N = [1, 2, 4, 8, 16, 32, 64]
@@ -435,8 +453,24 @@ code = '''
             }
             lfs3_trv_close(&lfs3, &trv) => 0;
 
-        // find clobbered blocks with lfs3_mount
+        // find clobbered blocks with lfs3_gc_write
         } else if (METHOD == 3) {
+            lfs3_gc_t gc;
+            lfs3_gc_open(&lfs3, &gc, LFS3_GC_WRONLY | LFS3_GC_CKDATA) => 0;
+            for (lfs3_block_t i = 0;; i++) {
+                // a bit hacky, but this catches infinite loops
+                LFS3_ASSERT(i < 2*BLOCK_COUNT);
+
+                int err = lfs3_gc_write(&lfs3, &gc, 1);
+                assert(!err || err == LFS3_ERR_CORRUPT);
+                if (err == LFS3_ERR_CORRUPT) {
+                    break;
+                }
+            }
+            lfs3_gc_close(&lfs3, &gc) => 0;
+
+        // find clobbered blocks with lfs3_mount
+        } else if (METHOD == 4) {
             lfs3_unmount(&lfs3) => 0;
             lfs3_mount(&lfs3,
                     LFS3_M_RDWR
@@ -447,7 +481,7 @@ code = '''
             assert(false);
         }
 
-        if (METHOD != 3) {
+        if (METHOD != 4) {
             lfs3_unmount(&lfs3) => 0;
         }
     }
@@ -459,8 +493,9 @@ done:;
 # METHOD=0 => lfs3_fs_ck
 # METHOD=1 => lfs3_fs_gc
 # METHOD=2 => lfs3_trv_read
-# METHOD=3 => lfs3_mount
-defines.METHOD = [0, 1, 2, 3]
+# METHOD=3 => lfs3_gc_write
+# METHOD=4 => lfs3_mount
+defines.METHOD = [0, 1, 2, 3, 4]
 defines.GC_FLAGS = 'LFS3_GC_CKMETA'
 defines.GC_STEPS = -1
 defines.N = [1, 2, 4, 8, 16, 32, 64]
@@ -594,8 +629,31 @@ code = '''
                 }
                 lfs3_trv_close(&lfs3, &trv) => 0;
 
-            // find clobbered blocks with lfs3_mount
+            // find clobbered blocks with lfs3_gc_write
             } else if (METHOD == 3) {
+                lfs3_gc_t gc;
+                lfs3_gc_open(&lfs3, &gc,
+                        LFS3_GC_WRONLY | LFS3_GC_CKMETA) => 0;
+                for (lfs3_block_t i = 0;; i++) {
+                    // a bit hacky, but this catches infinite loops
+                    LFS3_ASSERT(i < 2*BLOCK_COUNT);
+
+                    int err = lfs3_gc_write(&lfs3, &gc, 1);
+                    assert(!err
+                            || err == LFS3_ERR_NOENT
+                            || err == LFS3_ERR_CORRUPT);
+                    if (err == LFS3_ERR_NOENT) {
+                        break;
+                    }
+                    if (err == LFS3_ERR_CORRUPT) {
+                        lfs3_gc_close(&lfs3, &gc) => 0;
+                        goto detected;
+                    }
+                }
+                lfs3_gc_close(&lfs3, &gc) => 0;
+
+            // find clobbered blocks with lfs3_mount
+            } else if (METHOD == 4) {
                 lfs3_unmount(&lfs3) => 0;
                 int err = lfs3_mount(&lfs3,
                         LFS3_M_RDWR
@@ -652,7 +710,7 @@ code = '''
 
             // we should at least detect rollback if we don't lose
             // power/remount
-            if (METHOD != 3) {
+            if (METHOD != 4) {
                 assert(found == N);
             }
 
@@ -696,7 +754,7 @@ code = '''
             lfs3_emubd_flipbit(CFG, badblock, badbit) => 0;
 
             // remount if we ended up unmounted
-            if (METHOD == 3) {
+            if (METHOD == 4) {
                 lfs3_mount(&lfs3, LFS3_M_RDWR, CFG) => 0;
             }
 
@@ -714,8 +772,9 @@ done:;
 # METHOD=0 => lfs3_fs_ck
 # METHOD=1 => lfs3_fs_gc
 # METHOD=2 => lfs3_trv_read
-# METHOD=3 => lfs3_mount
-defines.METHOD = [0, 1, 2, 3]
+# METHOD=3 => lfs3_gc_write
+# METHOD=4 => lfs3_mount
+defines.METHOD = [0, 1, 2, 3, 4]
 defines.GC_FLAGS = 'LFS3_GC_CKDATA'
 defines.GC_STEPS = -1
 defines.N = [1, 2, 4, 8, 16, 32, 64]
@@ -850,8 +909,31 @@ code = '''
                 }
                 lfs3_trv_close(&lfs3, &trv) => 0;
 
-            // find clobbered blocks with lfs3_mount
+            // find clobbered blocks with lfs3_gc_write
             } else if (METHOD == 3) {
+                lfs3_gc_t gc;
+                lfs3_gc_open(&lfs3, &gc,
+                        LFS3_GC_WRONLY | LFS3_GC_CKDATA) => 0;
+                for (lfs3_block_t i = 0;; i++) {
+                    // a bit hacky, but this catches infinite loops
+                    LFS3_ASSERT(i < 2*BLOCK_COUNT);
+
+                    int err = lfs3_gc_write(&lfs3, &gc, 1);
+                    assert(!err
+                            || err == LFS3_ERR_NOENT
+                            || err == LFS3_ERR_CORRUPT);
+                    if (err == LFS3_ERR_NOENT) {
+                        break;
+                    }
+                    if (err == LFS3_ERR_CORRUPT) {
+                        lfs3_gc_close(&lfs3, &gc) => 0;
+                        goto detected;
+                    }
+                }
+                lfs3_gc_close(&lfs3, &gc) => 0;
+
+            // find clobbered blocks with lfs3_mount
+            } else if (METHOD == 4) {
                 lfs3_unmount(&lfs3) => 0;
                 int err = lfs3_mount(&lfs3,
                         LFS3_M_RDWR
@@ -908,7 +990,7 @@ code = '''
 
             // we should at least detect rollback if we don't lose
             // power/remount
-            if (METHOD != 3) {
+            if (METHOD != 4) {
                 assert(found == N);
             }
 
@@ -952,7 +1034,7 @@ code = '''
             lfs3_emubd_flipbit(CFG, badblock, badbit) => 0;
 
             // remount if we ended up unmounted
-            if (METHOD == 3) {
+            if (METHOD == 4) {
                 lfs3_mount(&lfs3, LFS3_M_RDWR, CFG) => 0;
             }
 
@@ -1025,7 +1107,7 @@ code = '''
             }
 
             if (tinfo.btype == LFS3_BTYPE_BTREE
-                    && trv.gc.t.h.mdir.mid != LFS3_MID_GBMAP) {
+                    && trv.t.h.mdir.mid != LFS3_MID_GBMAP) {
                 if (k == i) {
                     // clobber this block
                     printf("clobbering 0x%x\n", tinfo.block);
@@ -1125,7 +1207,7 @@ code = '''
 
             if ((tinfo.btype == LFS3_BTYPE_BTREE
                         || tinfo.btype == LFS3_BTYPE_DATA)
-                    && trv.gc.t.h.mdir.mid != LFS3_MID_GBMAP) {
+                    && trv.t.h.mdir.mid != LFS3_MID_GBMAP) {
                 if (k == i) {
                     // clobber this block
                     printf("clobbering 0x%x\n", tinfo.block);
@@ -1231,7 +1313,7 @@ code = '''
             }
 
             if (tinfo.btype == LFS3_BTYPE_BTREE
-                    && trv.gc.t.h.mdir.mid != LFS3_MID_GBMAP) {
+                    && trv.t.h.mdir.mid != LFS3_MID_GBMAP) {
                 // found an interesting block?
                 if (k == i) {
                     badblock = tinfo.block;
@@ -1382,7 +1464,7 @@ code = '''
 
             if ((tinfo.btype == LFS3_BTYPE_BTREE
                         || tinfo.btype == LFS3_BTYPE_DATA)
-                    && trv.gc.t.h.mdir.mid != LFS3_MID_GBMAP) {
+                    && trv.t.h.mdir.mid != LFS3_MID_GBMAP) {
                 // found an interesting block?
                 if (k == i) {
                     badblock = tinfo.block;
