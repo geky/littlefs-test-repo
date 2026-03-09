@@ -10022,13 +10022,16 @@ again:;
         }
     }
 
-    // done with this mid? transition to next mid
-    // TODO is this correct?
-    if (mtrv->h.mdir.mid >= 0
+    // done with mtree? exit early to avoid mid overflow
+    if (mtrv->h.mdir.mid >= (lfs3_smid_t)lfs3_mtree_weight(lfs3)) {
+        return LFS3_ERR_NOENT;
+    // done with mdir? move to next mdir
+    } else if (mtrv->h.mdir.mid >= 0
             && (lfs3_t_ismtreeonly(mtrv->h.flags)
                 || lfs3_mrid(lfs3, mtrv->h.mdir.mid)
                     >= (lfs3_srid_t)mtrv->h.mdir.r.weight-1)) {
         mtrv->h.mdir.mid = lfs3_mbid(lfs3, mtrv->h.mdir.mid) + 1;
+    // done with mid? move to next mid
     } else {
         mtrv->h.mdir.mid += 1;
     }
