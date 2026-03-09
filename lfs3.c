@@ -10555,16 +10555,17 @@ static int lfs3_mgc_gc(lfs3_t *lfs3, lfs3_mgc_t *mgc, lfs3_soff_t steps) {
             mgc->t.h.flags &= ~LFS3_t_DIRTY | dirty;
             #endif
 
-        // TODO wait, should this be conditional on some mutable flag?
-        // TODO islookahead || ispreerase? or at least check if
-        // TODO filesystem is mutable?
-        //
         // if we have nothing else to do, try to commit the gbmap to
         // disk so it's recoverable if we lose power
         } else if (LFS3_IFDEF_RDONLY(
                 false,
                 LFS3_IFDEF_GBMAP(
-                    lfs3_alloc_cansyncgbmap(lfs3),
+                    (lfs3_gc_ismkconsistent(mgc->t.h.flags)
+                            || lfs3_gc_islookahead(mgc->t.h.flags)
+                            || LFS3_IFDEF_PREERASE(
+                                lfs3_gc_ispreerase(mgc->t.h.flags),
+                                0))
+                        && lfs3_alloc_cansyncgbmap(lfs3),
                     false))) {
             #if !defined(LFS3_RDONLY) && defined(LFS3_GBMAP)
             uint32_t dirty = mgc->t.h.flags;
