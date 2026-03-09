@@ -10546,10 +10546,13 @@ static int lfs3_mgc_gc(lfs3_t *lfs3, lfs3_mgc_t *mgc, lfs3_soff_t steps) {
                         && lfs3_alloc_canpreerase(lfs3),
                     false))) {
             #if !defined(LFS3_RDONLY) && defined(LFS3_PREERASE)
+            uint32_t dirty = mgc->t.h.flags;
             int err = lfs3_alloc_preerase(lfs3);
             if (err && err != LFS3_ERR_NOENT) {
                 return err;
             }
+            // reset dirty flag
+            mgc->t.h.flags &= ~LFS3_t_DIRTY | dirty;
             #endif
 
         // TODO wait, should this be conditional on some mutable flag?
@@ -10564,11 +10567,14 @@ static int lfs3_mgc_gc(lfs3_t *lfs3, lfs3_mgc_t *mgc, lfs3_soff_t steps) {
                     lfs3_alloc_cansyncgbmap(lfs3),
                     false))) {
             #if !defined(LFS3_RDONLY) && defined(LFS3_GBMAP)
+            uint32_t dirty = mgc->t.h.flags;
             int err = lfs3_alloc_syncgbmap(lfs3);
             if (err) {
                 LFS3_ASSERT(err != LFS3_ERR_NOENT);
                 return err;
             }
+            // reset dirty flag
+            mgc->t.h.flags &= ~LFS3_t_DIRTY | dirty;
             #endif
 
         // nothing to do at all? guess we're done
