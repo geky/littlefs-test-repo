@@ -10212,22 +10212,6 @@ static int lfs3_alloc_adoptgbmap(lfs3_t *lfs3,
 // mutation here
 static lfs3_stag_t lfs3_mtree_gc(lfs3_t *lfs3, lfs3_mgc_t *mgc,
         lfs3_bptr_t *bptr_) {
-    // check for pending grms every step, just in case some other
-    // operation introduced new grms
-    #ifndef LFS3_RDONLY
-    if (lfs3_t_ismkconsistent(mgc->t.h.flags)
-            && lfs3_grm_count(lfs3) > 0) {
-        // fix pending grms
-        uint32_t dirty = mgc->t.h.flags;
-        int err = lfs3_fs_fixgrm(lfs3);
-        if (err) {
-            return err;
-        }
-        // reset dirty flag
-        mgc->t.h.flags &= ~LFS3_t_DIRTY | dirty;
-    }
-    #endif
-
     // start of traversal?
     if (mgc->t.h.mdir.mid == LFS3_MID_MROOTANCHOR) {
         #ifndef LFS3_RDONLY
@@ -10329,6 +10313,9 @@ again:;
     if (lfs3_t_ismkconsistent(mgc->t.h.flags)
             && lfs3_gc_ismkconsistent(lfs3->flags)
             && tag == LFS3_TAG_MDIR) {
+        // grm queue should be flushed before calling lfs3_mtree_gc
+        LFS3_ASSERT(lfs3_grm_count(lfs3) == 0);
+
         lfs3_mdir_t *mdir = (lfs3_mdir_t*)bptr_->d.u.buffer;
         uint32_t dirty = mgc->t.h.flags;
         int err = lfs3_mdir_mkconsistent(lfs3, mdir);
@@ -10439,22 +10426,36 @@ static int lfs3_mgc_gc(lfs3_t *lfs3, lfs3_mgc_t *mgc, lfs3_soff_t steps) {
     lfs3_off_t steps_ = lfs3_max((lfs3_off_t)steps, 1);
     while (steps_ > 0) {
         // do we have any pending traversal work?
-        uint32_t t = (mgc->t.h.flags
-                    & ((lfs3->flags & (
-                            LFS3_IFDEF_RDONLY(0, LFS3_GC_MKCONSISTENT)
-                                | LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
-                                | LFS3_IFDEF_RDONLY(0, LFS3_GC_COMPACT)
-                                | LFS3_GC_CKMETA
-                                | LFS3_GC_CKDATA))
-                        // including any pending grms
-                        | LFS3_IFDEF_RDONLY(0,
-                            (lfs3_grm_count(lfs3) > 0)
-                                ? LFS3_GC_MKCONSISTENT
-                                : 0)))
+        uint32_t t = (mgc->t.h.flags & lfs3->flags & (
+                    LFS3_IFDEF_RDONLY(0, LFS3_GC_MKCONSISTENT)
+                        | LFS3_IFDEF_RDONLY(0, LFS3_GC_LOOKAHEAD)
+                        | LFS3_IFDEF_RDONLY(0, LFS3_GC_COMPACT)
+                        | LFS3_GC_CKMETA
+                        | LFS3_GC_CKDATA))
                 // this weird shift is to let us mask out any
                 // flags that change
                 >> 8;
-        if (t) {
+
+        // first check for any grms, we need to flush the grm queue
+        // before traversal as orphans can be grmed and we don't support
+        // that
+        if (LFS3_IFDEF_RDONLY(
+                false,
+                lfs3_gc_ismkconsistent(mgc->t.h.flags)
+                    && lfs3_grm_count(lfs3) > 0)) {
+            #ifndef LFS3_RDONLY
+            // fix pending grms
+            uint32_t dirty = mgc->t.h.flags;
+            int err = lfs3_fs_fixgrm(lfs3);
+            if (err) {
+                return err;
+            }
+            // reset dirty flag
+            mgc->t.h.flags &= ~LFS3_t_DIRTY | dirty;
+            #endif
+
+        // pending traversal work?
+        } else if (t) {
             // prioritize lookahead/gbmap before any work that may need
             // to allocate
             #ifndef LFS3_RDONLY
@@ -10537,7 +10538,7 @@ static int lfs3_mgc_gc(lfs3_t *lfs3, lfs3_mgc_t *mgc, lfs3_soff_t steps) {
                             | LFS3_t_CKDATA);
             }
 
-        // if we have no pending gc work, can we preerase blocks?
+        // if we have no pending traversal work, can we preerase blocks?
         } else if (LFS3_IFDEF_RDONLY(
                 false,
                 LFS3_IFDEF_PREERASE(
