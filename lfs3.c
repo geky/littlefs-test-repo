@@ -1925,11 +1925,10 @@ static inline lfs3_data_t lfs3_data_fromlleb128(uint32_t word,
 // our core rbyd attribute type
 //
 //   wwll llff ffff ffff tttt tttt tttt tttt
-//    ^'-.-' ^ '---.---' :                 :
-//    '--|---|-----|-----:-----------------:-- compressed weight
-//   ::  '---|-----|-----:-----------------:-- total len - 1
-//   ::      '-----|-----:-----------------:-- from encoder
-//   ::            '-----:-----------------:-- optional from count
+//    ^'-.-''-----.----' :                 :
+//    '--|--------|------:-----------------:-- compressed weight
+//   ::  '--------|------:-----------------:-- total len - 1
+//   ::           '------:-----------------:-- from encoder
 //   ::     :          : rgmm kkkk +kkk kkkk
 //   11 => w=-1        : ^^ ^ '-.' '---.---'
 //   00 => w=0         : '|-|---|------|------ rm bit
@@ -1938,10 +1937,10 @@ static inline lfs3_data_t lfs3_data_fromlleb128(uint32_t word,
 //          :          :   ::   '------|------ tag suptype
 //          ff cccc cccc   ::          '------ tag subtype
 //          11 ffff ffcc   ::
-//                         00 => mask0  (---- ---- ----)
-//                         01 => mask2  (---- ---- --11)
-//                         10 => mask8  (---- 1111 1111)
-//                         11 => mask12 (1111 1111 1111)
+//          '----.---'     00 => mask0  (---- ---- ----)
+//             '-|-.---'   01 => mask2  (---- ---- --11)
+//   from -------' |       10 => mask8  (---- 1111 1111)
+//   count --------'       11 => mask12 (1111 1111 1111)
 //
 typedef uintptr_t lfs3_rattr_t;
 
@@ -1949,24 +1948,24 @@ typedef uintptr_t lfs3_rattr_t;
 enum lfs3_from {
     LFS3_FROM_NIL       = 0x000, // -- ++++ ++++ (count unused)
     LFS3_FROM_LBUF      = 0x100, // -1 cccc cccc
-    LFS3_FROM_NAME      = 0x200, // 1- ++++ ++++ (count if non-null?)
+    LFS3_FROM_NAME      = 0x200, // 1- ++++ ++++
 
     LFS3_FROM_BUF       = 0x300, // 11 ---- --++
     LFS3_FROM_GRAFT     = 0x304, // 11 ---- -1cc
-    LFS3_FROM_DATA      = 0x308, // 11 ---- 1-cc // TODO rm?
+    LFS3_FROM_DATA      = 0x308, // 11 ---- 1-cc
 
-    LFS3_FROM_LE32      = 0x30c, // 11 ---- 11++ // TODO cat?
+    LFS3_FROM_LE32      = 0x30c, // 11 ---- 11++
     LFS3_FROM_LEB128    = 0x310, // 11 ---1 --++
     LFS3_FROM_LLEB128   = 0x314, // 11 ---1 -1++
 
     LFS3_FROM_ECKSUM    = 0x318, // 11 ---1 1-++
-    LFS3_FROM_BPTR      = 0x31c, // 11 ---1 11++
-    LFS3_FROM_BRANCH    = 0x320, // 11 --1- --++
-    LFS3_FROM_BTREE     = 0x324, // 11 --1- -1++
-    LFS3_FROM_SHRUB     = 0x328, // 11 --1- 1-++
-    LFS3_FROM_MPTR      = 0x32c, // 11 --1- 11++ // TODO rm?
-    LFS3_FROM_COMPAT    = 0x330, // 11 --11 --++ // TODO rm?
-    LFS3_FROM_GEOMETRY  = 0x334, // 11 --11 -1++ // TODO rm?
+    LFS3_FROM_BRANCH    = 0x31c, // 11 ---1 11++
+    LFS3_FROM_BTREE     = 0x320, // 11 --1- --++
+    LFS3_FROM_SHRUB     = 0x324, // 11 --1- -1++
+    LFS3_FROM_MPTR      = 0x328, // 11 --1- 1-++
+    LFS3_FROM_BPTR      = 0x32c, // 11 --1- 11++
+    LFS3_FROM_COMPAT    = 0x330, // 11 --11 --++
+    LFS3_FROM_GEOMETRY  = 0x334, // 11 --11 -1++
 };
 
 typedef uint16_t lfs3_from_t;
@@ -3492,10 +3491,6 @@ static int lfs3_rbyd_appendrattr_(lfs3_t *lfs3, lfs3_rbyd_t *rbyd,
             } ecksum;
             struct {
                 lfs3_data_t data;
-                uint8_t buf[LFS3_BPTR_DSIZE];
-            } bptr;
-            struct {
-                lfs3_data_t data;
                 uint8_t buf[LFS3_BRANCH_DSIZE];
             } branch;
             struct {
@@ -3510,6 +3505,10 @@ static int lfs3_rbyd_appendrattr_(lfs3_t *lfs3, lfs3_rbyd_t *rbyd,
                 lfs3_data_t data;
                 uint8_t buf[LFS3_MPTR_DSIZE];
             } mptr;
+            struct {
+                lfs3_data_t data;
+                uint8_t buf[LFS3_BPTR_DSIZE];
+            } bptr;
             struct {
                 lfs3_data_t data;
                 uint8_t buf[LFS3_COMPAT_DSIZE];
@@ -3590,14 +3589,6 @@ static int lfs3_rbyd_appendrattr_(lfs3_t *lfs3, lfs3_rbyd_t *rbyd,
             datas = &ctx.u.ecksum.data;
             data_count = 1;
 
-        // bptr?
-        } else if (lfs3_from_from2(from) == LFS3_FROM_BPTR) {
-            ctx.u.bptr.data = lfs3_data_frombptr(
-                    (const lfs3_bptr_t*)args[0],
-                    ctx.u.bptr.buf);
-            datas = &ctx.u.bptr.data;
-            data_count = 1;
-
         // branch?
         } else if (lfs3_from_from2(from) == LFS3_FROM_BRANCH) {
             ctx.u.branch.data = lfs3_data_frombranch(
@@ -3634,6 +3625,14 @@ static int lfs3_rbyd_appendrattr_(lfs3_t *lfs3, lfs3_rbyd_t *rbyd,
                     (const lfs3_block_t*)args[0],
                     ctx.u.mptr.buf);
             datas = &ctx.u.mptr.data;
+            data_count = 1;
+
+        // bptr?
+        } else if (lfs3_from_from2(from) == LFS3_FROM_BPTR) {
+            ctx.u.bptr.data = lfs3_data_frombptr(
+                    (const lfs3_bptr_t*)args[0],
+                    ctx.u.bptr.buf);
+            datas = &ctx.u.bptr.data;
             data_count = 1;
 
         // compat flags?

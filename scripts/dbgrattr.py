@@ -66,11 +66,10 @@ TAG_GCKSUMDELTA = 0x3300    ##  v-11 --11 ++++ ++++
 # our core rbyd attribute type
 #
 #   wwll llff ffff ffff tttt tttt tttt tttt
-#    ^'-.-' ^ '---.---' :                 :
-#    '--|---|-----|-----:-----------------:-- compressed weight
-#   ::  '---|-----|-----:-----------------:-- total len - 1
-#   ::      '-----|-----:-----------------:-- from encoder
-#   ::            '-----:-----------------:-- optional from count
+#    ^'-.-''-----.----' :                 :
+#    '--|--------|------:-----------------:-- compressed weight
+#   ::  '--------|------:-----------------:-- total len - 1
+#   ::           '------:-----------------:-- from encoder
 #   ::     :          : rgmm kkkk +kkk kkkk
 #   11 => w=-1        : ^^ ^ '-.' '---.---'
 #   00 => w=0         : '|-|---|------|------ rm bit
@@ -79,10 +78,10 @@ TAG_GCKSUMDELTA = 0x3300    ##  v-11 --11 ++++ ++++
 #          :          :   ::   '------|------ tag suptype
 #          ff cccc cccc   ::          '------ tag subtype
 #          11 ffff ffcc   ::
-#                         00 => mask0  (---- ---- ----)
-#                         01 => mask2  (---- ---- --11)
-#                         10 => mask8  (---- 1111 1111)
-#                         11 => mask12 (1111 1111 1111)
+#          '----.---'     00 => mask0  (---- ---- ----)
+#             '-|-.---'   01 => mask2  (---- ---- --11)
+#   from -------' |       10 => mask8  (---- 1111 1111)
+#   count --------'       11 => mask12 (1111 1111 1111)
 #
 RATTR_WEIGHT        = 0xc0000000    # 11-- ---- ---- ---- ---- ---- ---- ----
 RATTR_LEN           = 0x3c000000    # --11 11-- ---- ---- ---- ---- ---- ----
@@ -116,7 +115,7 @@ tag_MASK12      = 0x3000    #i  --11 ---- ---- ----  (1111 1111 1111)
 # from encoders
 FROM_NIL        = 0x000     # -- ++++ ++++ (count unused)
 FROM_LBUF       = 0x100     # -1 cccc cccc
-FROM_NAME       = 0x200     # 1- ++++ ++++ (count if non-null?)
+FROM_NAME       = 0x200     # 1- ++++ ++++
 FROM_BUF        = 0x300     # 11 ---- --++
 FROM_GRAFT      = 0x304     # 11 ---- -1cc
 FROM_DATA       = 0x308     # 11 ---- 1-cc
@@ -124,11 +123,11 @@ FROM_LE32       = 0x30c     # 11 ---- 11++
 FROM_LEB128     = 0x310     # 11 ---1 --++
 FROM_LLEB128    = 0x314     # 11 ---1 -1++
 FROM_ECKSUM     = 0x318     # 11 ---1 1-++
-FROM_BPTR       = 0x31c     # 11 ---1 11++
-FROM_BRANCH     = 0x320     # 11 --1- --++
-FROM_BTREE      = 0x324     # 11 --1- -1++
-FROM_SHRUB      = 0x328     # 11 --1- 1-++
-FROM_MPTR       = 0x32c     # 11 --1- 11++
+FROM_BRANCH     = 0x31c     # 11 ---1 11++
+FROM_BTREE      = 0x320     # 11 --1- --++
+FROM_SHRUB      = 0x324     # 11 --1- -1++
+FROM_MPTR       = 0x328     # 11 --1- 1-++
+FROM_BPTR       = 0x32c     # 11 --1- 11++
 FROM_COMPAT     = 0x330     # 11 --11 --++
 FROM_GEOMETRY   = 0x334     # 11 --11 -1++
 
